@@ -221,7 +221,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             if (animator)
             {
                 animator.SetFloat("MoveX", currentVelocity.x);
-                animator.SetFloat("MoveY", currentVelocity.z);
+                animator.SetFloat("MoveZ", currentVelocity.z);
                 animator.SetFloat("Speed", currentVelocity.magnitude);
                 animator.SetInteger("FacingIndex", FacingIndex(animFacing));
             }
