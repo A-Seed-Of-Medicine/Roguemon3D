@@ -21,7 +21,41 @@ namespace _PinBoy.Scripts.CharacterMovement
         [SerializeField] private MovementProfile baseProfile;
         [SerializeField] private bool normalizeDiagonals = true;
         [SerializeField] private bool snapFacingTo8 = true;
-        public bool grounded { get; private set; } = true;
+        public bool grounded { get; private set; }
+        public Vector3 GroundNormal => groundNormal;
+
+        [Header("Grounding")]
+        [SerializeField] private LayerMask groundLayers = Physics.DefaultRaycastLayers;
+        [SerializeField, Tooltip("Radius used for sphere checks when evaluating the ground below the agent.")]
+        private float groundCheckRadius = 0.3f;
+        [SerializeField, Tooltip("Additional distance below the collider bounds to search for the ground.")]
+        private float groundCheckDistance = 0.3f;
+        [SerializeField, Tooltip("Vertical offset added above the collider when performing ground checks.")]
+        private float groundCheckOffset = 0.02f;
+        [SerializeField, Range(0f, 89f)]
+        private float maxGroundSlopeAngle = 60f;
+        [SerializeField]
+        private Collider groundCollider;
+
+        [Header("Jumping")]
+        [SerializeField, Tooltip("Downward acceleration applied while airborne. Negative values accelerate towards the ground.")]
+        private float gravity = -30f;
+        [SerializeField, Tooltip("Small downward force applied to keep the agent snapped to the ground.")]
+        private float groundedGravity = -2f;
+        [SerializeField, Tooltip("Desired jump height in meters for the initial jump.")]
+        private float jumpHeight = 2f;
+        [SerializeField, Tooltip("Number of additional jumps allowed while airborne.")]
+        private int extraAirJumps = 0;
+        [SerializeField, Tooltip("Time in seconds after leaving the ground during which a jump can still be triggered.")]
+        private float coyoteTime = 0.15f;
+        [SerializeField, Tooltip("Time window in seconds during which a buffered jump request remains valid.")]
+        private float jumpBufferTime = 0.15f;
+        [SerializeField, Tooltip("Multiplier applied to gravity while the agent is descending.")]
+        private float fallGravityMultiplier = 2f;
+        [SerializeField, Tooltip("Multiplier applied to gravity when the jump button is released early.")]
+        private float jumpReleaseGravityMultiplier = 2f;
+        [SerializeField, Tooltip("Maximum downward speed reached while falling.")]
+        private float terminalVelocity = -60f;
         
         [field: SerializeField]
         public AllegianceType allegiance { get; set; }
@@ -45,13 +79,20 @@ namespace _PinBoy.Scripts.CharacterMovement
         public GameObject aimPivotObject;
         
         
-        public bool IsMoving => currentVelocity.sqrMagnitude > 0.0001f;
-        
+        public bool IsMoving => new Vector3(currentVelocity.x, 0f, currentVelocity.z).sqrMagnitude > 0.0001f;
+
 
         protected MovementParams baseParams;
         protected MovementParams effective;
 
         public Rigidbody rb { get; private set; }
+        protected float verticalSpeed;
+        Vector3 groundNormal = Vector3.up;
+        readonly RaycastHit[] groundHitsBuffer = new RaycastHit[8];
+        float lastGroundedTime = float.NegativeInfinity;
+        float jumpRequestTime = float.NegativeInfinity;
+        int jumpPhase;
+        bool jumpButtonHeld;
         StateMachine machine;
         AgentRoot agentRoot;
         bool actionStatesInitialized;
@@ -151,6 +192,13 @@ namespace _PinBoy.Scripts.CharacterMovement
             rb.useGravity = false;
             rb.constraints = RigidbodyConstraints.FreezeRotation;
 
+            if (!groundCollider)
+            {
+                groundCollider = GetComponent<Collider>() ?? GetComponentInChildren<Collider>();
+            }
+
+            EvaluateGroundImmediate();
+
             animationController.Initialize(animator);
             
             if (baseProfile != null)
@@ -222,7 +270,8 @@ namespace _PinBoy.Scripts.CharacterMovement
             {
                 animator.SetFloat("MoveX", currentVelocity.x);
                 animator.SetFloat("MoveZ", currentVelocity.z);
-                animator.SetFloat("Speed", currentVelocity.magnitude);
+                Vector3 planar = new Vector3(currentVelocity.x, 0f, currentVelocity.z);
+                animator.SetFloat("Speed", planar.magnitude);
                 animator.SetInteger("FacingIndex", FacingIndex(animFacing));
             }
 
@@ -235,43 +284,66 @@ namespace _PinBoy.Scripts.CharacterMovement
             {
                 return;
             }
-            
+
             effective = baseParams.WithOverrides();
-            //Debug.Log($"Current params: speed={effective.moveSpeed}, accel={effective.acceleration}, decel={effective.deceleration}, turnAccel={effective.turnAcceleration}, inputDecel={effective.inputDeceleration}, maxSpeedMult={effective.maxSpeedMult}");
             Vector3 bodyVelocity = rb.linearVelocity;
-            float verticalVelocity = bodyVelocity.y;
             Vector3 planarVelocity = new Vector3(bodyVelocity.x, 0f, bodyVelocity.z);
+            float vertical = bodyVelocity.y;
 
-            Vector3 desired = IsMovementLocked ? Vector3.zero : new Vector3(moveInput.x, 0f, moveInput.y);
+            UpdateGroundedState(ref vertical);
+
+            Vector3 desiredInput = IsMovementLocked ? Vector3.zero : new Vector3(moveInput.x, 0f, moveInput.y);
             if (InputRedirector != null)
-                desired = InputRedirector(desired);
+            {
+                desiredInput = InputRedirector(desiredInput);
+            }
 
-            if (normalizeDiagonals && desired.sqrMagnitude > 0.0001f)
-                desired = desired.normalized;
+            float inputMagnitude = desiredInput.magnitude;
+            Vector3 desiredDirection = inputMagnitude > 0.0001f ? desiredInput / inputMagnitude : Vector3.zero;
+            if (normalizeDiagonals && inputMagnitude > 0.0001f)
+            {
+                desiredDirection = desiredDirection.normalized;
+                inputMagnitude = 1f;
+            }
+
+            if (grounded && desiredDirection.sqrMagnitude > 0.0001f)
+            {
+                Vector3 projected = Vector3.ProjectOnPlane(desiredDirection, groundNormal);
+                if (projected.sqrMagnitude > 0.0001f)
+                {
+                    desiredDirection = projected.normalized;
+                }
+            }
+
+            Vector3 desired = desiredDirection * inputMagnitude;
 
             float targetSpeed = effective.moveSpeed;
-            Vector3 targetVelocity = desired * (targetSpeed * effective.maxSpeedMult);
+            Vector3 targetVelocity = new Vector3(desired.x, 0f, desired.z) * (targetSpeed * effective.maxSpeedMult);
 
-            if (moveInput == Vector2.zero || targetVelocity == Vector3.zero)
+            if (inputMagnitude <= 0.0001f || targetVelocity == Vector3.zero)
             {
                 planarVelocity = Vector3.Lerp(planarVelocity, targetVelocity, effective.deceleration * Time.fixedDeltaTime);
             }
             else
             {
-                Vector3 desiredDirection = desired.sqrMagnitude > 0.0001f ? desired.normalized : Vector3.zero;
-                Vector3 currentDirection = planarVelocity.sqrMagnitude > 0.0001f ? planarVelocity.normalized : Vector3.zero;
+                Vector3 desiredPlanarDirection = targetVelocity.sqrMagnitude > 0.0001f ? targetVelocity.normalized : Vector3.zero;
+                Vector3 currentPlanarDirection = planarVelocity.sqrMagnitude > 0.0001f ? planarVelocity.normalized : Vector3.zero;
                 float pressedDeceleration = Mathf.Abs(effective.inputDeceleration);
 
                 float ax = ResolveAxisRate(planarVelocity.x, targetVelocity.x, effective.acceleration,
-                    effective.turnAcceleration, pressedDeceleration, currentDirection, desiredDirection);
+                    effective.turnAcceleration, pressedDeceleration, currentPlanarDirection, desiredPlanarDirection);
                 float az = ResolveAxisRate(planarVelocity.z, targetVelocity.z, effective.acceleration,
-                    effective.turnAcceleration, pressedDeceleration, currentDirection, desiredDirection);
+                    effective.turnAcceleration, pressedDeceleration, currentPlanarDirection, desiredPlanarDirection);
 
                 planarVelocity.x = MoveTowards(planarVelocity.x, targetVelocity.x, Mathf.Abs(ax) * Time.fixedDeltaTime);
                 planarVelocity.z = MoveTowards(planarVelocity.z, targetVelocity.z, Mathf.Abs(az) * Time.fixedDeltaTime);
             }
 
-            currentVelocity = new Vector3(planarVelocity.x, verticalVelocity, planarVelocity.z);
+            bool jumpPerformed = TryHandleJump(ref vertical);
+            ApplyGravity(ref vertical, Time.fixedDeltaTime, jumpPerformed);
+
+            verticalSpeed = vertical;
+            currentVelocity = new Vector3(planarVelocity.x, vertical, planarVelocity.z);
             rb.linearVelocity = currentVelocity;
         }
 
@@ -324,6 +396,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             }
             
             inputReader.Aim += HandleAimInput;
+            inputReader.Jump += HandleJumpInput;
             inputSubscribed = true;
         }
 
@@ -335,6 +408,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             }
             
             inputReader.Aim -= HandleAimInput;
+            inputReader.Jump -= HandleJumpInput;
             inputSubscribed = false;
         }
 
@@ -353,6 +427,29 @@ namespace _PinBoy.Scripts.CharacterMovement
                 }
                 ApplyMovementModifier(aimProfile, -1f);
                 SetAimIndicator(worldDirection);
+            }
+        }
+
+        protected virtual void HandleJumpInput(bool pressed)
+        {
+            jumpButtonHeld = pressed;
+            if (pressed)
+            {
+                QueueJump();
+            }
+        }
+
+        public void QueueJump()
+        {
+            jumpRequestTime = Time.time;
+        }
+
+        public void SetJumpHeld(bool held)
+        {
+            jumpButtonHeld = held;
+            if (held)
+            {
+                QueueJump();
             }
         }
 
@@ -472,6 +569,7 @@ namespace _PinBoy.Scripts.CharacterMovement
                 {
                     rb.linearVelocity = Vector3.zero;
                 }
+                verticalSpeed = 0f;
             }
         }
         
@@ -589,6 +687,181 @@ namespace _PinBoy.Scripts.CharacterMovement
                     linkedToken.Dispose();
                 }
             }
+        }
+
+        void EvaluateGroundImmediate()
+        {
+            float vertical = 0f;
+            UpdateGroundedState(ref vertical);
+            verticalSpeed = vertical;
+        }
+
+        void UpdateGroundedState(ref float verticalVelocity)
+        {
+            bool wasGrounded = grounded;
+            if (CheckGround(out RaycastHit hit))
+            {
+                grounded = true;
+                groundNormal = hit.normal.sqrMagnitude > 0.0001f ? hit.normal.normalized : Vector3.up;
+                lastGroundedTime = Time.time;
+                if (!wasGrounded)
+                {
+                    jumpPhase = 0;
+                }
+
+                if (verticalVelocity < 0f)
+                {
+                    verticalVelocity = Mathf.Max(verticalVelocity, groundedGravity);
+                }
+            }
+            else
+            {
+                if (wasGrounded)
+                {
+                    lastGroundedTime = Time.time;
+                }
+
+                grounded = false;
+                groundNormal = Vector3.up;
+            }
+        }
+
+        bool TryHandleJump(ref float verticalVelocity)
+        {
+            if (Time.time > jumpRequestTime + Mathf.Max(0f, jumpBufferTime))
+            {
+                jumpRequestTime = float.NegativeInfinity;
+                return false;
+            }
+
+            bool wasGroundedRecently = Time.time <= lastGroundedTime + Mathf.Max(0f, coyoteTime);
+            int maxJumps = Mathf.Max(1, extraAirJumps + 1);
+            bool canGroundJump = grounded || (wasGroundedRecently && jumpPhase == 0);
+
+            if (!canGroundJump && jumpPhase >= maxJumps)
+            {
+                return false;
+            }
+
+            float jumpSpeed = CalculateJumpSpeed(jumpHeight);
+            if (verticalVelocity < 0f)
+            {
+                verticalVelocity = 0f;
+            }
+
+            verticalVelocity = Mathf.Max(verticalVelocity, jumpSpeed);
+            grounded = false;
+            groundNormal = Vector3.up;
+            jumpPhase = canGroundJump ? 1 : jumpPhase + 1;
+            jumpRequestTime = float.NegativeInfinity;
+            return true;
+        }
+
+        void ApplyGravity(ref float verticalVelocity, float deltaTime, bool jumpJustPerformed)
+        {
+            if (grounded)
+            {
+                verticalVelocity = Mathf.Max(verticalVelocity, groundedGravity);
+                return;
+            }
+
+            bool isHoldingJump = jumpButtonHeld || jumpJustPerformed;
+
+            float multiplier = verticalVelocity > 0f
+                ? (isHoldingJump ? 1f : Mathf.Max(1f, jumpReleaseGravityMultiplier))
+                : Mathf.Max(1f, fallGravityMultiplier);
+
+            verticalVelocity += gravity * multiplier * deltaTime;
+
+            if (terminalVelocity < 0f)
+            {
+                verticalVelocity = Mathf.Max(verticalVelocity, terminalVelocity);
+            }
+            else
+            {
+                verticalVelocity = Mathf.Min(verticalVelocity, terminalVelocity);
+            }
+        }
+
+        float CalculateJumpSpeed(float height)
+        {
+            float g = Mathf.Abs(gravity);
+            return Mathf.Sqrt(2f * g * Mathf.Max(0f, height));
+        }
+
+        bool CheckGround(out RaycastHit bestHit)
+        {
+            float radius = Mathf.Max(0.01f, GetGroundCheckRadius());
+            Vector3 origin = GetGroundCheckOrigin(radius, out float castDistance);
+            int hitCount = Physics.SphereCastNonAlloc(origin, radius, Vector3.down, groundHitsBuffer, castDistance,
+                groundLayers, QueryTriggerInteraction.Ignore);
+
+            bestHit = default;
+            float closest = float.PositiveInfinity;
+            bool found = false;
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit hit = groundHitsBuffer[i];
+                Collider candidate = hit.collider;
+                if (!candidate)
+                {
+                    continue;
+                }
+
+                if (candidate == groundCollider || candidate.transform.IsChildOf(transform))
+                {
+                    continue;
+                }
+
+                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+                if (slopeAngle > maxGroundSlopeAngle)
+                {
+                    continue;
+                }
+
+                if (hit.distance < closest)
+                {
+                    closest = hit.distance;
+                    bestHit = hit;
+                    found = true;
+                }
+            }
+
+            return found;
+        }
+
+        float GetGroundCheckRadius()
+        {
+            if (groundCheckRadius > 0f)
+            {
+                return groundCheckRadius;
+            }
+
+            if (!groundCollider)
+            {
+                return 0.3f;
+            }
+
+            Bounds bounds = groundCollider.bounds;
+            return Mathf.Max(0.05f, Mathf.Min(bounds.extents.x, bounds.extents.z));
+        }
+
+        Vector3 GetGroundCheckOrigin(float radius, out float distance)
+        {
+            float offset = Mathf.Max(groundCheckOffset, 0.01f);
+            float extraDistance = Mathf.Max(groundCheckDistance, 0.01f);
+
+            if (groundCollider)
+            {
+                Bounds bounds = groundCollider.bounds;
+                float verticalExtent = Mathf.Max(bounds.extents.y, radius);
+                distance = verticalExtent + extraDistance + offset;
+                return bounds.center + Vector3.up * (verticalExtent + offset);
+            }
+
+            distance = radius + extraDistance + offset;
+            return transform.position + Vector3.up * (radius + offset);
         }
 
         public void ApplyKnockback(Vector3 direction, float force, KnockbackSettings settings)

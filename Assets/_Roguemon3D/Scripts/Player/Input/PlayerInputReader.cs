@@ -234,6 +234,7 @@ namespace _PinBoy.Scripts.Player.Input
         public void InvokePrimaryAim(bool pressed) => inputReader.InvokePrimaryAim(pressed);
         public void InvokeSecondaryAim(bool pressed) => inputReader.InvokeSecondaryAim(pressed);
         public void InvokeDash(bool pressed) => inputReader.InvokeDash(pressed);
+        public void InvokeJump(bool pressed) => inputReader.InvokeJump(pressed);
 
         public void InvokeInteract(bool pressed) => inputReader.InvokeInteract(pressed);
         

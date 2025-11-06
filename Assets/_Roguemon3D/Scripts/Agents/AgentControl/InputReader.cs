@@ -11,6 +11,7 @@ namespace AdvancedController
         public event UnityAction<Vector2> Move = delegate { };
         public event UnityAction<bool> EnableControls = delegate { };
         public event UnityAction<bool> Dash = delegate { };
+        public event UnityAction<bool> Jump = delegate { };
         public event UnityAction<bool> PrimaryAction = delegate { };
         public event UnityAction<bool> SecondaryAction = delegate { };
         public event UnityAction<bool, Vector2> Aim = delegate { };
@@ -80,6 +81,7 @@ namespace AdvancedController
         public void InvokeSecondaryAim(bool pressed) => AimSecondary.Invoke(pressed);
         public void InvokeInteract(bool pressed) => Interact.Invoke(pressed);
         public void InvokeDash(bool pressed) => Dash.Invoke(pressed);
+        public void InvokeJump(bool pressed) => Jump.Invoke(pressed);
         public void InvokeSprint(bool pressed) => Sprint.Invoke(pressed);
     }
 }
