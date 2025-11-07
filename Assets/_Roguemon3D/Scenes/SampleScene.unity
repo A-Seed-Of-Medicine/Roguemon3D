@@ -612,7 +612,6 @@ MonoBehaviour:
   dashDistance: 5
   <dashDuration>k__BackingField: 0.2
   dashCooldown: 0.5
-  cooldownReductionScale: 0.5
   speedCurve:
     serializedVersion: 2
     m_Curve:
@@ -641,8 +640,8 @@ MonoBehaviour:
   zeroVelocityOnStart: 0
   zeroVelocityOnEnd: 0
   lockMovementInput: 0
-  dashChainPreTriggerDuration: 0.1
-  dashChainDuration: 0.3
+  dashChainPreInputTolerance: 0.1
+  dashChainPostInputTolerance: 0.3
   isDashing: 0
   dashCache: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517

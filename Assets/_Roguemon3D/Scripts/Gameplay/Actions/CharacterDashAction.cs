@@ -2,6 +2,7 @@ using System;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Player;
 using UnityEngine;
+using UnityEngine.Serialization;
 using _PinBoy.Scripts.Utils;
 using HSM;
 
@@ -24,8 +25,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         public float dashDuration { get; private set; } = 0.2f;
         [SerializeField, Tooltip("How long before the dash can consecutively execute"), Min(0f)]
         private float dashCooldown = 0.5f;
-        [SerializeField, Tooltip("How much shorter the dash in relation to cooldown."), Min(0f)]
-        private float cooldownReductionScale = 0.5f;
         
         [SerializeField, Tooltip("Curve controlling the dash speed over time. Evaluated 0-1 across the dash duration.")]
         private AnimationCurve speedCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
@@ -38,12 +37,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         private bool zeroVelocityOnEnd;
         [SerializeField, Tooltip("If true movement input is overridden with the dash direction while active.")]
         private bool lockMovementInput = true;
-        [SerializeField, Tooltip("Time window before the dash ends to allow queueing a chained slide.")]
-        public float dashChainPreTriggerDuration = 0.1f;
+        [FormerlySerializedAs("dashChainPreTriggerDuration"), SerializeField, Tooltip("Time window before the dash ends to allow buffering a chained dash.")]
+        private float dashChainPreInputTolerance = 0.1f;
 
-        public float dashChainDuration = 0.3f;
+        [FormerlySerializedAs("dashChainDuration"), SerializeField, Tooltip("Time window after a dash completes to allow chaining without waiting for the cooldown.")]
+        private float dashChainPostInputTolerance = 0.3f;
 
-        private CountdownTimer dashChainTimer;
+        private CountdownTimer dashChainPostTimer;
         public bool isDashing;
         Vector3 dashDirection;
         Func<Vector3, Vector3> dashRedirector;
@@ -53,6 +53,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         float dashBaseSpeed;
         CountdownTimer dashTimer;
         CountdownTimer dashCooldownTimer;
+        bool queuedDash;
+        Vector3 queuedDashDirection;
 
         protected override void Awake()
         {
@@ -60,8 +62,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             dashTimer = new CountdownTimer(0f);
             dashTimer.OnTimerFinish += HandleDashTimerFinished;
 
-            dashCooldownTimer = new CountdownTimer(dashCooldown);
-            dashChainTimer = new CountdownTimer(0f);
+            dashCooldownTimer = new CountdownTimer(Mathf.Max(0f, dashCooldown));
+            dashChainPostTimer = new CountdownTimer(0f);
         }
 
         protected void FixedUpdate()
@@ -103,25 +105,46 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected override void OnDisable()
         {
             base.OnDisable();
+            queuedDash = false;
             StopDash();
             dashTimer?.Cancel();
-            dashChainTimer?.Cancel();
+            dashChainPostTimer?.Cancel();
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
+            queuedDash = false;
             StopDash();
             if (dashTimer != null)
             {
                 dashTimer.OnTimerFinish -= HandleDashTimerFinished;
             }
-            dashChainTimer?.Cancel();
+            dashChainPostTimer?.Cancel();
         }
 
         protected override void OnActionPressed()
         {
-            BeginDash();
+            if (isDashing)
+            {
+                if (IsDashWithinPreInputWindow())
+                {
+                    queuedDash = true;
+                    Vector3 requestedDirection = ResolveDashDirection();
+                    queuedDashDirection = requestedDirection.sqrMagnitude > 0.0001f
+                        ? requestedDirection.normalized
+                        : dashDirection.sqrMagnitude > 0.0001f ? dashDirection : Vector3.forward;
+                }
+
+                return;
+            }
+
+            if (!CanStartDash())
+            {
+                return;
+            }
+
+            BeginDashInternal(null);
         }
 
         protected override void OnActionReleased()
@@ -129,13 +152,36 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             // Dash is time based, releasing early does not cancel by default.
         }
 
-        void BeginDash()
+        bool CanStartDash()
+        {
+            if (isDashing)
+            {
+                return false;
+            }
+
+            bool cooldownReady = dashCooldownTimer == null || !dashCooldownTimer.IsRunning;
+            bool inChainPostWindow = IsDashWithinPostInputWindow();
+
+            return cooldownReady || inChainPostWindow;
+        }
+
+        void BeginDashInternal(Vector3? directionOverride)
         {
             if (isDashing || Controller == null || body == null)
                 return;
 
-            dashDirection = ResolveDashDirection();
-            dashDirection = dashDirection.sqrMagnitude <= 0.0001f ? Vector3.forward : dashDirection.normalized;
+            queuedDash = false;
+
+            Vector3 resolvedDirection = directionOverride ?? ResolveDashDirection();
+            if (resolvedDirection.sqrMagnitude <= 0.0001f)
+            {
+                resolvedDirection = dashDirection.sqrMagnitude > 0.0001f ? dashDirection : Vector3.forward;
+            }
+
+            dashDirection = resolvedDirection.normalized;
+
+            dashChainPostTimer?.Cancel();
+            dashCooldownTimer?.Cancel();
 
             if (zeroVelocityOnStart)
             {
@@ -155,13 +201,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
             
             isDashing = true;
-            dashChainTimer?.Cancel();
             actionStarted?.Invoke();
             dashElapsed = 0f;
 
             dashTimer.Cancel();
             dashBaseSpeed = dashDistance > 0f && duration > 0f
-                ? dashDistance / (Mathf.Max(0.0001f, duration) + dashCooldownTimer.CurrentTime * cooldownReductionScale)
+                ? dashDistance / Mathf.Max(0.0001f, duration)
                 : 0f;
 
             if (duration <= 0f)
@@ -230,45 +275,75 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Vector3 planar = zeroVelocityOnEnd ? Vector3.zero : dashCache;
             body.linearVelocity = new Vector3(planar.x, current.y, planar.z);
 
-            if (dashChainDuration > 0f)
+            bool executeQueuedDash = queuedDash;
+            Vector3 queuedDirection = queuedDashDirection;
+            queuedDash = false;
+
+            if (!executeQueuedDash)
             {
-                dashChainTimer.Start(dashChainDuration);
+                if (dashChainPostInputTolerance > 0f)
+                {
+                    dashChainPostTimer.Start(dashChainPostInputTolerance);
+                }
+                else
+                {
+                    dashChainPostTimer.Cancel();
+                }
+
+                if (dashCooldown > 0f)
+                {
+                    dashCooldownTimer.Start(dashCooldown);
+                }
+                else
+                {
+                    dashCooldownTimer.Cancel();
+                }
             }
             else
             {
-                dashChainTimer.Cancel();
+                dashCooldownTimer?.Cancel();
+                dashChainPostTimer?.Cancel();
             }
 
-            dashCooldownTimer.Start(Mathf.Min(dashCooldownTimer.CurrentTime + dashCooldown, 3));
             actionComplete?.Invoke();
+
+            if (executeQueuedDash)
+            {
+                BeginDashInternal(queuedDirection);
+            }
         }
 
         bool IsInDashChainWindow()
         {
             if (isDashing)
             {
-                return IsDashWithinPreTriggerWindow();
+                return IsDashWithinPreInputWindow();
             }
 
-            return dashChainTimer is { IsRunning: true };
+            return IsDashWithinPostInputWindow();
         }
 
-        public bool IsDashWithinPreTriggerWindow()
+        public bool IsDashWithinPreInputWindow()
         {
             if (!isDashing || dashTimer == null || !dashTimer.IsRunning)
             {
                 return false;
             }
 
-            if (dashChainPreTriggerDuration <= 0f)
+            if (dashChainPreInputTolerance <= 0f)
             {
                 return false;
             }
 
-            return dashTimer.CurrentTime <= dashChainPreTriggerDuration;
+            return dashTimer.CurrentTime <= dashChainPreInputTolerance;
         }
 
-        public float DashChainPreTriggerDuration => Mathf.Max(0f, dashChainPreTriggerDuration);
+        public float DashChainPreInputTolerance => Mathf.Max(0f, dashChainPreInputTolerance);
+
+        bool IsDashWithinPostInputWindow()
+        {
+            return dashChainPostTimer is { IsRunning: true };
+        }
 
         Vector3 ResolveDashDirection()
         {
