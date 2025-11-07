@@ -189,7 +189,6 @@ namespace _PinBoy.Scripts.CharacterMovement
             inputReader ??= new InputReader();
             inputReader.controller = this;
             rb = GetComponent<Rigidbody>();
-            rb.useGravity = false;
             rb.constraints = RigidbodyConstraints.FreezeRotation;
 
             if (!groundCollider)
@@ -297,7 +296,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             {
                 desiredInput = InputRedirector(desiredInput);
             }
-
+            
             float inputMagnitude = desiredInput.magnitude;
             Vector3 desiredDirection = inputMagnitude > 0.0001f ? desiredInput / inputMagnitude : Vector3.zero;
             if (normalizeDiagonals && inputMagnitude > 0.0001f)
@@ -334,11 +333,11 @@ namespace _PinBoy.Scripts.CharacterMovement
                     effective.turnAcceleration, pressedDeceleration, currentPlanarDirection, desiredPlanarDirection);
                 float az = ResolveAxisRate(planarVelocity.z, targetVelocity.z, effective.acceleration,
                     effective.turnAcceleration, pressedDeceleration, currentPlanarDirection, desiredPlanarDirection);
-
+                Debug.Log($"Ax: {ax}, Az: {az}");
                 planarVelocity.x = MoveTowards(planarVelocity.x, targetVelocity.x, Mathf.Abs(ax) * Time.fixedDeltaTime);
                 planarVelocity.z = MoveTowards(planarVelocity.z, targetVelocity.z, Mathf.Abs(az) * Time.fixedDeltaTime);
             }
-
+            
             bool jumpPerformed = TryHandleJump(ref vertical);
             ApplyGravity(ref vertical, Time.fixedDeltaTime, jumpPerformed);
 

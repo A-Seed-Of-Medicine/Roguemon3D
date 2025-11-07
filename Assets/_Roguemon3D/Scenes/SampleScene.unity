@@ -416,9 +416,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ac222396d4b41e5936f462f9d2e94df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Player.PlayerController
-  baseProfile: {fileID: 0}
+  baseProfile: {fileID: 11400000, guid: ea6f33aecae83cd458e1448f8f3fb605, type: 2}
   normalizeDiagonals: 1
   snapFacingTo8: 1
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 51
+  groundCheckRadius: 0.3
+  groundCheckDistance: 0.3
+  groundCheckOffset: 0.02
+  maxGroundSlopeAngle: 60
+  groundCollider: {fileID: 0}
+  gravity: -30
+  groundedGravity: -2
+  jumpHeight: 2
+  extraAirJumps: 0
+  coyoteTime: 0.15
+  jumpBufferTime: 0.15
+  fallGravityMultiplier: 2
+  jumpReleaseGravityMultiplier: 2
+  terminalVelocity: -60
   <allegiance>k__BackingField: 0
   <health>k__BackingField: {fileID: 0}
   animator: {fileID: 0}
