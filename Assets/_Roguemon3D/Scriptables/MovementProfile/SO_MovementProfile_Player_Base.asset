@@ -15,15 +15,15 @@ MonoBehaviour:
   executionOrder: 0
   cumulative: 1
   moveSpeed:
-    value: 4.5
+    value: 10.1
     decayDuration: 0
     type: 2
   acceleration:
-    value: 30
+    value: 412.9
     decayDuration: 0
     type: 2
   turnAcceleration:
-    value: 60
+    value: 194.2
     decayDuration: 0
     type: 2
   deceleration:
