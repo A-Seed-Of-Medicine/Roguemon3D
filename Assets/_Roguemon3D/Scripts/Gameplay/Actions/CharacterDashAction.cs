@@ -3,7 +3,6 @@ using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Player;
 using UnityEngine;
 using UnityEngine.Serialization;
-using _PinBoy.Scripts.Utils;
 using HSM;
 using ImprovedTimers;
 
@@ -44,7 +43,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [FormerlySerializedAs("dashChainDuration"), SerializeField, Tooltip("Time window after a dash completes to allow chaining without waiting for the cooldown.")]
         private float dashChainPostInputTolerance = 0.3f;
 
-        private CountdownTimer dashChainPostTimer;
+        private MyCountTimer dashChainPostTimer;
         public bool isDashing;
         Vector3 dashDirection;
         Func<Vector3, Vector3> dashRedirector;
@@ -52,7 +51,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         public Vector3 dashCache;
         float dashBaseSpeed;
         FixedCountdownTimer dashTimer;
-        CountdownTimer dashCooldownTimer;
+        MyCountTimer dashCooldownTimer;
         bool queuedDash;
         Vector3 queuedDashDirection;
         private bool canDashAgain = true;
@@ -63,8 +62,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             dashTimer = new FixedCountdownTimer(0f);
             dashTimer.OnTimerFinish += HandleDashTimerFinished;
 
-            dashCooldownTimer = new CountdownTimer(Mathf.Max(0f, dashCooldown));
-            dashChainPostTimer = new CountdownTimer(0f);
+            dashCooldownTimer = new MyCountTimer(Mathf.Max(0f, dashCooldown));
+            dashChainPostTimer = new MyCountTimer(0f);
             dashCooldownTimer.OnTimerFinish += () => { canDashAgain = true; };
         }
 

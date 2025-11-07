@@ -4,10 +4,10 @@ using System.Linq;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Effects;
 using Cysharp.Threading.Tasks;
+using ImprovedTimers;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
-using _PinBoy.Scripts.Utils;
 
 namespace AdvancedController
 {
@@ -48,7 +48,7 @@ namespace AdvancedController
     public class TimerStatus: IStatusEffect
     {
         public StatusHandler Handler { get; private set; }
-        public CountdownTimer Timer { get; private set; }
+        public MyCountTimer Timer { get; private set; }
         public bool IsActive => Timer.IsRunning;
         public float Amount => Timer.CurrentTime;
         public Action<IStatusEffect> OnStart { get; set; } = delegate { };
@@ -58,7 +58,7 @@ namespace AdvancedController
         public TimerStatus(StatusHandler handler)
         {
             Handler = handler;
-            Timer = new CountdownTimer(0);
+            Timer = new MyCountTimer(0);
             Timer.OnTimerFinish += Finish;
         }
         

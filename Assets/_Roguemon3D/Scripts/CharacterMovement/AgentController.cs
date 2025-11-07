@@ -6,8 +6,8 @@ using _PinBoy.Scripts.Gameplay.Effects;
 using AdvancedController;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using _PinBoy.Scripts.Utils;
 using HSM;
+using ImprovedTimers;
 
 namespace _PinBoy.Scripts.CharacterMovement
 {
@@ -117,7 +117,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         }
         protected Vector3 currentVelocity;
         protected Vector3 facingDirection = Vector3.forward;
-        protected CountdownTimer movementLockTimer;
+        protected MyCountTimer movementLockTimer;
         public bool IsMovementLocked => movementLockTimer.IsRunning;
 
         readonly Dictionary<MovementProfile, CancellationTokenSource> movementOverrideTokens = new Dictionary<MovementProfile, CancellationTokenSource>();
@@ -185,7 +185,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             agentRoot = new AgentRoot(null, this);
             machine = new StateMachineBuilder(agentRoot).Build();
             
-            movementLockTimer = new CountdownTimer(0f);
+            movementLockTimer = new MyCountTimer(0f);
             inputReader ??= new InputReader();
             inputReader.controller = this;
             rb = GetComponent<Rigidbody>();

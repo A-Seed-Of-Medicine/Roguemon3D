@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
-using _PinBoy.Scripts.Utils;
+using ImprovedTimers;
 
 namespace _PinBoy.Scripts.CharacterMovement
 {
@@ -35,7 +35,7 @@ namespace _PinBoy.Scripts.CharacterMovement
                 };
             }
 
-            public float ApplyTo(float baseValue, bool isDecaying, CountdownTimer decayTimer)
+            public float ApplyTo(float baseValue, bool isDecaying, MyCountTimer decayTimer)
             {
                 if (!isDecaying)
                 {
@@ -105,12 +105,12 @@ namespace _PinBoy.Scripts.CharacterMovement
             public Profile(MovementProfile profile)
             {
                 this.profile = profile;
-                decayTimer = new CountdownTimer(0f);
+                decayTimer = new MyCountTimer(0f);
                 ResetDecay();
             }
 
             public MovementProfile profile;
-            readonly CountdownTimer decayTimer;
+            readonly MyCountTimer decayTimer;
             bool isDecaying;
             bool hasExpired;
 

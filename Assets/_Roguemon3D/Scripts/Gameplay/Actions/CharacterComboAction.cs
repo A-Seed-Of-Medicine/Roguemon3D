@@ -5,8 +5,8 @@ using _PinBoy.Scripts.Gameplay.Effects;
 using AdvancedController;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using _PinBoy.Scripts.Utils;
 using HSM;
+using ImprovedTimers;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
 {
@@ -160,12 +160,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         bool currentStepExpired => currentStep == null || !IsCurrentStepRunning;
 
-        CountdownTimer windupTimer;
-        CountdownTimer activeTimer;
-        CountdownTimer recoveryTimer;
-        CountdownTimer stepTimer;
-        CountdownTimer transitionDelayTimer;
-        CountdownTimer comboResetTimer;
+        MyCountTimer windupTimer;
+        MyCountTimer activeTimer;
+        MyCountTimer recoveryTimer;
+        MyCountTimer stepTimer;
+        MyCountTimer transitionDelayTimer;
+        MyCountTimer comboResetTimer;
 
         bool inActivePhase;
         bool inRecoveryPhase;
@@ -176,21 +176,21 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             actionTrigger = HandleBindingInput;
             base.Awake();
-            windupTimer = new CountdownTimer(0f);
+            windupTimer = new MyCountTimer(0f);
             windupTimer.OnTimerFinish += HandleWindupTimerFinished;
 
-            activeTimer = new CountdownTimer(0f);
+            activeTimer = new MyCountTimer(0f);
             activeTimer.OnTimerFinish += HandleActiveTimerFinished;
 
-            recoveryTimer = new CountdownTimer(0f);
+            recoveryTimer = new MyCountTimer(0f);
             recoveryTimer.OnTimerFinish += HandleRecoveryTimerFinished;
 
-            stepTimer = new CountdownTimer(0f);
+            stepTimer = new MyCountTimer(0f);
 
-            transitionDelayTimer = new CountdownTimer(0f);
+            transitionDelayTimer = new MyCountTimer(0f);
             transitionDelayTimer.OnTimerFinish += HandleTransitionDelayTimerFinished;
 
-            comboResetTimer = new CountdownTimer(0f);
+            comboResetTimer = new MyCountTimer(0f);
             comboResetTimer.OnTimerFinish += HandleComboResetTimerFinished;
             BuildLookups();
         }

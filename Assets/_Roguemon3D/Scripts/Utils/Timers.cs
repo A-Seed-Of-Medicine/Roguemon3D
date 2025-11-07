@@ -2,13 +2,13 @@ using System;
 using ImprovedTimers;
 using UnityEngine;
 
-namespace _PinBoy.Scripts.Utils {
+namespace ImprovedTimers {
     /// <summary>
     /// Timer that counts down from a specific value to zero.
     /// </summary>
     [Serializable]
-    public class CountdownTimer : Timer {
-        public CountdownTimer(float value) : base(value) { }
+    public class MyCountTimer : Timer {
+        public MyCountTimer(float value) : base(value) { }
         
         public Action OnTimerFinish = delegate { };
         public Action<float> OnTimerTick = delegate { };
