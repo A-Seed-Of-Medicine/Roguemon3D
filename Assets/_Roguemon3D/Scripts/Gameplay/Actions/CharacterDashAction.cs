@@ -22,10 +22,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         [field: SerializeField, Tooltip("How long the dash lasts in seconds."), Min(0f)]
         public float dashDuration { get; private set; } = 0.2f;
-        [SerializeField, Tooltip("How long before the dash can consecutively execute"), Min(0f)]
-        private float dashCooldown = 0.5f;
-        [SerializeField, Tooltip("How much shorter the dash in relation to cooldown."), Min(0f)]
-        private float cooldownReductionScale = 0.5f;
         
         [SerializeField, Tooltip("Curve controlling the dash speed over time. Evaluated 0-1 across the dash duration.")]
         private AnimationCurve speedCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
@@ -38,10 +34,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         private bool zeroVelocityOnEnd;
         [SerializeField, Tooltip("If true movement input is overridden with the dash direction while active.")]
         private bool lockMovementInput = true;
-        [SerializeField, Tooltip("Time window before the dash ends to allow queueing a chained slide.")]
-        public float dashChainPreTriggerDuration = 0.1f;
+        [SerializeField, Tooltip("Time window before the dash ends during which a new dash input will be buffered."), Min(0f)]
+        private float preInputChainTolerance = 0.1f;
 
-        public float dashChainDuration = 0.3f;
+        [SerializeField, Tooltip("Time window after the dash ends during which a new dash input continues the chain."), Min(0f)]
+        private float postInputChainTolerance = 0.3f;
 
         private CountdownTimer dashChainTimer;
         public bool isDashing;
@@ -49,10 +46,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         Func<Vector3, Vector3> dashRedirector;
         Func<Vector3, Vector3> previousRedirector;
         public Vector3 dashCache;
+        Vector3 cachedPreDashVelocity;
         float dashElapsed;
         float dashBaseSpeed;
         CountdownTimer dashTimer;
-        CountdownTimer dashCooldownTimer;
+        bool queuedDashInput;
+        Vector3 queuedDashDirection;
 
         protected override void Awake()
         {
@@ -60,7 +59,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             dashTimer = new CountdownTimer(0f);
             dashTimer.OnTimerFinish += HandleDashTimerFinished;
 
-            dashCooldownTimer = new CountdownTimer(dashCooldown);
             dashChainTimer = new CountdownTimer(0f);
         }
 
@@ -103,6 +101,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected override void OnDisable()
         {
             base.OnDisable();
+            queuedDashInput = false;
             StopDash();
             dashTimer?.Cancel();
             dashChainTimer?.Cancel();
@@ -111,6 +110,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected override void OnDestroy()
         {
             base.OnDestroy();
+            queuedDashInput = false;
             StopDash();
             if (dashTimer != null)
             {
@@ -121,7 +121,19 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected override void OnActionPressed()
         {
-            BeginDash();
+            Vector3 desiredDirection = ResolveDashDirection();
+
+            if (isDashing)
+            {
+                if (IsWithinPreInputWindow())
+                {
+                    QueueDash(desiredDirection);
+                }
+
+                return;
+            }
+
+            BeginDash(desiredDirection);
         }
 
         protected override void OnActionReleased()
@@ -129,13 +141,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             // Dash is time based, releasing early does not cancel by default.
         }
 
-        void BeginDash()
+        void BeginDash(Vector3 desiredDirection)
         {
             if (isDashing || Controller == null || body == null)
                 return;
 
-            dashDirection = ResolveDashDirection();
-            dashDirection = dashDirection.sqrMagnitude <= 0.0001f ? Vector3.forward : dashDirection.normalized;
+            dashDirection = desiredDirection.sqrMagnitude <= 0.0001f ? Vector3.forward : desiredDirection.normalized;
 
             if (zeroVelocityOnStart)
             {
@@ -159,10 +170,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             actionStarted?.Invoke();
             dashElapsed = 0f;
 
+            queuedDashInput = false;
             dashTimer.Cancel();
             dashBaseSpeed = dashDistance > 0f && duration > 0f
-                ? dashDistance / (Mathf.Max(0.0001f, duration) + dashCooldownTimer.CurrentTime * cooldownReductionScale)
+                ? dashDistance / Mathf.Max(0.0001f, duration)
                 : 0f;
+            dashCache = dashDirection * dashBaseSpeed;
 
             if (duration <= 0f)
             {
@@ -172,8 +185,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
             
             Vector3 initialVelocity = body.linearVelocity;
-            float planarMagnitude = new Vector3(initialVelocity.x, 0f, initialVelocity.z).magnitude;
-            dashCache = planarMagnitude * dashDirection;
+            cachedPreDashVelocity = new Vector3(initialVelocity.x, 0f, initialVelocity.z);
             dashTimer.Start(duration);
             ApplyDashVelocity(0f);
         }
@@ -227,48 +239,81 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             Vector3 current = body.linearVelocity;
-            Vector3 planar = zeroVelocityOnEnd ? Vector3.zero : dashCache;
+            Vector3 planar = zeroVelocityOnEnd ? Vector3.zero : cachedPreDashVelocity;
             body.linearVelocity = new Vector3(planar.x, current.y, planar.z);
 
-            if (dashChainDuration > 0f)
+            bool hasQueuedDash = TryConsumeQueuedDash(out Vector3 queuedDirection);
+
+            if (postInputChainTolerance > 0f)
             {
-                dashChainTimer.Start(dashChainDuration);
+                dashChainTimer.Start(postInputChainTolerance);
             }
             else
             {
                 dashChainTimer.Cancel();
             }
 
-            dashCooldownTimer.Start(Mathf.Min(dashCooldownTimer.CurrentTime + dashCooldown, 3));
             actionComplete?.Invoke();
+
+            if (hasQueuedDash)
+            {
+                BeginDash(queuedDirection);
+            }
         }
 
         bool IsInDashChainWindow()
         {
             if (isDashing)
             {
-                return IsDashWithinPreTriggerWindow();
+                return IsWithinPreInputWindow();
             }
 
             return dashChainTimer is { IsRunning: true };
         }
 
-        public bool IsDashWithinPreTriggerWindow()
+        public bool IsWithinPreInputWindow()
         {
             if (!isDashing || dashTimer == null || !dashTimer.IsRunning)
             {
                 return false;
             }
 
-            if (dashChainPreTriggerDuration <= 0f)
+            if (preInputChainTolerance <= 0f)
             {
                 return false;
             }
 
-            return dashTimer.CurrentTime <= dashChainPreTriggerDuration;
+            return dashTimer.CurrentTime <= preInputChainTolerance;
         }
 
-        public float DashChainPreTriggerDuration => Mathf.Max(0f, dashChainPreTriggerDuration);
+        public float PreInputChainTolerance => Mathf.Max(0f, preInputChainTolerance);
+        public float PostInputChainTolerance => Mathf.Max(0f, postInputChainTolerance);
+
+        void QueueDash(Vector3 desiredDirection)
+        {
+            Vector3 direction = desiredDirection.sqrMagnitude > 0.0001f ? desiredDirection : dashDirection;
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                queuedDashInput = false;
+                return;
+            }
+
+            queuedDashInput = true;
+            queuedDashDirection = direction;
+        }
+
+        bool TryConsumeQueuedDash(out Vector3 direction)
+        {
+            if (queuedDashInput)
+            {
+                queuedDashInput = false;
+                direction = queuedDashDirection;
+                return true;
+            }
+
+            direction = Vector3.zero;
+            return false;
+        }
 
         Vector3 ResolveDashDirection()
         {

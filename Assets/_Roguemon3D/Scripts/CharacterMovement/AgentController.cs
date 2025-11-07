@@ -927,6 +927,14 @@ namespace _PinBoy.Scripts.CharacterMovement
                 : current + Mathf.Sign(target - current) * maxDelta;
         }
 
+        static Vector2 SnapTo8(Vector2 v)
+        {
+            if (v.sqrMagnitude < 0.0001f) return Vector2.zero;
+            Vector3 planar = new Vector3(v.x, 0f, v.y);
+            Vector3 snapped = SnapTo8(planar);
+            return new Vector2(snapped.x, snapped.z);
+        }
+
         static Vector3 SnapTo8(Vector3 v)
         {
             if (v.sqrMagnitude < 0.0001f) return Vector3.zero;
