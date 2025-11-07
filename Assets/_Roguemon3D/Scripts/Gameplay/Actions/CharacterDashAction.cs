@@ -55,6 +55,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         CountdownTimer dashCooldownTimer;
         bool queuedDash;
         Vector3 queuedDashDirection;
+        private bool canDashAgain = true;
 
         protected override void Awake()
         {
@@ -64,14 +65,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             dashCooldownTimer = new CountdownTimer(Mathf.Max(0f, dashCooldown));
             dashChainPostTimer = new CountdownTimer(0f);
+            dashCooldownTimer.OnTimerFinish += () => { canDashAgain = true; };
         }
 
         protected void FixedUpdate()
         {
             if (!isDashing)
-            {
                 return;
-            }
+            
 
             dashElapsed += Time.fixedDeltaTime;
 
@@ -171,6 +172,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
 
             queuedDash = false;
+            canDashAgain = true;
 
             Vector3 resolvedDirection = directionOverride ?? ResolveDashDirection();
             if (resolvedDirection.sqrMagnitude <= 0.0001f)
@@ -317,7 +319,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             if (isDashing)
             {
-                return IsDashWithinPreInputWindow();
+                canDashAgain = IsDashWithinPreInputWindow();
+                return canDashAgain;
             }
 
             return IsDashWithinPostInputWindow();
@@ -325,7 +328,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         public bool IsDashWithinPreInputWindow()
         {
-            if (!isDashing || dashTimer == null || !dashTimer.IsRunning)
+            if (!isDashing || dashTimer is not { IsRunning: true } || !canDashAgain)
             {
                 return false;
             }

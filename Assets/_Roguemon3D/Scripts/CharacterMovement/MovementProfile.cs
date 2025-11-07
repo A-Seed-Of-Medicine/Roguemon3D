@@ -144,8 +144,6 @@ namespace _PinBoy.Scripts.CharacterMovement
                 if (!isDecaying)
                     return;
 
-                decayTimer.Tick();
-
                 if (decayTimer.IsFinished)
                 {
                     isDecaying = false;
