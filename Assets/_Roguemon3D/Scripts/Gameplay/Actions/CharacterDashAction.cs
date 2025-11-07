@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using _PinBoy.Scripts.Utils;
 using HSM;
+using ImprovedTimers;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
 {
@@ -49,9 +50,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         Func<Vector3, Vector3> dashRedirector;
         Func<Vector3, Vector3> previousRedirector;
         public Vector3 dashCache;
-        float dashElapsed;
         float dashBaseSpeed;
-        CountdownTimer dashTimer;
+        FixedCountdownTimer dashTimer;
         CountdownTimer dashCooldownTimer;
         bool queuedDash;
         Vector3 queuedDashDirection;
@@ -60,7 +60,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected override void Awake()
         {
             base.Awake();
-            dashTimer = new CountdownTimer(0f);
+            dashTimer = new FixedCountdownTimer(0f);
             dashTimer.OnTimerFinish += HandleDashTimerFinished;
 
             dashCooldownTimer = new CountdownTimer(Mathf.Max(0f, dashCooldown));
@@ -74,10 +74,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             
 
-            dashElapsed += Time.fixedDeltaTime;
-
-            float normalizedTime = dashDuration > 0f
-                ? Mathf.Clamp01(dashElapsed / Mathf.Max(0.0001f, dashDuration))
+            float normalizedTime = dashDuration > 0f && dashTimer != null
+                ? Mathf.Clamp01(dashTimer.TimePassed / Mathf.Max(0.0001f, dashDuration))
                 : 1f;
 
             ApplyDashVelocity(normalizedTime);
@@ -128,13 +126,23 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             if (isDashing)
             {
-                if (IsDashWithinPreInputWindow())
+                if (IsDashWithinPreInputWindowInternal())
                 {
-                    queuedDash = true;
                     Vector3 requestedDirection = ResolveDashDirection();
-                    queuedDashDirection = requestedDirection.sqrMagnitude > 0.0001f
+                    Vector3 normalizedDirection = requestedDirection.sqrMagnitude > 0.0001f
                         ? requestedDirection.normalized
                         : dashDirection.sqrMagnitude > 0.0001f ? dashDirection : Vector3.forward;
+
+                    if (!queuedDash && canDashAgain)
+                    {
+                        queuedDash = true;
+                        canDashAgain = false;
+                    }
+
+                    if (queuedDash)
+                    {
+                        queuedDashDirection = normalizedDirection;
+                    }
                 }
 
                 return;
@@ -172,6 +180,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
 
             queuedDash = false;
+            queuedDashDirection = Vector3.zero;
             canDashAgain = true;
 
             Vector3 resolvedDirection = directionOverride ?? ResolveDashDirection();
@@ -204,8 +213,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             
             isDashing = true;
             actionStarted?.Invoke();
-            dashElapsed = 0f;
-
             dashTimer.Cancel();
             dashBaseSpeed = dashDistance > 0f && duration > 0f
                 ? dashDistance / Mathf.Max(0.0001f, duration)
@@ -319,16 +326,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             if (isDashing)
             {
-                canDashAgain = IsDashWithinPreInputWindow();
-                return canDashAgain;
+                bool withinPreWindow = IsDashWithinPreInputWindowInternal();
+                canDashAgain = withinPreWindow && !queuedDash;
+                return withinPreWindow;
             }
 
             return IsDashWithinPostInputWindow();
         }
 
-        public bool IsDashWithinPreInputWindow()
+        private bool IsDashWithinPreInputWindowInternal()
         {
-            if (!isDashing || dashTimer is not { IsRunning: true } || !canDashAgain)
+            if (!isDashing || dashTimer is not { IsRunning: true })
             {
                 return false;
             }
@@ -339,6 +347,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             return dashTimer.CurrentTime <= dashChainPreInputTolerance;
+        }
+
+        public bool IsDashWithinPreInputWindow()
+        {
+            return canDashAgain && IsDashWithinPreInputWindowInternal();
         }
 
         public float DashChainPreInputTolerance => Mathf.Max(0f, dashChainPreInputTolerance);
