@@ -64,7 +64,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         public StatusHandler statusHandler { get; private set; }
 
         [Header("Animation (optional)")]
-        [SerializeField] private Animator animator;
+        [SerializeField] private ArrayFlipbookAVS flipbook;
         [Header("State Animations")]
         [SerializeField] private AgentAnimationRequest idleAnimation;
         [SerializeField] private AgentAnimationRequest movingAnimation;
@@ -132,12 +132,12 @@ namespace _PinBoy.Scripts.CharacterMovement
         public bool IsPerformingAction => isActionRunning;
         public float AnimatorSpeed
         {
-            get => animator ? animator.speed : 1f;
+            get => flipbook ? flipbook.speedMultiplier : 1f;
             set
             {
-                if (animator)
+                if (flipbook)
                 {
-                    animator.speed = value;
+                    flipbook.SetSpeed(Mathf.Max(0f, value));
                 }
             }
         }
@@ -198,7 +198,7 @@ namespace _PinBoy.Scripts.CharacterMovement
 
             EvaluateGroundImmediate();
 
-            animationController.Initialize(animator);
+            animationController.Initialize(flipbook);
             
             if (baseProfile != null)
             {
@@ -262,16 +262,6 @@ namespace _PinBoy.Scripts.CharacterMovement
             else
             {
                 SetAimIndicator(facingDirection);
-            }
-
-            Vector3 animFacing = snapFacingTo8 ? SnapTo8(facingDirection) : facingDirection.normalized;
-            if (animator)
-            {
-                animator.SetFloat("MoveX", currentVelocity.x);
-                animator.SetFloat("MoveZ", currentVelocity.z);
-                Vector3 planar = new Vector3(currentVelocity.x, 0f, currentVelocity.z);
-                animator.SetFloat("Speed", planar.magnitude);
-                animator.SetInteger("FacingIndex", FacingIndex(animFacing));
             }
 
             machine?.Tick(Time.deltaTime);
@@ -618,21 +608,15 @@ namespace _PinBoy.Scripts.CharacterMovement
             }
         }
 
-        public void PlayActionAnimation(AnimationClip clip, float crossFade)
+        public void PlayActionAnimation(ArrayFlipbookAnimationClip clip)
         {
-            if (!animator || !clip)
+            if (!flipbook || clip == null || !clip.IsValid)
             {
                 return;
             }
 
-            if (crossFade > 0f)
-            {
-                animator.CrossFadeInFixedTime(clip.name, crossFade);
-            }
-            else
-            {
-                animator.Play(clip.name);
-            }
+            flipbook.SetClip(clip, 0f, true);
+            flipbook.Play();
         }
 
         public UniTask ExecuteAction(AgentActionDefinition action, AgentActionRuntime runtime)

@@ -8,7 +8,7 @@ namespace _PinBoy.Scripts.CharacterMovement
     [Serializable]
     public struct AgentAnimationRequest : IEquatable<AgentAnimationRequest>
     {
-        public AnimationClip clip;
+        public ArrayFlipbookAnimationClip clip;
         [Min(0f)] public float crossFade;
         public float playbackSpeed;
         public bool overrideSpeed;
@@ -21,11 +21,11 @@ namespace _PinBoy.Scripts.CharacterMovement
             overrideSpeed = false
         };
 
-        public bool IsValid => clip != null;
+        public bool IsValid => clip != null && clip.IsValid;
 
         public bool Equals(AgentAnimationRequest other)
         {
-            return clip == other.clip &&
+            return ReferenceEquals(clip, other.clip) &&
                    Mathf.Approximately(Mathf.Max(0f, crossFade), Mathf.Max(0f, other.crossFade)) &&
                    Mathf.Approximately(playbackSpeed, other.playbackSpeed) &&
                    overrideSpeed == other.overrideSpeed;
@@ -40,7 +40,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         {
             unchecked
             {
-                int hash = clip ? clip.GetHashCode() : 0;
+                int hash = clip != null ? clip.GetHashCode() : 0;
                 hash = (hash * 397) ^ Mathf.RoundToInt(Mathf.Max(0f, crossFade) * 1000f);
                 hash = (hash * 397) ^ Mathf.RoundToInt(playbackSpeed * 1000f);
                 hash = (hash * 397) ^ (overrideSpeed ? 1 : 0);
@@ -52,15 +52,15 @@ namespace _PinBoy.Scripts.CharacterMovement
     public sealed class AgentAnimationController
     {
         readonly Dictionary<State, AgentAnimationRequest> requests = new();
-        Animator animator;
+        ArrayFlipbookAVS flipbook;
         float defaultSpeed = 1f;
         State currentOwner;
         AgentAnimationRequest currentRequest = AgentAnimationRequest.None;
 
-        public void Initialize(Animator targetAnimator)
+        public void Initialize(ArrayFlipbookAVS targetFlipbook)
         {
-            animator = targetAnimator;
-            defaultSpeed = animator ? animator.speed : 1f;
+            flipbook = targetFlipbook;
+            defaultSpeed = flipbook ? flipbook.speedMultiplier : 1f;
             requests.Clear();
             currentOwner = null;
             currentRequest = AgentAnimationRequest.None;
@@ -133,6 +133,7 @@ namespace _PinBoy.Scripts.CharacterMovement
                 RestoreDefaultSpeed();
                 currentOwner = null;
                 currentRequest = AgentAnimationRequest.None;
+                flipbook?.Stop();
                 return;
             }
 
@@ -148,7 +149,7 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         void Apply(AgentAnimationRequest request)
         {
-            if (!animator)
+            if (!flipbook)
             {
                 return;
             }
@@ -156,33 +157,32 @@ namespace _PinBoy.Scripts.CharacterMovement
             if (!request.IsValid)
             {
                 RestoreDefaultSpeed();
+                flipbook.Stop();
                 return;
             }
 
             if (request.overrideSpeed && request.playbackSpeed > 0f)
             {
-                animator.speed = request.playbackSpeed;
+                flipbook.SetSpeed(request.playbackSpeed);
             }
             else
             {
                 RestoreDefaultSpeed();
             }
 
-            if (request.crossFade > 0f)
+            bool forceRestart = request.crossFade > 0f;
+            flipbook.SetClip(request.clip, 0f, forceRestart);
+            if (!flipbook.IsPlaying())
             {
-                animator.CrossFadeInFixedTime(request.clip.name, request.crossFade);
-            }
-            else
-            {
-                animator.Play(request.clip.name);
+                flipbook.Play();
             }
         }
 
         void RestoreDefaultSpeed()
         {
-            if (animator)
+            if (flipbook)
             {
-                animator.speed = defaultSpeed;
+                flipbook.SetSpeed(defaultSpeed);
             }
         }
 

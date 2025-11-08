@@ -4,9 +4,11 @@ using UnityEngine;
 [DisallowMultipleComponent, RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
 public class ArrayFlipbookAVS : MonoBehaviour
 {
-    [Header("Bank / Clip")]
-    public SpriteArrayBank bank;
-    public string clipName { get; private set; }
+    const string ArrayPropertyName = "_SpriteArray";
+
+    [Header("Animation")]
+    [SerializeField] private ArrayFlipbookAnimationClip defaultClip;
+    public ArrayFlipbookAnimationClip CurrentClip { get; private set; }
 
     [Header("Overrides")]
     public bool flipX;
@@ -19,8 +21,6 @@ public class ArrayFlipbookAVS : MonoBehaviour
     public MeshRenderer[] renderers;
     [Tooltip("MeshFilters that define the base meshes (1:1 with Renderers)")]
     public MeshFilter[] filters;
-
-    SpriteArrayBank.Clip _clip;
 
     // Per-target data
     [SerializeField, HideInInspector] Mesh[] _avsMeshes;
@@ -56,12 +56,18 @@ public class ArrayFlipbookAVS : MonoBehaviour
         }
 
         CreateOrBindAVSAll();
+
         if (randomizedStart)
             _time = Random.Range(0f, 1f);
-        if (bank != null && !string.IsNullOrEmpty(clipName))
-            SetClip(clipName, _time, true);
 
-        WriteLayer(CurrentLayerOrDefault());
+        if (defaultClip != null && defaultClip.IsValid)
+        {
+            SetClip(defaultClip, _time, true);
+        }
+        else
+        {
+            WriteLayer(CurrentLayerOrDefault());
+        }
 
         _playing = playOnAwake;
     }
@@ -125,44 +131,84 @@ public class ArrayFlipbookAVS : MonoBehaviour
         }
     }
 
-    public void SetClip(string newClipName, float startNormalizedTime = 0f, bool overrride = false)
+    public void SetClip(ArrayFlipbookAnimationClip clip, float startNormalizedTime = 0f, bool force = false)
     {
-        if (!overrride && clipName == newClipName) return;
-        _clip = bank?.GetClip(newClipName);
-        clipName = newClipName;
-        _time = Mathf.Clamp01(startNormalizedTime) * Mathf.Max(1, _clip?.frameCount ?? 1);
+        if (!force && ReferenceEquals(CurrentClip, clip))
+        {
+            return;
+        }
+
+        CurrentClip = clip != null && clip.IsValid ? clip : null;
+
+        if (CurrentClip != null)
+        {
+            ApplyClipTexture(CurrentClip);
+            ApplyPPUScale(CurrentClip);
+            _time = Mathf.Clamp01(startNormalizedTime) * Mathf.Max(1, CurrentClip.FrameCount);
+        }
+        else
+        {
+            ClearClipTexture();
+            _time = 0f;
+        }
+
         WriteLayer(CurrentLayerOrDefault());
     }
 
-    public void ApplyPPUScale(SpriteArrayBank b)
+    void ApplyClipTexture(ArrayFlipbookAnimationClip clip)
     {
-        return;
-        if (!b || !b.material) return;
-        var arr = b.material.GetTexture("_SpriteArray") as Texture2DArray;
-        if (!arr) return;
-        float wUnits = arr.width / b.pixelsPerUnit;
-        float hUnits = arr.height / b.pixelsPerUnit;
-        transform.localScale = new Vector3(wUnits, hUnits, wUnits);
+        if (clip == null || renderers == null)
+        {
+            return;
+        }
+
+        foreach (var renderer in renderers)
+        {
+            clip.ApplyTexture(renderer, ArrayPropertyName);
+        }
+    }
+
+    void ClearClipTexture()
+    {
+        if (renderers == null)
+        {
+            return;
+        }
+
+        foreach (var renderer in renderers)
+        {
+            if (!renderer)
+            {
+                continue;
+            }
+
+            var block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            block.SetTexture(ArrayPropertyName, null);
+            renderer.SetPropertyBlock(block);
+        }
     }
 
     void Update()
     {
-        if (_clip == null || !_playing) return;
-
-        _time += Time.deltaTime * (_clip.fps * Mathf.Max(0.001f, speedMultiplier));
-        //Debug.Log(gameObject.name + " : "+ _clip.name + " : Time = " + _time + " Loop=" + _clip.loop);
-        int layer;
-        if (_clip.loop)
+        if (CurrentClip == null || !_playing)
         {
-            int span = Mathf.Max(1, _clip.frameCount);
+            return;
+        }
+
+        _time += Time.deltaTime * (CurrentClip.FramesPerSecond * Mathf.Max(0.001f, speedMultiplier));
+
+        int layer;
+        if (CurrentClip.Loop)
+        {
+            int span = Mathf.Max(1, CurrentClip.FrameCount);
             int frameOffset = Mathf.FloorToInt(_time) % span;
-            //Debug.Log(gameObject.name + " span: " + frameOffset);
-            layer = _clip.firstLayer + frameOffset;
+            layer = frameOffset;
         }
         else
         {
-            int frameOffset = Mathf.Min(Mathf.FloorToInt(_time), _clip.frameCount - 1);
-            layer = _clip.firstLayer + frameOffset;
+            int frameOffset = Mathf.Min(Mathf.FloorToInt(_time), CurrentClip.FrameCount - 1);
+            layer = frameOffset;
         }
 
         WriteLayer(layer);
@@ -170,10 +216,14 @@ public class ArrayFlipbookAVS : MonoBehaviour
 
     int CurrentLayerOrDefault()
     {
-        if (_clip == null) return 0;
-        int span = Mathf.Max(1, _clip.frameCount);
+        if (CurrentClip == null)
+        {
+            return 0;
+        }
+
+        int span = Mathf.Max(1, CurrentClip.FrameCount);
         int frameOffset = Mathf.FloorToInt(_time) % span;
-        return _clip.firstLayer + frameOffset;
+        return frameOffset;
     }
 
     void WriteLayer(int layer)
@@ -224,11 +274,28 @@ public class ArrayFlipbookAVS : MonoBehaviour
         }
     }
 
+    void ApplyPPUScale(ArrayFlipbookAnimationClip clip)
+    {
+        if (clip == null || clip.TextureArray == null)
+        {
+            return;
+        }
+
+        float wUnits = clip.TextureArray.width / clip.PixelsPerUnit;
+        float hUnits = clip.TextureArray.height / clip.PixelsPerUnit;
+        transform.localScale = new Vector3(wUnits, hUnits, wUnits);
+    }
+
     // Controls
     public void Play() => _playing = true;
     public void Pause() => _playing = false;
-    public void Stop() { _playing = false; _time = 0f; WriteLayer(_clip != null ? _clip.firstLayer : 0); }
+    public void Stop()
+    {
+        _playing = false;
+        _time = 0f;
+        WriteLayer(CurrentClip != null ? 0 : 0);
+    }
     public void SetSpeed(float mul) { speedMultiplier = mul; }
-    
+
     public bool IsPlaying() { return _playing; }
 }
