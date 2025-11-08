@@ -204,6 +204,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             inputReader.controller = this;
             rb = GetComponent<Rigidbody>();
             rb.constraints = RigidbodyConstraints.FreezeRotation;
+            rb.useGravity = false;
 
             if (!groundCollider)
             {
@@ -1076,13 +1077,37 @@ namespace _PinBoy.Scripts.CharacterMovement
             throw new NotImplementedException();
         }
         
-        // Draw gizmos for ground check
         protected virtual void OnDrawGizmosSelected()
         {
+            // Draw gizmos for ground check
             float radius = Mathf.Max(0.01f, GetGroundCheckRadius());
             Vector3 origin = GetGroundCheckOrigin(radius, out float distance);
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(origin - Vector3.up * distance, radius);
+            
+            //Draw step check gizmos
+            if (enableStepHandling)
+            {
+                Bounds bounds;
+                if (groundCollider)
+                {
+                    bounds = groundCollider.bounds;
+                }
+                else
+                {
+                    bounds = new Bounds(transform.position, Vector3.zero);
+                }
+
+                Vector3 basePosition = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+                Vector3 lowOrigin = basePosition + Vector3.up * Mathf.Max(0.001f, stepCheckVerticalOffset);
+                Vector3 highOrigin = basePosition + Vector3.up * (Mathf.Max(0.001f, stepCheckVerticalOffset) + Mathf.Max(0f, maxStepHeight));
+                float checkDistance = Mathf.Max(0.01f, stepCheckDistance);
+                float stepRadius = stepCheckRadius > 0f ? stepCheckRadius : Mathf.Max(0.01f, GetGroundCheckRadius());
+
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawWireSphere(lowOrigin + transform.forward * checkDistance, stepRadius);
+                Gizmos.DrawWireSphere(highOrigin + transform.forward * checkDistance, stepRadius);
+            }
         }
     }
 }
