@@ -22,7 +22,7 @@ MonoBehaviour:
   faceAimDirectionWhenNoTarget: 1
   animationClip:
     textureArray: {fileID: 18700000, guid: 6073c3686d2e26e4283840cfcda253b5, type: 3}
-    framesPerSecond: 10
+    framesPerSecond: 20
     loop: 1
     pixelsPerUnit: 30
   animationCrossFade: 0.05

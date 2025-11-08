@@ -36,7 +36,7 @@ namespace ImprovedTimers {
             OnTimerFinish.Invoke();
             if (CurrentTime > 0f)
                 return;
-            Stop();
+            Stop(); 
         }
 
         public void Cancel() {

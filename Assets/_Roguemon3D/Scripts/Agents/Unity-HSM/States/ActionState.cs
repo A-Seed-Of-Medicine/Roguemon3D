@@ -1,8 +1,11 @@
+using System;
 using _PinBoy.Scripts.CharacterMovement;
 using HSM;
+using UnityEngine;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
 {
+    [Serializable]
     public abstract class ActionState : AgentState
     {
         protected readonly CharacterAction action;
@@ -127,10 +130,18 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             if (controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
                 return AgentRoot.Stunned;
-
+            
             if (!dashAction.isDashing)
             {
-                return controller && controller.grounded ? AgentRoot.Grounded : AgentRoot.Airborne;
+                if (!controller)
+                    return null;
+                if (controller.grounded)
+                {
+                    if (controller.IsMoving) 
+                        return AgentRoot.Grounded.Moving;
+                    return AgentRoot.Grounded.Idle;
+                }
+                return AgentRoot.Airborne;
             }
 
             return null;

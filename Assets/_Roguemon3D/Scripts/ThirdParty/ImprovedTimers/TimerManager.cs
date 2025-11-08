@@ -12,7 +12,6 @@ namespace ImprovedTimers {
 
         public static void RegisterTimer(Timer timer) {
             if (timer is IFixedUpdateTimer) {
-                Debug.Log("Registering fixed update timer.");
                 fixedTimers.Add(timer);
             }
             else {
@@ -22,7 +21,6 @@ namespace ImprovedTimers {
 
         public static void DeregisterTimer(Timer timer) {
             if (!updateTimers.Remove(timer)) {
-                Debug.Log("Deregistering fixed update timer.");
                 fixedTimers.Remove(timer);
             }
         }

@@ -44,7 +44,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         private float dashChainPostInputTolerance = 0.3f;
 
         private MyCountTimer dashChainPostTimer;
-        public bool isDashing;
+        public bool isDashing => dashTimer.IsRunning;
         Vector3 dashDirection;
         Func<Vector3, Vector3> dashRedirector;
         Func<Vector3, Vector3> previousRedirector;
@@ -198,7 +198,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 Controller.LockMovement(duration, zeroVelocityOnStart);
             }
             
-            isDashing = true;
             actionStarted?.Invoke();
             dashBaseSpeed = dashDistance > 0f && duration > 0f
                 ? dashDistance / Mathf.Max(0.0001f, duration)
@@ -253,8 +252,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 Controller.UnlockMovement();
             }
-
-            isDashing = false;
+            
             dashTimer.Cancel();
 
             if (dashProfile != null)
