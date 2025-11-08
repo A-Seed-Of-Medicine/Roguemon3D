@@ -103,6 +103,11 @@ namespace _PinBoy.Scripts.Player.Input
             {
                 move = Vector2.zero;
             }
+            else
+            {
+                move = ApplyDirectionalOffset(move);
+            }
+
             if (inputReader.isAiming)
             {
                 inputReader.moveInput = move;
@@ -282,6 +287,38 @@ namespace _PinBoy.Scripts.Player.Input
 
             Vector2 fallback = inputReader.aimDirection;
             return origin + new Vector3(fallback.x, 0f, fallback.y);
+        }
+
+        private Vector2 ApplyDirectionalOffset(Vector2 input)
+        {
+            Camera camera = mainCamera ? mainCamera : Camera.main;
+            if (!camera)
+            {
+                return input;
+            }
+
+            if (!mainCamera && camera)
+            {
+                mainCamera = camera;
+            }
+
+            Transform cameraTransform = camera.transform;
+            Vector3 forward = cameraTransform.forward;
+            Vector3 right = cameraTransform.right;
+
+            forward.y = 0f;
+            right.y = 0f;
+
+            if (forward.sqrMagnitude < 0.0001f || right.sqrMagnitude < 0.0001f)
+            {
+                return input;
+            }
+
+            forward.Normalize();
+            right.Normalize();
+
+            Vector3 worldDirection = forward * input.y + right * input.x;
+            return new Vector2(worldDirection.x, worldDirection.z);
         }
     }
 }
