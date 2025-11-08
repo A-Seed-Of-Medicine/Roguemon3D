@@ -333,7 +333,6 @@ namespace _PinBoy.Scripts.CharacterMovement
                     effective.turnAcceleration, pressedDeceleration, currentPlanarDirection, desiredPlanarDirection);
                 float az = ResolveAxisRate(planarVelocity.z, targetVelocity.z, effective.acceleration,
                     effective.turnAcceleration, pressedDeceleration, currentPlanarDirection, desiredPlanarDirection);
-                Debug.Log($"Ax: {ax}, Az: {az}");
                 planarVelocity.x = MoveTowards(planarVelocity.x, targetVelocity.x, Mathf.Abs(ax) * Time.fixedDeltaTime);
                 planarVelocity.z = MoveTowards(planarVelocity.z, targetVelocity.z, Mathf.Abs(az) * Time.fixedDeltaTime);
             }
@@ -380,7 +379,7 @@ namespace _PinBoy.Scripts.CharacterMovement
                 Vector3 planarDirection = new Vector3(aimDir.x, 0f, aimDir.z);
                 if (planarDirection.sqrMagnitude > 0.0001f)
                 {
-                    aimPivotObject.transform.rotation = Quaternion.LookRotation(planarDirection, Vector3.up);
+                    aimPivotObject.transform.rotation = Quaternion.LookRotation(-planarDirection, Vector3.up);
                 }
             }
 

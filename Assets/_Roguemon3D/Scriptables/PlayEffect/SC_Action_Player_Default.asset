@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb5d2a414f307f448ed87be717b0caa, type: 3}
+  m_Name: SC_Action_Player_Default
+  m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Actions.AgentActionDefinition
+  actionName: 
+  duration: 0.5
+  effectDelay: 0.1
+  lockMovement: 1
+  movementLockDuration: -1
+  zeroVelocityOnLock: 1
+  faceTargetOnStart: 1
+  faceAimDirectionWhenNoTarget: 1
+  animationClip: {fileID: 0}
+  animationCrossFade: 0.05
+  animationPlaybackSpeed: 1
+  effects:
+  - rid: 234841993414705229
+  baseMagnitude: 1
+  vfxPrefab: {fileID: 2336955926572963415, guid: 30042e234964e5642a864a048db3e407, type: 3}
+  vfxAnchor: 1
+  vfxTiming: 0
+  parentVfxToAnchor: 0
+  vfxOffset: {x: 0, y: 0, z: 0}
+  vfxLifetime: 1.5
+  references:
+    version: 2
+    RefIds:
+    - rid: 234841993414705229
+      type: {class: KnockbackEffect, ns: _PinBoy.Scripts.Gameplay.Effects, asm: Assembly-CSharp}
+      data:
+        force: 10
+        scaleWithMagnitude: 0
+        clearVelocity: 1
+        forceMode: 1
+        useContextDirection: 1
+        customDirection: {x: 0, y: 1}

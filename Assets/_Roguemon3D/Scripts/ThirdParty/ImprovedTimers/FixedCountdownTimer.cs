@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 
 namespace ImprovedTimers {
+    [Serializable]
     public class FixedCountdownTimer : Timer, IFixedUpdateTimer {
         public FixedCountdownTimer(float value) : base(value) { }
 
@@ -33,6 +34,8 @@ namespace ImprovedTimers {
         public void Finish() {
             CurrentTime = 0f;
             OnTimerFinish.Invoke();
+            if (CurrentTime > 0f)
+                return;
             Stop();
         }
 

@@ -53,7 +53,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         FixedCountdownTimer dashTimer;
         MyCountTimer dashCooldownTimer;
         bool queuedDash;
-        Vector3 queuedDashDirection;
         private bool canDashAgain = true;
 
         protected override void Awake()
@@ -67,17 +66,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             dashCooldownTimer.OnTimerFinish += () => { canDashAgain = true; };
         }
 
-        protected void FixedUpdate()
+        private void FixedUpdate()
         {
             if (!isDashing)
                 return;
-            
 
-            float normalizedTime = dashDuration > 0f && dashTimer != null
-                ? Mathf.Clamp01(dashTimer.TimePassed / Mathf.Max(0.0001f, dashDuration))
-                : 1f;
-
-            ApplyDashVelocity(normalizedTime);
+            ApplyDashVelocity(dashTimer.Progress);
         }
 
         public bool CanChain(Vector3 velocity, float tolerance)
@@ -137,11 +131,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                         queuedDash = true;
                         canDashAgain = false;
                     }
-
-                    if (queuedDash)
-                    {
-                        queuedDashDirection = normalizedDirection;
-                    }
                 }
 
                 return;
@@ -179,7 +168,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
 
             queuedDash = false;
-            queuedDashDirection = Vector3.zero;
             canDashAgain = true;
 
             Vector3 resolvedDirection = directionOverride ?? ResolveDashDirection();
@@ -212,33 +200,26 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             
             isDashing = true;
             actionStarted?.Invoke();
-            dashTimer.Cancel();
             dashBaseSpeed = dashDistance > 0f && duration > 0f
                 ? dashDistance / Mathf.Max(0.0001f, duration)
                 : 0f;
-
-            if (duration <= 0f)
-            {
-                ApplyDashVelocity(1f);
-                HandleDashTimerFinished();
-                return;
-            }
+            
             
             Vector3 initialVelocity = body.linearVelocity;
             float planarMagnitude = new Vector3(initialVelocity.x, 0f, initialVelocity.z).magnitude;
             dashCache = planarMagnitude * dashDirection;
+            if (dashTimer.IsRunning)
+            {
+                ApplyDashVelocity(1f);
+                dashTimer.Finish();
+            }
             dashTimer.Start(duration);
+            queuedDash = false;
             ApplyDashVelocity(0f);
         }
 
         void HandleDashTimerFinished()
         {
-            if (!isDashing)
-            {
-                dashTimer?.Cancel();
-                return;
-            }
-
             StopDash();
         }
 
@@ -262,9 +243,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             if (!isDashing)
             {
-                dashTimer?.Cancel();
+                dashTimer.Cancel();
                 return;
             }
+            
+            ApplyDashVelocity(1f);
 
             if (lockMovementInput)
             {
@@ -272,7 +255,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             isDashing = false;
-            dashTimer?.Cancel();
+            dashTimer.Cancel();
 
             if (dashProfile != null)
             {
@@ -282,43 +265,32 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Vector3 current = body.linearVelocity;
             Vector3 planar = zeroVelocityOnEnd ? Vector3.zero : dashCache;
             body.linearVelocity = new Vector3(planar.x, current.y, planar.z);
-
-            bool executeQueuedDash = queuedDash;
-            Vector3 queuedDirection = queuedDashDirection;
-            queuedDash = false;
-
-            if (!executeQueuedDash)
+            
+            if (dashChainPostInputTolerance > 0f)
             {
-                if (dashChainPostInputTolerance > 0f)
-                {
-                    dashChainPostTimer.Start(dashChainPostInputTolerance);
-                }
-                else
-                {
-                    dashChainPostTimer.Cancel();
-                }
-
-                if (dashCooldown > 0f)
-                {
-                    dashCooldownTimer.Start(dashCooldown);
-                }
-                else
-                {
-                    dashCooldownTimer.Cancel();
-                }
+                dashChainPostTimer.Start(dashChainPostInputTolerance);
             }
             else
             {
-                dashCooldownTimer?.Cancel();
-                dashChainPostTimer?.Cancel();
+                dashChainPostTimer.Cancel();
+            }
+
+            if (dashCooldown > 0f)
+            {
+                dashCooldownTimer.Start(dashCooldown);
+            }
+            else
+            {
+                dashCooldownTimer.Cancel();
             }
 
             actionComplete?.Invoke();
 
-            if (executeQueuedDash)
+            if (queuedDash)
             {
-                BeginDashInternal(queuedDirection);
+                BeginDashInternal(null);
             }
+            queuedDash = false;
         }
 
         bool IsInDashChainWindow()
