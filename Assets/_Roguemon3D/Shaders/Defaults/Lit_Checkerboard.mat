@@ -51,7 +51,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _CheckerSize: 1
+    - _CheckerSize: 2
     - _OcclusionStrength: 1
     - _QueueControl: 0
     - _QueueOffset: 0
