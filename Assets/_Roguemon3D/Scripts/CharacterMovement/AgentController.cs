@@ -37,6 +37,20 @@ namespace _PinBoy.Scripts.CharacterMovement
         [SerializeField]
         private Collider groundCollider;
 
+        [Header("Step Handling")]
+        [SerializeField, Tooltip("Enables automatic stepping up small height differences when moving across uneven terrain.")]
+        private bool enableStepHandling = true;
+        [SerializeField, Tooltip("Maximum height difference in meters that the agent can automatically step up.")]
+        private float maxStepHeight = 0.4f;
+        [SerializeField, Tooltip("Vertical offset above the feet used for the lower step detection cast.")]
+        private float stepCheckVerticalOffset = 0.05f;
+        [SerializeField, Tooltip("Forward distance in meters used when probing for a potential step.")]
+        private float stepCheckDistance = 0.4f;
+        [SerializeField, Tooltip("Radius used for the forward step detection casts. Leave at 0 to reuse the ground check radius.")]
+        private float stepCheckRadius = 0f;
+        [SerializeField, Tooltip("Speed in meters per second used to interpolate towards the new height when stepping up. Set to 0 for an instant snap.")]
+        private float stepSnapSpeed = 10f;
+
         [Header("Jumping")]
         [SerializeField, Tooltip("Downward acceleration applied while airborne. Negative values accelerate towards the ground.")]
         private float gravity = -30f;
@@ -329,6 +343,8 @@ namespace _PinBoy.Scripts.CharacterMovement
                 planarVelocity.z = MoveTowards(planarVelocity.z, targetVelocity.z, Mathf.Abs(az) * Time.fixedDeltaTime);
             }
             
+            TryResolveStep(ref planarVelocity, ref vertical, desiredDirection, Time.fixedDeltaTime);
+
             bool jumpPerformed = TryHandleJump(ref vertical);
             ApplyGravity(ref vertical, Time.fixedDeltaTime, jumpPerformed);
 
@@ -773,6 +789,108 @@ namespace _PinBoy.Scripts.CharacterMovement
             return Mathf.Sqrt(2f * g * Mathf.Max(0f, height));
         }
 
+        void TryResolveStep(ref Vector3 planarVelocity, ref float verticalVelocity, Vector3 desiredDirection, float deltaTime)
+        {
+            if (!enableStepHandling || !grounded)
+            {
+                return;
+            }
+
+            Vector3 planarDirection = planarVelocity.sqrMagnitude > 0.0001f
+                ? new Vector3(planarVelocity.x, 0f, planarVelocity.z)
+                : new Vector3(desiredDirection.x, 0f, desiredDirection.z);
+
+            if (planarDirection.sqrMagnitude <= 0.0001f)
+            {
+                return;
+            }
+
+            planarDirection = planarDirection.normalized;
+
+            float lowerOffset = Mathf.Max(0.001f, stepCheckVerticalOffset);
+            float allowableStepHeight = Mathf.Max(0f, maxStepHeight);
+            if (allowableStepHeight <= 0f)
+            {
+                return;
+            }
+
+            float checkDistance = Mathf.Max(0.01f, stepCheckDistance);
+            float radius = stepCheckRadius > 0f ? stepCheckRadius : Mathf.Max(0.01f, GetGroundCheckRadius());
+
+            Bounds bounds;
+            if (groundCollider)
+            {
+                bounds = groundCollider.bounds;
+            }
+            else
+            {
+                bounds = new Bounds(rb.position, Vector3.zero);
+            }
+
+            Vector3 basePosition = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+            Vector3 lowOrigin = basePosition + Vector3.up * lowerOffset;
+            Vector3 highOrigin = basePosition + Vector3.up * (lowerOffset + allowableStepHeight);
+
+            if (!Physics.SphereCast(lowOrigin, radius, planarDirection, out RaycastHit lowerHit, checkDistance, groundLayers, QueryTriggerInteraction.Ignore))
+            {
+                return;
+            }
+
+            if (IsSelfCollider(lowerHit.collider))
+            {
+                return;
+            }
+
+            if (Physics.SphereCast(highOrigin, radius, planarDirection, out RaycastHit upperHit, checkDistance, groundLayers, QueryTriggerInteraction.Ignore))
+            {
+                if (!IsSelfCollider(upperHit.collider))
+                {
+                    return;
+                }
+            }
+
+            float forwardDistance = Mathf.Min(checkDistance, lowerHit.distance + Mathf.Max(radius, 0.05f));
+            Vector3 stepOrigin = highOrigin + planarDirection * forwardDistance;
+            float downwardDistance = allowableStepHeight + lowerOffset + 0.1f;
+
+            if (!Physics.Raycast(stepOrigin, Vector3.down, out RaycastHit stepHit, downwardDistance, groundLayers, QueryTriggerInteraction.Ignore))
+            {
+                return;
+            }
+
+            if (IsSelfCollider(stepHit.collider))
+            {
+                return;
+            }
+
+            if (Vector3.Angle(stepHit.normal, Vector3.up) > maxGroundSlopeAngle)
+            {
+                return;
+            }
+
+            float heightDifference = stepHit.point.y - basePosition.y;
+            if (heightDifference <= 0f || heightDifference > allowableStepHeight + 0.01f)
+            {
+                return;
+            }
+
+            float snapSpeed = Mathf.Max(0f, stepSnapSpeed);
+            float stepDelta = snapSpeed <= 0f ? heightDifference : Mathf.Min(heightDifference, snapSpeed * deltaTime);
+            if (stepDelta <= 0f)
+            {
+                return;
+            }
+
+            Vector3 newPosition = rb.position + Vector3.up * stepDelta;
+            rb.position = newPosition;
+
+            verticalVelocity = Mathf.Max(verticalVelocity, 0f);
+            grounded = true;
+            groundNormal = stepHit.normal.sqrMagnitude > 0.0001f ? stepHit.normal.normalized : Vector3.up;
+            lastGroundedTime = Time.time;
+            jumpPhase = 0;
+        }
+
         bool CheckGround(out RaycastHit bestHit)
         {
             float radius = Mathf.Max(0.01f, GetGroundCheckRadius());
@@ -813,6 +931,21 @@ namespace _PinBoy.Scripts.CharacterMovement
             }
 
             return found;
+        }
+
+        bool IsSelfCollider(Collider candidate)
+        {
+            if (!candidate)
+            {
+                return false;
+            }
+
+            if (candidate == groundCollider)
+            {
+                return true;
+            }
+
+            return candidate.transform.IsChildOf(transform);
         }
 
         float GetGroundCheckRadius()
