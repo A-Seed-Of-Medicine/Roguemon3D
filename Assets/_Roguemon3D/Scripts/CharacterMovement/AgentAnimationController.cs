@@ -474,6 +474,13 @@ namespace _PinBoy.Scripts.CharacterMovement
 
             float angleDeg = Mathf.Atan2(planar.y, planar.x) * Mathf.Rad2Deg;
             angleDeg = Mathf.Repeat(angleDeg + 90f + 22.5f, 360f);
+            Camera mainCam = Camera.main;
+            // Offset by camera yaw
+            if (mainCam != null)
+            {
+                angleDeg += mainCam.transform.eulerAngles.y;
+                angleDeg = Mathf.Repeat(angleDeg, 360f);
+            }
             return Mathf.FloorToInt(angleDeg / 45f) % 8;
         }
     }

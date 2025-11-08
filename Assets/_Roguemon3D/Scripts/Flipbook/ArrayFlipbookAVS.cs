@@ -7,7 +7,7 @@ public class ArrayFlipbookAVS : MonoBehaviour
     const string ArrayPropertyName = "_SpriteArray";
 
     [Header("Animation")]
-    [SerializeField] private ArrayFlipbookAnimationClip defaultClip;
+    [SerializeField] public ArrayFlipbookAnimationClip defaultClip;
     public ArrayFlipbookAnimationClip CurrentClip { get; private set; }
 
     [Header("Overrides")]

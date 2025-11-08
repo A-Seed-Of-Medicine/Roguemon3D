@@ -14,13 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Actions.AgentActionDefinition
   actionName: 
   duration: 0.5
-  effectDelay: 0.1
+  effectDelay: 0
   lockMovement: 1
   movementLockDuration: -1
   zeroVelocityOnLock: 1
   faceTargetOnStart: 1
   faceAimDirectionWhenNoTarget: 1
-  animationClip: {fileID: 0}
+  animationClip:
+    textureArray: {fileID: 18700000, guid: 6073c3686d2e26e4283840cfcda253b5, type: 3}
+    framesPerSecond: 10
+    loop: 1
+    pixelsPerUnit: 30
   animationCrossFade: 0.05
   animationPlaybackSpeed: 1
   effects:
@@ -43,4 +47,4 @@ MonoBehaviour:
         clearVelocity: 1
         forceMode: 1
         useContextDirection: 1
-        customDirection: {x: 0, y: 1}
+        customDirection: {x: 0, y: 1, z: 1}
