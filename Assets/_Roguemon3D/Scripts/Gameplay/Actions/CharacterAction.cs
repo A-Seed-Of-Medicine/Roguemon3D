@@ -140,17 +140,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         AgentAnimationRequest NormalizeAnimationRequest(AgentAnimationRequest request)
         {
-            request.crossFade = Mathf.Max(0f, request.crossFade);
-            if (request.clip != null && !request.clip.IsValid)
-            {
-                request.clip = null;
-            }
-            if (request.overrideSpeed && request.playbackSpeed <= 0f)
-            {
-                request.playbackSpeed = 1f;
-            }
-
-            return request;
+            return request.Sanitized();
         }
 
         void UpdateAnimationRequest(AgentAnimationRequest request)

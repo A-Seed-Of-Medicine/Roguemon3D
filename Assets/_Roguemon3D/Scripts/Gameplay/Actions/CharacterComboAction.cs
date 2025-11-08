@@ -481,7 +481,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 float speed = step.animationSpeed <= 0f ? 1f : step.animationSpeed;
                 AgentAnimationRequest request = new AgentAnimationRequest
                 {
-                    clip = step.animationClip,
+                    directionMode = AgentAnimationRequest.DirectionMode.Single,
+                    singleClip = step.animationClip,
                     crossFade = Mathf.Max(0f, step.animationCrossFade),
                     playbackSpeed = speed,
                     overrideSpeed = step.overrideAnimationSpeed

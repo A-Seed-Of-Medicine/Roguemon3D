@@ -87,7 +87,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 {
                     runtime.Action.ApplyAnimationRequest(new AgentAnimationRequest
                     {
-                        clip = animationClip,
+                        directionMode = AgentAnimationRequest.DirectionMode.Single,
+                        singleClip = animationClip,
                         crossFade = crossFade,
                         playbackSpeed = playbackSpeed,
                         overrideSpeed = animationPlaybackSpeed > 0f

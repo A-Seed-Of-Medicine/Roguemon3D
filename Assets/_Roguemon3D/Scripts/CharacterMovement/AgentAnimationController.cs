@@ -2,30 +2,235 @@ using System;
 using System.Collections.Generic;
 using HSM;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace _PinBoy.Scripts.CharacterMovement
 {
     [Serializable]
     public struct AgentAnimationRequest : IEquatable<AgentAnimationRequest>
     {
-        public ArrayFlipbookAnimationClip clip;
+        public enum DirectionMode
+        {
+            Single,
+            FourWay,
+            EightWay
+        }
+
+        public DirectionMode directionMode;
+        public bool mirrorLeftRight;
+
+        [FormerlySerializedAs("clip")] public ArrayFlipbookAnimationClip singleClip;
+        public ArrayFlipbookAnimationClip northClip;
+        public ArrayFlipbookAnimationClip southClip;
+        public ArrayFlipbookAnimationClip eastClip;
+        public ArrayFlipbookAnimationClip westClip;
+        public ArrayFlipbookAnimationClip northEastClip;
+        public ArrayFlipbookAnimationClip southEastClip;
+        public ArrayFlipbookAnimationClip northWestClip;
+        public ArrayFlipbookAnimationClip southWestClip;
+
         [Min(0f)] public float crossFade;
         public float playbackSpeed;
         public bool overrideSpeed;
 
         public static AgentAnimationRequest None => new AgentAnimationRequest
         {
-            clip = null,
+            directionMode = DirectionMode.Single,
+            mirrorLeftRight = false,
+            singleClip = null,
+            northClip = null,
+            southClip = null,
+            eastClip = null,
+            westClip = null,
+            northEastClip = null,
+            southEastClip = null,
+            northWestClip = null,
+            southWestClip = null,
             crossFade = 0f,
             playbackSpeed = 1f,
             overrideSpeed = false
         };
 
-        public bool IsValid => clip != null && clip.IsValid;
+        public bool UsesDirectionalClips => directionMode != DirectionMode.Single;
+
+        public bool IsValid
+        {
+            get
+            {
+                switch (directionMode)
+                {
+                    case DirectionMode.Single:
+                        return ClipIsValid(singleClip);
+                    case DirectionMode.FourWay:
+                        return ClipIsValid(northClip) &&
+                               ClipIsValid(southClip) &&
+                               ClipIsValid(eastClip) &&
+                               (mirrorLeftRight || ClipIsValid(westClip));
+                    case DirectionMode.EightWay:
+                        return ClipIsValid(northClip) &&
+                               ClipIsValid(southClip) &&
+                               ClipIsValid(eastClip) &&
+                               ClipIsValid(northEastClip) &&
+                               ClipIsValid(southEastClip) &&
+                               (mirrorLeftRight || ClipIsValid(westClip)) &&
+                               (mirrorLeftRight || ClipIsValid(northWestClip)) &&
+                               (mirrorLeftRight || ClipIsValid(southWestClip));
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        public AgentAnimationRequest Sanitized()
+        {
+            AgentAnimationRequest sanitized = this;
+            sanitized.crossFade = Mathf.Max(0f, crossFade);
+            sanitized.singleClip = SanitizeClip(singleClip);
+            sanitized.northClip = SanitizeClip(northClip);
+            sanitized.southClip = SanitizeClip(southClip);
+            sanitized.eastClip = SanitizeClip(eastClip);
+            sanitized.westClip = SanitizeClip(westClip);
+            sanitized.northEastClip = SanitizeClip(northEastClip);
+            sanitized.southEastClip = SanitizeClip(southEastClip);
+            sanitized.northWestClip = SanitizeClip(northWestClip);
+            sanitized.southWestClip = SanitizeClip(southWestClip);
+            if (sanitized.overrideSpeed && sanitized.playbackSpeed <= 0f)
+            {
+                sanitized.playbackSpeed = 1f;
+            }
+
+            return sanitized;
+        }
+
+        static ArrayFlipbookAnimationClip SanitizeClip(ArrayFlipbookAnimationClip clip)
+        {
+            return ClipIsValid(clip) ? clip : null;
+        }
+
+        static bool ClipIsValid(ArrayFlipbookAnimationClip clip)
+        {
+            return clip != null && clip.IsValid;
+        }
+
+        public bool TryResolveClip(int directionIndex, out ArrayFlipbookAnimationClip clip, out bool flipX)
+        {
+            flipX = false;
+            clip = null;
+
+            switch (directionMode)
+            {
+                case DirectionMode.Single:
+                    clip = SanitizeClip(singleClip);
+                    break;
+                case DirectionMode.FourWay:
+                    clip = ResolveFourWayClip(directionIndex, out flipX);
+                    break;
+                case DirectionMode.EightWay:
+                    clip = ResolveEightWayClip(directionIndex, out flipX);
+                    break;
+            }
+
+            if (clip == null)
+            {
+                clip = SanitizeClip(singleClip);
+                flipX = false;
+            }
+
+            return clip != null;
+        }
+
+        ArrayFlipbookAnimationClip ResolveFourWayClip(int directionIndex, out bool flipX)
+        {
+            flipX = false;
+            if (directionIndex < 0)
+            {
+                directionIndex = 4;
+            }
+
+            int cardinalIndex = ((directionIndex + 1) / 2) & 3;
+            switch (cardinalIndex)
+            {
+                case 0:
+                    return SanitizeClip(southClip);
+                case 1:
+                    return SanitizeClip(eastClip);
+                case 2:
+                    return SanitizeClip(northClip);
+                case 3:
+                    if (mirrorLeftRight)
+                    {
+                        flipX = true;
+                        return SanitizeClip(eastClip);
+                    }
+
+                    return SanitizeClip(westClip);
+                default:
+                    return null;
+            }
+        }
+
+        ArrayFlipbookAnimationClip ResolveEightWayClip(int directionIndex, out bool flipX)
+        {
+            flipX = false;
+            if (directionIndex < 0)
+            {
+                directionIndex = 4;
+            }
+
+            switch (directionIndex & 7)
+            {
+                case 0:
+                    return SanitizeClip(southClip);
+                case 1:
+                    return SanitizeClip(southEastClip);
+                case 2:
+                    return SanitizeClip(eastClip);
+                case 3:
+                    return SanitizeClip(northEastClip);
+                case 4:
+                    return SanitizeClip(northClip);
+                case 5:
+                    if (mirrorLeftRight)
+                    {
+                        flipX = true;
+                        return SanitizeClip(northEastClip);
+                    }
+
+                    return SanitizeClip(northWestClip);
+                case 6:
+                    if (mirrorLeftRight)
+                    {
+                        flipX = true;
+                        return SanitizeClip(eastClip);
+                    }
+
+                    return SanitizeClip(westClip);
+                case 7:
+                    if (mirrorLeftRight)
+                    {
+                        flipX = true;
+                        return SanitizeClip(southEastClip);
+                    }
+
+                    return SanitizeClip(southWestClip);
+                default:
+                    return null;
+            }
+        }
 
         public bool Equals(AgentAnimationRequest other)
         {
-            return ReferenceEquals(clip, other.clip) &&
+            return directionMode == other.directionMode &&
+                   mirrorLeftRight == other.mirrorLeftRight &&
+                   ReferenceEquals(singleClip, other.singleClip) &&
+                   ReferenceEquals(northClip, other.northClip) &&
+                   ReferenceEquals(southClip, other.southClip) &&
+                   ReferenceEquals(eastClip, other.eastClip) &&
+                   ReferenceEquals(westClip, other.westClip) &&
+                   ReferenceEquals(northEastClip, other.northEastClip) &&
+                   ReferenceEquals(southEastClip, other.southEastClip) &&
+                   ReferenceEquals(northWestClip, other.northWestClip) &&
+                   ReferenceEquals(southWestClip, other.southWestClip) &&
                    Mathf.Approximately(Mathf.Max(0f, crossFade), Mathf.Max(0f, other.crossFade)) &&
                    Mathf.Approximately(playbackSpeed, other.playbackSpeed) &&
                    overrideSpeed == other.overrideSpeed;
@@ -40,7 +245,17 @@ namespace _PinBoy.Scripts.CharacterMovement
         {
             unchecked
             {
-                int hash = clip != null ? clip.GetHashCode() : 0;
+                int hash = (int)directionMode;
+                hash = (hash * 397) ^ (mirrorLeftRight ? 1 : 0);
+                hash = (hash * 397) ^ (singleClip != null ? singleClip.GetHashCode() : 0);
+                hash = (hash * 397) ^ (northClip != null ? northClip.GetHashCode() : 0);
+                hash = (hash * 397) ^ (southClip != null ? southClip.GetHashCode() : 0);
+                hash = (hash * 397) ^ (eastClip != null ? eastClip.GetHashCode() : 0);
+                hash = (hash * 397) ^ (westClip != null ? westClip.GetHashCode() : 0);
+                hash = (hash * 397) ^ (northEastClip != null ? northEastClip.GetHashCode() : 0);
+                hash = (hash * 397) ^ (southEastClip != null ? southEastClip.GetHashCode() : 0);
+                hash = (hash * 397) ^ (northWestClip != null ? northWestClip.GetHashCode() : 0);
+                hash = (hash * 397) ^ (southWestClip != null ? southWestClip.GetHashCode() : 0);
                 hash = (hash * 397) ^ Mathf.RoundToInt(Mathf.Max(0f, crossFade) * 1000f);
                 hash = (hash * 397) ^ Mathf.RoundToInt(playbackSpeed * 1000f);
                 hash = (hash * 397) ^ (overrideSpeed ? 1 : 0);
@@ -56,6 +271,9 @@ namespace _PinBoy.Scripts.CharacterMovement
         float defaultSpeed = 1f;
         State currentOwner;
         AgentAnimationRequest currentRequest = AgentAnimationRequest.None;
+        Vector2 cachedInput;
+        Vector3 cachedFacing;
+        int currentDirectionIndex = -1;
 
         public void Initialize(ArrayFlipbookAVS targetFlipbook)
         {
@@ -64,6 +282,9 @@ namespace _PinBoy.Scripts.CharacterMovement
             requests.Clear();
             currentOwner = null;
             currentRequest = AgentAnimationRequest.None;
+            cachedInput = Vector2.zero;
+            cachedFacing = Vector3.forward;
+            currentDirectionIndex = ComputeDirectionIndex(cachedInput, cachedFacing);
         }
 
         public void Register(State owner, AgentAnimationRequest request)
@@ -72,6 +293,8 @@ namespace _PinBoy.Scripts.CharacterMovement
             {
                 return;
             }
+
+            request = request.Sanitized();
 
             if (!request.IsValid)
             {
@@ -147,7 +370,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             currentRequest = bestRequest;
         }
 
-        void Apply(AgentAnimationRequest request)
+        void Apply(AgentAnimationRequest request, bool directionChanged = false)
         {
             if (!flipbook)
             {
@@ -170,8 +393,25 @@ namespace _PinBoy.Scripts.CharacterMovement
                 RestoreDefaultSpeed();
             }
 
-            bool forceRestart = request.crossFade > 0f;
-            flipbook.SetClip(request.clip, 0f, forceRestart);
+            if (currentDirectionIndex < 0)
+            {
+                currentDirectionIndex = ComputeDirectionIndex(cachedInput, cachedFacing);
+            }
+
+            if (!request.TryResolveClip(currentDirectionIndex, out ArrayFlipbookAnimationClip clip, out bool flipX))
+            {
+                RestoreDefaultSpeed();
+                flipbook.Stop();
+                return;
+            }
+
+            if (flipbook.flipX != flipX)
+            {
+                flipbook.flipX = flipX;
+            }
+
+            bool forceRestart = request.crossFade > 0f || directionChanged;
+            flipbook.SetClip(clip, 0f, forceRestart);
             if (!flipbook.IsPlaying())
             {
                 flipbook.Play();
@@ -195,6 +435,52 @@ namespace _PinBoy.Scripts.CharacterMovement
             }
 
             return depth;
+        }
+
+        public void UpdateDirection(Vector2 input, Vector3 facing)
+        {
+            cachedInput = input;
+            cachedFacing = facing;
+
+            int previousIndex = currentDirectionIndex;
+            int computed = ComputeDirectionIndex(input, facing);
+            if (computed >= 0)
+            {
+                currentDirectionIndex = computed;
+            }
+
+            bool directionChanged = computed >= 0 && computed != previousIndex;
+            if (directionChanged && currentRequest.IsValid && currentRequest.UsesDirectionalClips)
+            {
+                Apply(currentRequest, true);
+            }
+        }
+
+        static int ComputeDirectionIndex(Vector2 input, Vector3 facing)
+        {
+            Vector3 direction = Vector3.zero;
+            if (input.sqrMagnitude > 0.0001f)
+            {
+                direction = new Vector3(input.x, 0f, input.y);
+            }
+            else if (facing.sqrMagnitude > 0.0001f)
+            {
+                direction = new Vector3(facing.x, 0f, facing.z);
+            }
+            else
+            {
+                return -1;
+            }
+
+            Vector2 planar = new Vector2(direction.x, direction.z);
+            if (planar.sqrMagnitude < 0.0001f)
+            {
+                return -1;
+            }
+
+            float angleDeg = Mathf.Atan2(planar.y, planar.x) * Mathf.Rad2Deg;
+            angleDeg = Mathf.Repeat(angleDeg + 90f + 22.5f, 360f);
+            return Mathf.FloorToInt(angleDeg / 45f) % 8;
         }
     }
 }

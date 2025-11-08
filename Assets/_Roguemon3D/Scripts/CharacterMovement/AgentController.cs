@@ -264,6 +264,8 @@ namespace _PinBoy.Scripts.CharacterMovement
                 SetAimIndicator(facingDirection);
             }
 
+            animationController.UpdateDirection(moveInput, facingDirection);
+
             machine?.Tick(Time.deltaTime);
         }
 
