@@ -6,175 +6,216 @@ namespace _PinBoy.Scripts.CharacterMovement.Editor
     [CustomPropertyDrawer(typeof(AgentAnimationRequest))]
     public class AgentAnimationRequestDrawer : PropertyDrawer
     {
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-        {
-            float lineHeight = EditorGUIUtility.singleLineHeight;
-            float spacing = EditorGUIUtility.standardVerticalSpacing;
-            float total = lineHeight;
-
-            if (!property.isExpanded)
-            {
-                return total;
-            }
-
-            SerializedProperty modeProp = property.FindPropertyRelative("directionMode");
-            SerializedProperty mirrorProp = property.FindPropertyRelative("mirrorLeftRight");
-            var mode = (AgentAnimationRequest.DirectionMode)modeProp.enumValueIndex;
-
-            int clipLines = mode switch
-            {
-                AgentAnimationRequest.DirectionMode.Single => 1,
-                AgentAnimationRequest.DirectionMode.FourWay => mirrorProp.boolValue ? 3 : 4,
-                AgentAnimationRequest.DirectionMode.EightWay => mirrorProp.boolValue ? 5 : 8,
-                _ => 1
-            };
-
-            int lines = 1; // Direction mode
-            if (mode != AgentAnimationRequest.DirectionMode.Single)
-            {
-                lines += 1; // Mirror toggle
-            }
-
-            lines += clipLines;
-            lines += 1; // Cross fade
-            lines += 1; // Override speed
-            lines += 1; // Playback speed
-
-            total += spacing;
-            total += lines * lineHeight;
-            total += Mathf.Max(0, lines - 1) * spacing;
-            return total;
-        }
-
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
 
-            SerializedProperty modeProp = property.FindPropertyRelative("directionMode");
-            SerializedProperty mirrorProp = property.FindPropertyRelative("mirrorLeftRight");
-            SerializedProperty singleProp = property.FindPropertyRelative("singleClip");
-            SerializedProperty northProp = property.FindPropertyRelative("northClip");
-            SerializedProperty southProp = property.FindPropertyRelative("southClip");
-            SerializedProperty eastProp = property.FindPropertyRelative("eastClip");
-            SerializedProperty westProp = property.FindPropertyRelative("westClip");
-            SerializedProperty northEastProp = property.FindPropertyRelative("northEastClip");
-            SerializedProperty southEastProp = property.FindPropertyRelative("southEastClip");
-            SerializedProperty northWestProp = property.FindPropertyRelative("northWestClip");
-            SerializedProperty southWestProp = property.FindPropertyRelative("southWestClip");
-            SerializedProperty crossFadeProp = property.FindPropertyRelative("crossFade");
-            SerializedProperty overrideSpeedProp = property.FindPropertyRelative("overrideSpeed");
-            SerializedProperty playbackSpeedProp = property.FindPropertyRelative("playbackSpeed");
+            // Resolve properties once
+            var modeProp    = property.FindPropertyRelative("directionMode");
+            var mirrorProp  = property.FindPropertyRelative("mirrorLeftRight");
+            var single      = property.FindPropertyRelative("singleClip");
+            var north       = property.FindPropertyRelative("northClip");
+            var south       = property.FindPropertyRelative("southClip");
+            var east        = property.FindPropertyRelative("eastClip");
+            var west        = property.FindPropertyRelative("westClip");
+            var ne          = property.FindPropertyRelative("northEastClip");
+            var se          = property.FindPropertyRelative("southEastClip");
+            var nw          = property.FindPropertyRelative("northWestClip");
+            var sw          = property.FindPropertyRelative("southWestClip");
+            var crossFade   = property.FindPropertyRelative("crossFade");
+            var overrideSp  = property.FindPropertyRelative("overrideSpeed");
+            var speed       = property.FindPropertyRelative("playbackSpeed");
 
-            Rect foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
-            GUIContent foldoutLabel = new GUIContent(BuildSummaryLabel(label, modeProp, mirrorProp, singleProp));
-            property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, foldoutLabel, true);
+            // Foldout with summary
+            var foldRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+            property.isExpanded = EditorGUI.Foldout(
+                foldRect,
+                property.isExpanded,
+                BuildSummaryLabel(label, modeProp, mirrorProp, single),
+                true
+            );
 
-            if (!property.isExpanded)
+            if (property.isExpanded)
             {
-                EditorGUI.EndProperty();
-                return;
+                EditorGUI.indentLevel++;
+                var y = foldRect.y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+
+                Rect next(float h)
+                {
+                    var r = new Rect(position.x, y, position.width, h);
+                    y += h + EditorGUIUtility.standardVerticalSpacing;
+                    return r;
+                }
+
+                // convenience drawer that includes children
+                void DrawWithChildren(SerializedProperty p, string lbl = null)
+                {
+                    var gc = string.IsNullOrEmpty(lbl) ? GUIContent.none : new GUIContent(lbl);
+                    float h = EditorGUI.GetPropertyHeight(p, gc, true);
+                    EditorGUI.PropertyField(next(h), p, gc, true);
+                }
+
+                // Controls
+                DrawWithChildren(modeProp, "Direction Mode");
+                DrawWithChildren(mirrorProp, "Mirror Left/Right");
+
+                // Clips by mode
+                switch ((AgentAnimationRequest.DirectionMode)modeProp.enumValueIndex)
+                {
+                    case AgentAnimationRequest.DirectionMode.Single:
+                        DrawWithChildren(single, "Clip");
+                        break;
+
+                    case AgentAnimationRequest.DirectionMode.FourWay:
+                        DrawWithChildren(north, "North");
+                        DrawWithChildren(south, "South");
+                        DrawWithChildren(east,  "East");
+                        if (!mirrorProp.boolValue) DrawWithChildren(west, "West");
+                        break;
+
+                    case AgentAnimationRequest.DirectionMode.EightWay:
+                        DrawWithChildren(north, "North");
+                        DrawWithChildren(south, "South");
+                        DrawWithChildren(east,  "East");
+                        DrawWithChildren(ne,    "North-East");
+                        DrawWithChildren(se,    "South-East");
+                        if (!mirrorProp.boolValue)
+                        {
+                            DrawWithChildren(west, "West");
+                            DrawWithChildren(nw,   "North-West");
+                            DrawWithChildren(sw,   "South-West");
+                        }
+                        break;
+                }
+
+                // Playback options
+                DrawWithChildren(crossFade, "Cross Fade");
+                DrawWithChildren(overrideSp, "Override Speed");
+                if (overrideSp.boolValue) DrawWithChildren(speed, "Playback Speed");
+
+                EditorGUI.indentLevel--;
             }
 
-            EditorGUI.indentLevel++;
-            float y = foldoutRect.yMax + EditorGUIUtility.standardVerticalSpacing;
-            float width = position.width;
-            float lineHeight = EditorGUIUtility.singleLineHeight;
-            float spacing = EditorGUIUtility.standardVerticalSpacing;
-
-            Rect fieldRect = new Rect(position.x, y, width, lineHeight);
-            EditorGUI.PropertyField(fieldRect, modeProp);
-            y += lineHeight + spacing;
-
-            var mode = (AgentAnimationRequest.DirectionMode)modeProp.enumValueIndex;
-            if (mode != AgentAnimationRequest.DirectionMode.Single)
-            {
-                fieldRect.y = y;
-                EditorGUI.PropertyField(fieldRect, mirrorProp);
-                y += lineHeight + spacing;
-            }
-
-            switch (mode)
-            {
-                case AgentAnimationRequest.DirectionMode.Single:
-                    y = DrawClipField(position.x, width, y, singleProp, "Clip");
-                    break;
-                case AgentAnimationRequest.DirectionMode.FourWay:
-                    y = DrawClipField(position.x, width, y, southProp, "South / Down Clip");
-                    y = DrawClipField(position.x, width, y, northProp, "North / Up Clip");
-                    y = DrawClipField(position.x, width, y, eastProp, "East / Right Clip");
-                    if (!mirrorProp.boolValue)
-                    {
-                        y = DrawClipField(position.x, width, y, westProp, "West / Left Clip");
-                    }
-                    break;
-                case AgentAnimationRequest.DirectionMode.EightWay:
-                    y = DrawClipField(position.x, width, y, southProp, "South / Down Clip");
-                    y = DrawClipField(position.x, width, y, southEastProp, "South-East Clip");
-                    y = DrawClipField(position.x, width, y, eastProp, "East / Right Clip");
-                    y = DrawClipField(position.x, width, y, northEastProp, "North-East Clip");
-                    y = DrawClipField(position.x, width, y, northProp, "North / Up Clip");
-                    if (!mirrorProp.boolValue)
-                    {
-                        y = DrawClipField(position.x, width, y, northWestProp, "North-West Clip");
-                        y = DrawClipField(position.x, width, y, westProp, "West / Left Clip");
-                        y = DrawClipField(position.x, width, y, southWestProp, "South-West Clip");
-                    }
-                    break;
-            }
-
-            y = DrawFloatField(position.x, width, y, crossFadeProp, "Cross Fade");
-
-            Rect overrideRect = new Rect(position.x, y, width, lineHeight);
-            EditorGUI.PropertyField(overrideRect, overrideSpeedProp);
-            y += lineHeight + spacing;
-
-            using (new EditorGUI.DisabledScope(!overrideSpeedProp.boolValue))
-            {
-                y = DrawFloatField(position.x, width, y, playbackSpeedProp, "Playback Speed");
-            }
-
-            EditorGUI.indentLevel--;
             EditorGUI.EndProperty();
         }
 
-        static float DrawClipField(float x, float width, float y, SerializedProperty property, string label)
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            Rect rect = new Rect(x, y, width, EditorGUIUtility.singleLineHeight);
-            EditorGUI.PropertyField(rect, property, new GUIContent(label));
-            return y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-        }
+            // Always at least one line for the foldout
+            float total = EditorGUIUtility.singleLineHeight;
+            if (!property.isExpanded) return total;
 
-        static float DrawFloatField(float x, float width, float y, SerializedProperty property, string label)
-        {
-            Rect rect = new Rect(x, y, width, EditorGUIUtility.singleLineHeight);
-            EditorGUI.PropertyField(rect, property, new GUIContent(label));
-            return y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-        }
+            float s = EditorGUIUtility.standardVerticalSpacing;
 
-        static string BuildSummaryLabel(GUIContent baseLabel, SerializedProperty modeProp, SerializedProperty mirrorProp, SerializedProperty singleProp)
-        {
-            var mode = (AgentAnimationRequest.DirectionMode)modeProp.enumValueIndex;
-            string summary = mode switch
+            var modeProp    = property.FindPropertyRelative("directionMode");
+            var mirrorProp  = property.FindPropertyRelative("mirrorLeftRight");
+            var single      = property.FindPropertyRelative("singleClip");
+            var north       = property.FindPropertyRelative("northClip");
+            var south       = property.FindPropertyRelative("southClip");
+            var east        = property.FindPropertyRelative("eastClip");
+            var west        = property.FindPropertyRelative("westClip");
+            var ne          = property.FindPropertyRelative("northEastClip");
+            var se          = property.FindPropertyRelative("southEastClip");
+            var nw          = property.FindPropertyRelative("northWestClip");
+            var sw          = property.FindPropertyRelative("southWestClip");
+            var crossFade   = property.FindPropertyRelative("crossFade");
+            var overrideSp  = property.FindPropertyRelative("overrideSpeed");
+            var speed       = property.FindPropertyRelative("playbackSpeed");
+
+            float Add(SerializedProperty p, string lbl = null)
             {
-                AgentAnimationRequest.DirectionMode.Single => ObjectLabel(singleProp),
-                AgentAnimationRequest.DirectionMode.FourWay => mirrorProp.boolValue ? "4-Way (Mirror)" : "4-Way",
-                AgentAnimationRequest.DirectionMode.EightWay => mirrorProp.boolValue ? "8-Way (Mirror)" : "8-Way",
-                _ => string.Empty
-            };
-
-            if (string.IsNullOrEmpty(summary))
-            {
-                return baseLabel.text;
+                var gc = string.IsNullOrEmpty(lbl) ? GUIContent.none : new GUIContent(lbl);
+                float h = EditorGUI.GetPropertyHeight(p, gc, true);
+                total += h + s;
+                return h;
             }
 
-            return string.IsNullOrEmpty(baseLabel.text)
-                ? summary
-                : $"{baseLabel.text} [{summary}]";
+            // Controls
+            Add(modeProp, "Direction Mode");
+            Add(mirrorProp, "Mirror Left/Right");
+
+            // Clips by mode
+            switch ((AgentAnimationRequest.DirectionMode)modeProp.enumValueIndex)
+            {
+                case AgentAnimationRequest.DirectionMode.Single:
+                    Add(single, "Clip");
+                    break;
+
+                case AgentAnimationRequest.DirectionMode.FourWay:
+                    Add(north, "North");
+                    Add(south, "South");
+                    Add(east,  "East");
+                    if (!mirrorProp.boolValue) Add(west, "West");
+                    break;
+
+                case AgentAnimationRequest.DirectionMode.EightWay:
+                    Add(north, "North");
+                    Add(south, "South");
+                    Add(east,  "East");
+                    Add(ne,    "North-East");
+                    Add(se,    "South-East");
+                    if (!mirrorProp.boolValue)
+                    {
+                        Add(west, "West");
+                        Add(nw,   "North-West");
+                        Add(sw,   "South-West");
+                    }
+                    break;
+            }
+
+            // Playback options
+            Add(crossFade, "Cross Fade");
+            Add(overrideSp, "Override Speed");
+            if (overrideSp.boolValue) Add(speed, "Playback Speed");
+
+            return total;
         }
 
-        static string ObjectLabel(SerializedProperty property)
+        // Builds the foldout title with a short summary. Never reads objectReference from non-object fields.
+        static GUIContent BuildSummaryLabel(GUIContent baseLabel,
+                                            SerializedProperty modeProp,
+                                            SerializedProperty mirrorProp,
+                                            SerializedProperty singleClipProp)
         {
-            return property.objectReferenceValue != null ? property.objectReferenceValue.name : "None";
+            string summary = string.Empty;
+
+            var mode = (AgentAnimationRequest.DirectionMode)modeProp.enumValueIndex;
+            switch (mode)
+            {
+                case AgentAnimationRequest.DirectionMode.Single:
+                    summary = singleClipProp.propertyType == SerializedPropertyType.ObjectReference
+                        ? SafeObjectLabel(singleClipProp)
+                        : "Single";
+                    break;
+
+                case AgentAnimationRequest.DirectionMode.FourWay:
+                    summary = mirrorProp.boolValue ? "4-Way (Mirror)" : "4-Way";
+                    break;
+
+                case AgentAnimationRequest.DirectionMode.EightWay:
+                    summary = mirrorProp.boolValue ? "8-Way (Mirror)" : "8-Way";
+                    break;
+            }
+
+            if (string.IsNullOrEmpty(summary)) return baseLabel;
+
+            var text = string.IsNullOrEmpty(baseLabel.text)
+                ? summary
+                : $"{baseLabel.text} [{summary}]";
+
+            // Preserve tooltip and image if any
+            return new GUIContent(text, baseLabel.image, baseLabel.tooltip);
+        }
+
+        // Safe label for ObjectReference only
+        static string SafeObjectLabel(SerializedProperty property)
+        {
+            if (property.propertyType != SerializedPropertyType.ObjectReference)
+                return "Value";
+
+            return property.objectReferenceValue != null
+                ? property.objectReferenceValue.name
+                : "None";
         }
     }
 }

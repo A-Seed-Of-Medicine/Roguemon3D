@@ -19,7 +19,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         public DirectionMode directionMode;
         public bool mirrorLeftRight;
 
-        [FormerlySerializedAs("clip")] public ArrayFlipbookAnimationClip singleClip;
+        public ArrayFlipbookAnimationClip singleClip;
         public ArrayFlipbookAnimationClip northClip;
         public ArrayFlipbookAnimationClip southClip;
         public ArrayFlipbookAnimationClip eastClip;
@@ -290,9 +290,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         public void Register(State owner, AgentAnimationRequest request)
         {
             if (owner == null)
-            {
                 return;
-            }
 
             request = request.Sanitized();
 
@@ -303,9 +301,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             }
 
             if (requests.TryGetValue(owner, out AgentAnimationRequest existing) && existing.Equals(request))
-            {
                 return;
-            }
 
             requests[owner] = request;
             Evaluate();
@@ -373,9 +369,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         void Apply(AgentAnimationRequest request, bool directionChanged = false)
         {
             if (!flipbook)
-            {
                 return;
-            }
 
             if (!request.IsValid)
             {

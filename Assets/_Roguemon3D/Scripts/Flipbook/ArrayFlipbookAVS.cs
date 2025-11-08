@@ -134,9 +134,7 @@ public class ArrayFlipbookAVS : MonoBehaviour
     public void SetClip(ArrayFlipbookAnimationClip clip, float startNormalizedTime = 0f, bool force = false)
     {
         if (!force && ReferenceEquals(CurrentClip, clip))
-        {
             return;
-        }
 
         CurrentClip = clip != null && clip.IsValid ? clip : null;
 
@@ -192,10 +190,8 @@ public class ArrayFlipbookAVS : MonoBehaviour
     void Update()
     {
         if (CurrentClip == null || !_playing)
-        {
             return;
-        }
-
+        
         _time += Time.deltaTime * (CurrentClip.FramesPerSecond * Mathf.Max(0.001f, speedMultiplier));
 
         int layer;

@@ -180,7 +180,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 61.7
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -207,7 +207,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.2548959, y: -0.3678304, z: 0.105581336, w: 0.8880211}
-  m_LocalPosition: {x: 11.21428, y: 8.809999, z: -8.78571}
+  m_LocalPosition: {x: 6.21428, y: 6.26, z: -3.7857099}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -455,11 +455,11 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 51
-  groundCheckRadius: 0.3
-  groundCheckDistance: 0.3
-  groundCheckOffset: 0.02
+  groundCheckRadius: 0.79
+  groundCheckDistance: 0.96
+  groundCheckOffset: 0
   maxGroundSlopeAngle: 60
-  groundCollider: {fileID: 0}
+  groundCollider: {fileID: 535669723}
   gravity: -30
   groundedGravity: -2
   jumpHeight: 2
@@ -471,24 +471,208 @@ MonoBehaviour:
   terminalVelocity: -60
   <allegiance>k__BackingField: 0
   <health>k__BackingField: {fileID: 0}
-  animator: {fileID: 0}
+  flipbook: {fileID: 1018706276}
   idleAnimation:
-    clip: {fileID: 0}
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 18700000, guid: 6073c3686d2e26e4283840cfcda253b5, type: 3}
+      framesPerSecond: 0
+      loop: 1
+      pixelsPerUnit: 30
+    northClip:
+      textureArray: {fileID: 18700000, guid: 70e38344e6b780e4db45be33fe28680a, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southClip:
+      textureArray: {fileID: 18700000, guid: c409f26bd3ca6844687b5caa291ff34d, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    eastClip:
+      textureArray: {fileID: 18700000, guid: b68db602e7f75aa44a24519ed7977945, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    westClip:
+      textureArray: {fileID: 18700000, guid: 49ca0cc95a2007f4dadd8d499cd765e3, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northEastClip:
+      textureArray: {fileID: 18700000, guid: 96a6464abc373c54fae75c6ecd32b73d, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southEastClip:
+      textureArray: {fileID: 18700000, guid: 53a32eeb35a9f484e95f367b4d7d6f3e, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northWestClip:
+      textureArray: {fileID: 18700000, guid: 1037d7b2d24a285448d13255d27d9e06, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southWestClip:
+      textureArray: {fileID: 18700000, guid: c4034ea0247e5bb42b0043d62b9f254f, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     crossFade: 0
-    playbackSpeed: 0
-    overrideSpeed: 0
+    playbackSpeed: 1
+    overrideSpeed: 1
   movingAnimation:
-    clip: {fileID: 0}
+    directionMode: 2
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northClip:
+      textureArray: {fileID: 18700000, guid: 70e38344e6b780e4db45be33fe28680a, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 30
+    southClip:
+      textureArray: {fileID: 18700000, guid: c409f26bd3ca6844687b5caa291ff34d, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 30
+    eastClip:
+      textureArray: {fileID: 18700000, guid: b68db602e7f75aa44a24519ed7977945, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 30
+    westClip:
+      textureArray: {fileID: 18700000, guid: 49ca0cc95a2007f4dadd8d499cd765e3, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 30
+    northEastClip:
+      textureArray: {fileID: 18700000, guid: 96a6464abc373c54fae75c6ecd32b73d, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 30
+    southEastClip:
+      textureArray: {fileID: 18700000, guid: 53a32eeb35a9f484e95f367b4d7d6f3e, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 30
+    northWestClip:
+      textureArray: {fileID: 18700000, guid: 1037d7b2d24a285448d13255d27d9e06, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 30
+    southWestClip:
+      textureArray: {fileID: 18700000, guid: c4034ea0247e5bb42b0043d62b9f254f, type: 3}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 30
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
   airborneAnimation:
-    clip: {fileID: 0}
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    eastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    westClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
   stunnedAnimation:
-    clip: {fileID: 0}
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    eastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    westClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
@@ -582,7 +766,53 @@ MonoBehaviour:
   actionMagnitude: 1
   skipIfActionInProgress: 1
   defaultAnimationRequest:
-    clip: {fileID: 0}
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    eastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    westClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
@@ -638,7 +868,53 @@ MonoBehaviour:
   actionMagnitude: 1
   skipIfActionInProgress: 1
   defaultAnimationRequest:
-    clip: {fileID: 0}
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    eastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    westClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
@@ -677,7 +953,11 @@ MonoBehaviour:
       queueUntilWindow: 1
       transitionDelay: 0
     vfx: {fileID: 0}
-    animationClip: {fileID: 0}
+    animationClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     animationCrossFade: 0
     animationSpeed: 0
     overrideAnimationSpeed: 0
@@ -711,7 +991,11 @@ MonoBehaviour:
       queueUntilWindow: 1
       transitionDelay: 0
     vfx: {fileID: 0}
-    animationClip: {fileID: 0}
+    animationClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     animationCrossFade: 0
     animationSpeed: 0
     overrideAnimationSpeed: 0
@@ -741,7 +1025,11 @@ MonoBehaviour:
     fallbackDirection: {x: 0, y: 0, z: 1}
     transitions: []
     vfx: {fileID: 0}
-    animationClip: {fileID: 0}
+    animationClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     animationCrossFade: 0
     animationSpeed: 0
     overrideAnimationSpeed: 0
@@ -835,24 +1123,208 @@ MonoBehaviour:
   terminalVelocity: -60
   <allegiance>k__BackingField: 1
   <health>k__BackingField: {fileID: 604436160}
-  animator: {fileID: 0}
+  flipbook: {fileID: 0}
   idleAnimation:
-    clip: {fileID: 0}
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    eastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    westClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
   movingAnimation:
-    clip: {fileID: 0}
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    eastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    westClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
   airborneAnimation:
-    clip: {fileID: 0}
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    eastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    westClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
   stunnedAnimation:
-    clip: {fileID: 0}
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    eastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    westClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southEastClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    northWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
+    southWestClip:
+      textureArray: {fileID: 0}
+      framesPerSecond: 10
+      loop: 1
+      pixelsPerUnit: 100
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
@@ -1038,7 +1510,7 @@ MonoBehaviour:
     AngularDampingMode: 0
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
-  FollowOffset: {x: 10, y: 6.83, z: -10}
+  FollowOffset: {x: 5, y: 4.28, z: -5}
 --- !u!114 &790160479
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1063,7 +1535,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 60
+    FieldOfView: 61.7
     OrthographicSize: 5
     NearClipPlane: 0.3
     FarClipPlane: 1000
@@ -1091,7 +1563,7 @@ Transform:
   m_GameObject: {fileID: 790160476}
   serializedVersion: 2
   m_LocalRotation: {x: 0.2548959, y: -0.3678304, z: 0.105581336, w: 0.8880211}
-  m_LocalPosition: {x: 11.21428, y: 8.809999, z: -8.78571}
+  m_LocalPosition: {x: 6.21428, y: 6.26, z: -3.7857099}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1285,13 +1757,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1018706274}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: -0.38268343, z: 0, w: 0.92387956}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 535669726}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -45, z: 0}
 --- !u!114 &1018706276
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1304,8 +1776,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 462f49866b184f148a5fff7c97bd0a59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArrayFlipbookAVS
-  bank: {fileID: 11400000, guid: 350ac3870ff796c4aa53edb5412c04a4, type: 2}
-  clipName: 
+  defaultClip:
+    textureArray: {fileID: 0}
+    framesPerSecond: 10
+    loop: 1
+    pixelsPerUnit: 100
   flipX: 0
   speedMultiplier: 1
   playOnAwake: 1

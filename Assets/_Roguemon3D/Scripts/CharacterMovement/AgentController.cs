@@ -942,5 +942,14 @@ namespace _PinBoy.Scripts.CharacterMovement
         {
             throw new NotImplementedException();
         }
+        
+        // Draw gizmos for ground check
+        protected virtual void OnDrawGizmosSelected()
+        {
+            float radius = Mathf.Max(0.01f, GetGroundCheckRadius());
+            Vector3 origin = GetGroundCheckOrigin(radius, out float distance);
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(origin - Vector3.up * distance, radius);
+        }
     }
 }

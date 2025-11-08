@@ -967,7 +967,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             pendingComboResetDelay = 0f;
             if (comboActive)
             {
-                Debug.Log("Resetting combo state.");
                 comboActive = false;
                 actionComplete?.Invoke();
             }
