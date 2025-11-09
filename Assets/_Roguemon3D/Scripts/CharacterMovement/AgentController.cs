@@ -23,6 +23,16 @@ namespace _PinBoy.Scripts.CharacterMovement
         [SerializeField] private bool snapFacingTo8 = true;
         public bool grounded { get; private set; }
         public Vector3 GroundNormal => groundNormal;
+        public bool PreventLedgeDrop
+        {
+            get => preventLedgeDrop;
+            set => preventLedgeDrop = value;
+        }
+
+        public void SetLedgePreventionEnabled(bool enabled)
+        {
+            preventLedgeDrop = enabled;
+        }
 
         [Header("Grounding")]
         [SerializeField] private LayerMask groundLayers = Physics.DefaultRaycastLayers;
@@ -50,6 +60,16 @@ namespace _PinBoy.Scripts.CharacterMovement
         private float stepCheckRadius = 0f;
         [SerializeField, Tooltip("Speed in meters per second used to interpolate towards the new height when stepping up. Set to 0 for an instant snap.")]
         private float stepSnapSpeed = 10f;
+
+        [Header("Ledge Safety")]
+        [SerializeField, Tooltip("Prevents the agent from moving in directions that would result in falling off unsupported ledges.")]
+        private bool preventLedgeDrop = true;
+        [SerializeField, Tooltip("Maximum downward distance in meters that is considered safe when checking for supporting ground ahead.")]
+        private float maxLedgeDropHeight = 0.5f;
+        [SerializeField, Tooltip("Extra horizontal distance in meters used when looking for ground ahead of the agent.")]
+        private float ledgeCheckDistance = 0.1f;
+        [SerializeField, Tooltip("Vertical offset in meters above the agent's base where ledge checks originate from.")]
+        private float ledgeCheckVerticalOffset = 0.05f;
 
         [Header("Jumping")]
         [SerializeField, Tooltip("Downward acceleration applied while airborne. Negative values accelerate towards the ground.")]
@@ -325,7 +345,6 @@ namespace _PinBoy.Scripts.CharacterMovement
 
             float targetSpeed = effective.moveSpeed;
             Vector3 targetVelocity = new Vector3(desired.x, 0f, desired.z) * (targetSpeed * effective.maxSpeedMult);
-
             if (inputMagnitude <= 0.0001f || targetVelocity == Vector3.zero)
             {
                 planarVelocity = Vector3.Lerp(planarVelocity, targetVelocity, effective.deceleration * Time.fixedDeltaTime);
@@ -343,8 +362,9 @@ namespace _PinBoy.Scripts.CharacterMovement
                 planarVelocity.x = MoveTowards(planarVelocity.x, targetVelocity.x, Mathf.Abs(ax) * Time.fixedDeltaTime);
                 planarVelocity.z = MoveTowards(planarVelocity.z, targetVelocity.z, Mathf.Abs(az) * Time.fixedDeltaTime);
             }
-            
+
             TryResolveStep(ref planarVelocity, ref vertical, desiredDirection, Time.fixedDeltaTime);
+            ApplyLedgePrevention(ref planarVelocity, desiredDirection, targetVelocity, Time.fixedDeltaTime);
 
             bool jumpPerformed = TryHandleJump(ref vertical);
             ApplyGravity(ref vertical, Time.fixedDeltaTime, jumpPerformed);
@@ -892,6 +912,128 @@ namespace _PinBoy.Scripts.CharacterMovement
             jumpPhase = 0;
         }
 
+        void ApplyLedgePrevention(ref Vector3 planarVelocity, Vector3 desiredDirection, Vector3 targetPlanarVelocity, float deltaTime)
+        {
+            if (!preventLedgeDrop || !grounded)
+            {
+                return;
+            }
+
+            Vector3 planarMovement = new Vector3(planarVelocity.x, 0f, planarVelocity.z);
+            Vector3 desiredPlanar = new Vector3(desiredDirection.x, 0f, desiredDirection.z);
+            Vector3 targetPlanar = new Vector3(targetPlanarVelocity.x, 0f, targetPlanarVelocity.z);
+            float referenceSpeed = Mathf.Max(planarMovement.magnitude, targetPlanar.magnitude);
+
+            if (planarMovement.sqrMagnitude <= 0.0001f && desiredPlanar.sqrMagnitude > 0.0001f)
+            {
+                planarMovement = desiredPlanar.normalized * Mathf.Max(referenceSpeed, 0.0001f);
+            }
+
+            if (planarMovement.sqrMagnitude <= 0.0001f)
+            {
+                return;
+            }
+
+            Vector3 checkDirection = planarMovement.normalized;
+            if (!HasSupportingGround(checkDirection, Mathf.Max(referenceSpeed, 0.0001f), deltaTime))
+            {
+                ApplyAxisLedgePrevention(ref planarVelocity, targetPlanar, deltaTime);
+
+                Vector3 remainingPlanar = new Vector3(planarVelocity.x, 0f, planarVelocity.z);
+                if (remainingPlanar.sqrMagnitude <= 0.0001f)
+                {
+                    planarVelocity = Vector3.zero;
+                    return;
+                }
+
+                Vector3 remainingDirection = remainingPlanar.normalized;
+                float remainingSpeed = Mathf.Max(remainingPlanar.magnitude, targetPlanar.magnitude);
+                if (!HasSupportingGround(remainingDirection, Mathf.Max(remainingSpeed, 0.0001f), deltaTime))
+                {
+                    float forwardComponent = Vector3.Dot(planarVelocity, remainingDirection);
+                    if (forwardComponent > 0f)
+                    {
+                        planarVelocity -= remainingDirection * forwardComponent;
+                    }
+                }
+            }
+        }
+
+        void ApplyAxisLedgePrevention(ref Vector3 planarVelocity, Vector3 targetPlanarVelocity, float deltaTime)
+        {
+            if (Mathf.Abs(planarVelocity.x) > 0.0001f || Mathf.Abs(targetPlanarVelocity.x) > 0.0001f)
+            {
+                float axisSpeed = Mathf.Max(Mathf.Abs(planarVelocity.x), Mathf.Abs(targetPlanarVelocity.x));
+                float axisSource = Mathf.Abs(planarVelocity.x) > 0.0001f ? planarVelocity.x : targetPlanarVelocity.x;
+                Vector3 axisDirection = Mathf.Abs(axisSource) > 0.0001f ? new Vector3(Mathf.Sign(axisSource), 0f, 0f) : Vector3.zero;
+
+                if (axisDirection.sqrMagnitude > 0f &&
+                    !HasSupportingGround(axisDirection, Mathf.Max(axisSpeed, 0.0001f), deltaTime))
+                {
+                    planarVelocity.x = 0f;
+                }
+            }
+
+            if (Mathf.Abs(planarVelocity.z) > 0.0001f || Mathf.Abs(targetPlanarVelocity.z) > 0.0001f)
+            {
+                float axisSpeed = Mathf.Max(Mathf.Abs(planarVelocity.z), Mathf.Abs(targetPlanarVelocity.z));
+                float axisSource = Mathf.Abs(planarVelocity.z) > 0.0001f ? planarVelocity.z : targetPlanarVelocity.z;
+                Vector3 axisDirection = Mathf.Abs(axisSource) > 0.0001f ? new Vector3(0f, 0f, Mathf.Sign(axisSource)) : Vector3.zero;
+
+                if (axisDirection.sqrMagnitude > 0f &&
+                    !HasSupportingGround(axisDirection, Mathf.Max(axisSpeed, 0.0001f), deltaTime))
+                {
+                    planarVelocity.z = 0f;
+                }
+            }
+        }
+
+        bool HasSupportingGround(Vector3 direction, float planarSpeed, float deltaTime)
+        {
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                return true;
+            }
+
+            float radius = Mathf.Max(0.01f, GetGroundCheckRadius());
+            float verticalOffset = Mathf.Max(0.01f, ledgeCheckVerticalOffset);
+            float dropAllowance = Mathf.Max(0f, maxLedgeDropHeight);
+
+            Bounds bounds = groundCollider ? groundCollider.bounds : new Bounds(rb.position, Vector3.zero);
+            Vector3 basePosition = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+
+            float horizontalDistance = Mathf.Max(radius + ledgeCheckDistance, planarSpeed * deltaTime + radius);
+            Vector3 origin = basePosition + Vector3.up * verticalOffset + direction * horizontalDistance;
+            float castDistance = verticalOffset + dropAllowance + radius + 0.05f;
+            float minimumHeight = basePosition.y - dropAllowance - 0.01f;
+
+            int hitCount = Physics.SphereCastNonAlloc(origin, radius, Vector3.down, groundHitsBuffer, castDistance,
+                groundLayers, QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit hit = groundHitsBuffer[i];
+                Collider candidate = hit.collider;
+                if (!candidate || IsSelfCollider(candidate))
+                {
+                    continue;
+                }
+
+                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+                if (slopeAngle > maxGroundSlopeAngle)
+                {
+                    continue;
+                }
+
+                if (hit.point.y >= minimumHeight)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         bool CheckGround(out RaycastHit bestHit)
         {
             float radius = Mathf.Max(0.01f, GetGroundCheckRadius());
@@ -1107,6 +1249,32 @@ namespace _PinBoy.Scripts.CharacterMovement
                 Gizmos.color = Color.cyan;
                 Gizmos.DrawWireSphere(lowOrigin + transform.forward * checkDistance, stepRadius);
                 Gizmos.DrawWireSphere(highOrigin + transform.forward * checkDistance, stepRadius);
+            }
+
+            if (preventLedgeDrop)
+            {
+                Bounds bounds;
+                if (groundCollider)
+                {
+                    bounds = groundCollider.bounds;
+                }
+                else
+                {
+                    bounds = new Bounds(transform.position, Vector3.zero);
+                }
+
+                float radius = Mathf.Max(0.01f, GetGroundCheckRadius());
+                float verticalOffset = Mathf.Max(0.01f, ledgeCheckVerticalOffset);
+                float dropAllowance = Mathf.Max(0f, maxLedgeDropHeight);
+                float horizontalDistance = Mathf.Max(radius + ledgeCheckDistance, radius * 1.25f);
+                Vector3 basePosition = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+                Vector3 origin = basePosition + Vector3.up * verticalOffset + transform.forward * horizontalDistance;
+                float castDistance = verticalOffset + dropAllowance + radius + 0.05f;
+
+                Gizmos.color = Color.magenta;
+                Gizmos.DrawWireSphere(origin, radius);
+                Gizmos.DrawLine(origin, origin - Vector3.up * castDistance);
+                Gizmos.DrawWireSphere(origin - Vector3.up * castDistance, radius);
             }
         }
     }
