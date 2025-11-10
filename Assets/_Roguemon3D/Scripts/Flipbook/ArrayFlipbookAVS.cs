@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 [DisallowMultipleComponent, RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
 public class ArrayFlipbookAVS : MonoBehaviour
@@ -10,17 +12,20 @@ public class ArrayFlipbookAVS : MonoBehaviour
     [SerializeField] public ArrayFlipbookAnimationClip defaultClip;
     public ArrayFlipbookAnimationClip CurrentClip { get; private set; }
 
-    [Header("Overrides")]
+    [Header("Overrides")] 
+    public bool cameraAligned;
     public bool flipX;
     public float speedMultiplier = 1f;
     public bool playOnAwake = true;
-    public bool randomizedStart = false;
+    [Min(0)] public int startFrame;
+    public bool randomizedStart;
 
     [Header("Targets")]
     [Tooltip("Renderers to receive AVS additional vertex streams")]
     public MeshRenderer[] renderers;
     [Tooltip("MeshFilters that define the base meshes (1:1 with Renderers)")]
     public MeshFilter[] filters;
+    float anchorYOffset;
 
     // Per-target data
     [SerializeField, HideInInspector] Mesh[] _avsMeshes;
@@ -31,6 +36,7 @@ public class ArrayFlipbookAVS : MonoBehaviour
 
     void Awake()
     {
+        anchorYOffset = transform.position.y;
         // If user left arrays empty, try to auto-bind on this GameObject
         if ((filters == null || filters.Length == 0) &&
             (renderers == null || renderers.Length == 0))
@@ -57,6 +63,16 @@ public class ArrayFlipbookAVS : MonoBehaviour
 
         CreateOrBindAVSAll();
 
+        if (startFrame > 0)
+        {
+            if (defaultClip != null && defaultClip.IsValid)
+            {
+                int frameCount = Mathf.Max(1, defaultClip.FrameCount);
+                _time = Mathf.Clamp01(startFrame / (float)frameCount);
+            }
+            
+        }
+
         if (randomizedStart)
             _time = Random.Range(0f, 1f);
 
@@ -70,6 +86,12 @@ public class ArrayFlipbookAVS : MonoBehaviour
         }
 
         _playing = playOnAwake;
+    }
+
+    private void Start()
+    {
+        if (CameraManager.Instance)
+            CameraManager.Instance.OnCameraPositionUpdated += AlignToCamera;
     }
 
     void OnDestroy()
@@ -136,7 +158,7 @@ public class ArrayFlipbookAVS : MonoBehaviour
         if (!force && ReferenceEquals(CurrentClip, clip))
             return;
 
-        CurrentClip = clip != null && clip.IsValid ? clip : null;
+        CurrentClip = clip is { IsValid: true } ? clip : null;
 
         if (CurrentClip != null)
         {
@@ -294,4 +316,29 @@ public class ArrayFlipbookAVS : MonoBehaviour
     public void SetSpeed(float mul) { speedMultiplier = mul; }
 
     public bool IsPlaying() { return _playing; }
+
+    public void AlignToCamera(Vector3 cameraPosition, Vector3 playerPosition)
+    {
+        if (!cameraAligned)
+            return;
+        
+        Vector3 dirToCamera = cameraPosition - transform.position;
+        dirToCamera.y = 0f;
+        if (dirToCamera.sqrMagnitude > 0.0001f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(dirToCamera.normalized, Vector3.up);
+            transform.rotation = targetRot;
+            Vector3 pos = transform.position;
+            pos.y = anchorYOffset;
+            transform.position = pos;
+        }
+    }
+
+    void OnValidate()
+    {
+        Debug.Log("OnApplicationQuit");
+        if (defaultClip is not { IsValid: true })
+            return;
+        SetClip(defaultClip, startFrame / (float)defaultClip.FrameCount, true);
+    }
 }

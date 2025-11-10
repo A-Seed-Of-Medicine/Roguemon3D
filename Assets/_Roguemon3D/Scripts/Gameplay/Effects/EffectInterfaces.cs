@@ -45,7 +45,7 @@ namespace _PinBoy.Scripts.Gameplay.Effects
     {
         Transform transform { get; }
         AllegianceType allegiance { get; }
-        void DealDamage(DamageInfo damageInfo);
+        void ApplyDamage(DamageInfo damageInfo);
     }
 
     public interface IMovable

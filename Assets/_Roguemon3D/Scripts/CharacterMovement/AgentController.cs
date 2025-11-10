@@ -1069,12 +1069,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         
         public void ApplyDamage(DamageInfo damageInfo)
         {
-            throw new NotImplementedException();
-        }
-
-        public void DealDamage(DamageInfo damageInfo)
-        {
-            throw new NotImplementedException();
+            health?.ApplyDamage(damageInfo);
         }
         
         protected virtual void OnDrawGizmosSelected()

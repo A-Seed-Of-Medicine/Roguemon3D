@@ -13,12 +13,13 @@ MonoBehaviour:
   m_Name: SC_Movement_Enemy_Default
   m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.CharacterMovement.MovementProfile
   executionOrder: 0
+  cumulative: 1
   moveSpeed:
     value: 36.4
     decayDuration: 0
     type: 2
   acceleration:
-    value: 8
+    value: 34.22
     decayDuration: 0
     type: 2
   turnAcceleration:

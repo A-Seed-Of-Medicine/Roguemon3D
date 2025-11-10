@@ -22,7 +22,7 @@ public static class BaseQuad {
 
 
             var norms = new [] {
-                Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward
+                -Vector3.forward, -Vector3.forward, -Vector3.forward, -Vector3.forward
             };
             var tangents = new [] {
                 new Vector4(1f,0f,0f,-1f),

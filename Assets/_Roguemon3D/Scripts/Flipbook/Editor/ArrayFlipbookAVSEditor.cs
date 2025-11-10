@@ -13,7 +13,7 @@ namespace Editor
             serializedObject.Update();
             ArrayFlipbookAVS t = (ArrayFlipbookAVS)target;
             if (GUILayout.Button("Recalculate Quad"))
-                t.SetClip(t.defaultClip, 0, true);
+                t.SetClip(t.defaultClip, t.startFrame / (float)t.defaultClip?.FrameCount, true);
 
             // Ensure BaseQuad on all filters
             var fs = t.filters;
