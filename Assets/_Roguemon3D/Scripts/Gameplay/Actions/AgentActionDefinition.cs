@@ -32,7 +32,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField] private bool zeroVelocityOnLock = true;
         [SerializeField] private bool faceTargetOnStart = true;
         [SerializeField] private bool faceAimDirectionWhenNoTarget = true;
-        [SerializeField] private ArrayFlipbookAnimationClip animationClip;
+        [SerializeField] private AnimationClip animationClip;
         [SerializeField] private float animationCrossFade = 0.05f;
         [SerializeField] private float animationPlaybackSpeed = 1f;
         [SerializeReference] [SerializeField] private List<Effect> effects = new();
@@ -77,7 +77,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             float originalAnimatorSpeed = controller.AnimatorSpeed;
             bool restoreAnimatorSpeed = false;
-            if (animationClip != null && animationClip.IsValid)
+            if (animationClip != null)
             {
                 float playbackSpeed = animationPlaybackSpeed > 0f ? animationPlaybackSpeed : 1f;
 
@@ -152,7 +152,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
             finally
             {
-                if (restoreAnimatorSpeed && animationClip != null && animationClip.IsValid)
+                if (restoreAnimatorSpeed && animationClip != null)
                 {
                     controller.AnimatorSpeed = originalAnimatorSpeed;
                 }

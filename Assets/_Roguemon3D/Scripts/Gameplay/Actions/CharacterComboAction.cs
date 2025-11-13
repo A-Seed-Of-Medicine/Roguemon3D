@@ -102,7 +102,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public ParticleSystem vfx;
 
             [Header("Animation")]
-            public ArrayFlipbookAnimationClip animationClip;
+            public AnimationClip animationClip;
             [Min(0f)] public float animationCrossFade = 0.1f;
             public float animationSpeed = 1f;
             public bool overrideAnimationSpeed;
@@ -476,7 +476,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
-            if (step.animationClip != null && step.animationClip.IsValid)
+            if (step.animationClip != null)
             {
                 float speed = step.animationSpeed <= 0f ? 1f : step.animationSpeed;
                 AgentAnimationRequest request = new AgentAnimationRequest

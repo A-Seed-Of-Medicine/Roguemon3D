@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using _PinBoy.Scripts.Gameplay.Actions;
 using _PinBoy.Scripts.Gameplay.Effects;
+using _PinBoy.Scripts.Animation;
 using AdvancedController;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -78,7 +79,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         public StatusHandler statusHandler { get; private set; }
 
         [Header("Animation (optional)")]
-        [SerializeField] private ArrayFlipbookAVS flipbook;
+        [SerializeField] private SpriteAnimator spriteAnimator;
         [Header("State Animations")]
         [SerializeField] private AgentAnimationRequest idleAnimation;
         [SerializeField] private AgentAnimationRequest movingAnimation;
@@ -146,12 +147,12 @@ namespace _PinBoy.Scripts.CharacterMovement
         public bool IsPerformingAction => isActionRunning;
         public float AnimatorSpeed
         {
-            get => flipbook ? flipbook.speedMultiplier : 1f;
+            get => spriteAnimator ? spriteAnimator.SpeedMultiplier : 1f;
             set
             {
-                if (flipbook)
+                if (spriteAnimator)
                 {
-                    flipbook.SetSpeed(Mathf.Max(0f, value));
+                    spriteAnimator.SetSpeed(Mathf.Max(0f, value));
                 }
             }
         }
@@ -213,7 +214,12 @@ namespace _PinBoy.Scripts.CharacterMovement
 
             EvaluateGroundImmediate();
 
-            animationController.Initialize(flipbook);
+            if (!spriteAnimator)
+            {
+                spriteAnimator = GetComponent<SpriteAnimator>() ?? GetComponentInChildren<SpriteAnimator>();
+            }
+
+            animationController.Initialize(spriteAnimator);
             
             if (baseProfile != null)
             {
@@ -627,15 +633,15 @@ namespace _PinBoy.Scripts.CharacterMovement
             }
         }
 
-        public void PlayActionAnimation(ArrayFlipbookAnimationClip clip)
+        public void PlayActionAnimation(AnimationClip clip)
         {
-            if (!flipbook || clip == null || !clip.IsValid)
+            if (!spriteAnimator || clip == null)
             {
                 return;
             }
 
-            flipbook.SetClip(clip, 0f, true);
-            flipbook.Play();
+            spriteAnimator.SetClip(clip, 0f, true);
+            spriteAnimator.Play();
         }
 
         public UniTask ExecuteAction(AgentActionDefinition action, AgentActionRuntime runtime)

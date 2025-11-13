@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using _PinBoy.Scripts.Animation;
 using HSM;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -19,15 +20,15 @@ namespace _PinBoy.Scripts.CharacterMovement
         public DirectionMode directionMode;
         public bool mirrorLeftRight;
 
-        public ArrayFlipbookAnimationClip singleClip;
-        public ArrayFlipbookAnimationClip northClip;
-        public ArrayFlipbookAnimationClip southClip;
-        public ArrayFlipbookAnimationClip eastClip;
-        public ArrayFlipbookAnimationClip westClip;
-        public ArrayFlipbookAnimationClip northEastClip;
-        public ArrayFlipbookAnimationClip southEastClip;
-        public ArrayFlipbookAnimationClip northWestClip;
-        public ArrayFlipbookAnimationClip southWestClip;
+        public AnimationClip singleClip;
+        public AnimationClip northClip;
+        public AnimationClip southClip;
+        public AnimationClip eastClip;
+        public AnimationClip westClip;
+        public AnimationClip northEastClip;
+        public AnimationClip southEastClip;
+        public AnimationClip northWestClip;
+        public AnimationClip southWestClip;
 
         [Min(0f)] public float crossFade;
         public float playbackSpeed;
@@ -102,17 +103,17 @@ namespace _PinBoy.Scripts.CharacterMovement
             return sanitized;
         }
 
-        static ArrayFlipbookAnimationClip SanitizeClip(ArrayFlipbookAnimationClip clip)
+        static AnimationClip SanitizeClip(AnimationClip clip)
         {
             return ClipIsValid(clip) ? clip : null;
         }
 
-        static bool ClipIsValid(ArrayFlipbookAnimationClip clip)
+        static bool ClipIsValid(AnimationClip clip)
         {
-            return clip != null && clip.IsValid;
+            return clip != null;
         }
 
-        public bool TryResolveClip(int directionIndex, out ArrayFlipbookAnimationClip clip, out bool flipX)
+        public bool TryResolveClip(int directionIndex, out AnimationClip clip, out bool flipX)
         {
             flipX = false;
             clip = null;
@@ -139,7 +140,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             return clip != null;
         }
 
-        ArrayFlipbookAnimationClip ResolveFourWayClip(int directionIndex, out bool flipX)
+        AnimationClip ResolveFourWayClip(int directionIndex, out bool flipX)
         {
             flipX = false;
             if (directionIndex < 0)
@@ -169,7 +170,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             }
         }
 
-        ArrayFlipbookAnimationClip ResolveEightWayClip(int directionIndex, out bool flipX)
+        AnimationClip ResolveEightWayClip(int directionIndex, out bool flipX)
         {
             flipX = false;
             if (directionIndex < 0)
@@ -267,7 +268,7 @@ namespace _PinBoy.Scripts.CharacterMovement
     public sealed class AgentAnimationController
     {
         readonly Dictionary<State, AgentAnimationRequest> requests = new();
-        ArrayFlipbookAVS flipbook;
+        SpriteAnimator spriteAnimator;
         float defaultSpeed = 1f;
         State currentOwner;
         AgentAnimationRequest currentRequest = AgentAnimationRequest.None;
@@ -275,10 +276,10 @@ namespace _PinBoy.Scripts.CharacterMovement
         Vector3 cachedFacing;
         int currentDirectionIndex = -1;
 
-        public void Initialize(ArrayFlipbookAVS targetFlipbook)
+        public void Initialize(SpriteAnimator targetAnimator)
         {
-            flipbook = targetFlipbook;
-            defaultSpeed = flipbook ? flipbook.speedMultiplier : 1f;
+            spriteAnimator = targetAnimator;
+            defaultSpeed = spriteAnimator ? spriteAnimator.SpeedMultiplier : 1f;
             requests.Clear();
             currentOwner = null;
             currentRequest = AgentAnimationRequest.None;
@@ -352,7 +353,7 @@ namespace _PinBoy.Scripts.CharacterMovement
                 RestoreDefaultSpeed();
                 currentOwner = null;
                 currentRequest = AgentAnimationRequest.None;
-                flipbook?.Stop();
+                spriteAnimator?.Stop();
                 return;
             }
 
@@ -368,19 +369,19 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         void Apply(AgentAnimationRequest request, bool directionChanged = false)
         {
-            if (!flipbook)
+            if (!spriteAnimator)
                 return;
 
             if (!request.IsValid)
             {
                 RestoreDefaultSpeed();
-                flipbook.Stop();
+                spriteAnimator.Stop();
                 return;
             }
 
             if (request.overrideSpeed && request.playbackSpeed > 0f)
             {
-                flipbook.SetSpeed(request.playbackSpeed);
+                spriteAnimator.SetSpeed(request.playbackSpeed);
             }
             else
             {
@@ -392,31 +393,31 @@ namespace _PinBoy.Scripts.CharacterMovement
                 currentDirectionIndex = ComputeDirectionIndex(cachedInput, cachedFacing);
             }
 
-            if (!request.TryResolveClip(currentDirectionIndex, out ArrayFlipbookAnimationClip clip, out bool flipX))
+            if (!request.TryResolveClip(currentDirectionIndex, out AnimationClip clip, out bool flipX))
             {
                 RestoreDefaultSpeed();
-                flipbook.Stop();
+                spriteAnimator.Stop();
                 return;
             }
 
-            if (flipbook.flipX != flipX)
+            if (spriteAnimator.flipX != flipX)
             {
-                flipbook.flipX = flipX;
+                spriteAnimator.flipX = flipX;
             }
 
             bool forceRestart = request.crossFade > 0f || directionChanged;
-            flipbook.SetClip(clip, 0f, forceRestart);
-            if (!flipbook.IsPlaying())
+            spriteAnimator.SetClip(clip, 0f, forceRestart);
+            if (!spriteAnimator.IsPlaying())
             {
-                flipbook.Play();
+                spriteAnimator.Play();
             }
         }
 
         void RestoreDefaultSpeed()
         {
-            if (flipbook)
+            if (spriteAnimator)
             {
-                flipbook.SetSpeed(defaultSpeed);
+                spriteAnimator.SetSpeed(defaultSpeed);
             }
         }
 
