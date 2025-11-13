@@ -3,6 +3,7 @@ using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Player;
 using UnityEngine;
 
+[ExecuteAlways]
 public class CameraManager : MonoBehaviour
 {
     public static CameraManager Instance { get; private set; }
@@ -23,7 +24,8 @@ public class CameraManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        if (Application.isPlaying)
+            DontDestroyOnLoad(gameObject);
 
         mainCamera = Camera.main;
     }
@@ -46,6 +48,7 @@ public class CameraManager : MonoBehaviour
 
     void OnEnable()
     {
+        if (!mainCamera) mainCamera = Camera.main;
         mainCamera.ResetProjectionMatrix();
         baseProj = mainCamera.projectionMatrix; // capture current
     }

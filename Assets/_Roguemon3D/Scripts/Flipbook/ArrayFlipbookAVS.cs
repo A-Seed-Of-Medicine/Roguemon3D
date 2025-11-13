@@ -336,7 +336,6 @@ public class ArrayFlipbookAVS : MonoBehaviour
 
     void OnValidate()
     {
-        Debug.Log("OnApplicationQuit");
         if (defaultClip is not { IsValid: true })
             return;
         SetClip(defaultClip, startFrame / (float)defaultClip.FrameCount, true);
