@@ -13,6 +13,9 @@ namespace _PinBoy.Scripts.Animation
         [SerializeField] private AnimationClip defaultClip;
         [SerializeField] private bool playOnAwake = true;
         [SerializeField, Min(0f)] private float speedMultiplier = 1f;
+        
+        [Header("Rendering")]
+        public bool faceCamera = true;
 
         Animator animator;
         SpriteRenderer spriteRenderer;
@@ -36,6 +39,19 @@ namespace _PinBoy.Scripts.Animation
                     spriteRenderer.flipX = value;
                 }
             }
+        }
+
+        void OnValidate()
+        {
+            FaceCamera(Camera.main?.GetComponent<CameraManager>());
+        }
+        
+        void FaceCamera(CameraManager camera)
+        {
+            if (!faceCamera || camera == null)
+                return;
+            
+            transform.eulerAngles = new Vector3(transform.eulerAngles.x, camera.transform.eulerAngles.y, transform.eulerAngles.z);
         }
 
         void Awake()
