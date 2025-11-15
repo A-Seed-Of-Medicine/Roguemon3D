@@ -1,6 +1,9 @@
 using System;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Player;
+using _Roguemon3D.Scripts.Utils;
+using ImprovedTimers;
+using Unity.Cinemachine;
 using UnityEngine;
 
 [ExecuteAlways]
@@ -10,11 +13,30 @@ public class CameraManager : MonoBehaviour
     
     public PlayerController playerController;
 
+    [SerializeField]
     private Camera mainCamera;
+    [SerializeField]
+    private CinemachineCamera cinemachineCamera;
+    [SerializeField]
+    private CinemachineBasicMultiChannelPerlin cinemachineNoise;
     private Vector3 cachedCameraPosition;
     public Action<Vector3, Vector3> OnCameraPositionUpdated;
+    public float cameraFOV = 80f;
     public float verticalScale = 1.41421356f; // √2
     Matrix4x4 baseProj;
+
+    [Header("Hit Stop Settings")]
+    public AnimCurveScale hitStopScale = new () { scale = 0.2f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
+    public AnimCurveScale hitStopZoom = new () { scale = 0.5f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
+    public AnimCurveScale hitStopShake = new () { scale = 0.5f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
+    public AnimCurveScale hitStopDecay = new () { scale = 0.2f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
+
+    [SerializeField]
+    private float damageTakenMultiplier = 1f;
+    [SerializeField]
+    private float damageDealtMultiplier = 1f;
+    
+    private float stopAccumulated;
 
     private void Awake()
     {
@@ -26,8 +48,49 @@ public class CameraManager : MonoBehaviour
         Instance = this;
         if (Application.isPlaying)
             DontDestroyOnLoad(gameObject);
+        
+        if (!mainCamera) mainCamera = Camera.main;
+    }
 
-        mainCamera = Camera.main;
+    private void OnValidate()
+    {
+        if (cinemachineCamera)
+        {
+            cinemachineCamera.Lens.FieldOfView = cameraFOV;
+        }
+        OnPreCull();
+    }
+    
+    public void AddDamageTakenHitStop(float amount)
+    {
+        stopAccumulated += amount * damageTakenMultiplier;
+    }
+    
+    public void AddDamageDealtHitStop(float amount)
+    {
+        stopAccumulated += amount * damageDealtMultiplier;
+    }
+    
+    void HitStopUpdate(float deltaTime)
+    {
+        if (stopAccumulated <= 0f)
+            return;
+
+        float zoom = hitStopZoom.InverseEvaluate(stopAccumulated);
+        float scale = hitStopScale.InverseEvaluate(stopAccumulated);
+        float shake = hitStopShake.InverseEvaluate(stopAccumulated);
+        Time.timeScale = scale;
+        cinemachineNoise.AmplitudeGain = shake;
+        cinemachineCamera.Lens.FieldOfView = cameraFOV + zoom;
+        
+        stopAccumulated -= deltaTime * hitStopDecay.Evaluate(stopAccumulated);
+        if (stopAccumulated < 0f)
+            stopAccumulated = 0f;
+    }
+
+    public void Update()
+    {
+        HitStopUpdate(Time.deltaTime);   
     }
 
     public Camera GetMainCamera()

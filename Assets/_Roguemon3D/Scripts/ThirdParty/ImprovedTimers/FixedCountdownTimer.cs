@@ -3,8 +3,28 @@ using UnityEngine;
 
 namespace ImprovedTimers {
     [Serializable]
-    public class FixedCountdownTimer : Timer, IFixedUpdateTimer {
+    public class FixedCountdownTimer : MyCountdownTimer, IFixedUpdateTimer {
         public FixedCountdownTimer(float value) : base(value) { }
+
+        public override void Tick() {
+            if (!IsRunning || CurrentTime < 0f) {
+                return;
+            }
+
+            if (CurrentTime > 0f) {
+                float delta = Time.fixedDeltaTime;
+                CurrentTime -= delta;
+                OnTimerTick.Invoke(delta);
+            }
+
+            if (IsRunning && CurrentTime <= 0f) {
+                Finish();
+            }
+        }
+    }
+    
+    public class MyCountdownTimer : Timer {
+        public MyCountdownTimer(float value) : base(value) { }
 
         public Action OnTimerFinish = delegate { };
         public Action<float> OnTimerTick = delegate { };
@@ -15,7 +35,7 @@ namespace ImprovedTimers {
             }
 
             if (CurrentTime > 0f) {
-                float delta = Time.fixedDeltaTime;
+                float delta = Time.deltaTime;
                 CurrentTime -= delta;
                 OnTimerTick.Invoke(delta);
             }
