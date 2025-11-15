@@ -22,8 +22,11 @@ public class CameraManager : MonoBehaviour
     private CinemachineImpulseSource cinemachineImpulse;
     private Vector3 cachedCameraPosition;
     public Action<Vector3, Vector3> OnCameraPositionUpdated;
+    [Header("Projection Settings")]
     public float cameraFOV = 80f;
     public float verticalScale = 1.41421356f; // √2
+    [Min(0)] public float xSpriteRotationMultiplier = 10f;
+    [Min(0)] public float xSpriteRotationOffset = 10f;
     Matrix4x4 baseProj;
 
     [Header("Hit Stop Settings")]

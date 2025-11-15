@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityUtils;
 
 namespace _PinBoy.Scripts.Animation
 {
@@ -16,7 +17,7 @@ namespace _PinBoy.Scripts.Animation
         [SerializeField, Min(0f)] private float speedMultiplier = 1f;
         
         [Header("Rendering")]
-        public bool faceCamera = true;
+        [Min(0)] public float cameraXOffsetMax = 17f;
 
         Animator animator;
         SpriteRenderer spriteRenderer;
@@ -49,11 +50,17 @@ namespace _PinBoy.Scripts.Animation
         
         void FaceCamera(CameraManager camera)
         {
-            if (!faceCamera || !camera)
+            if (cameraXOffsetMax <= 0 || !camera)
                 return;
             
-            Debug.Log("FaceCamera called");
-            transform.eulerAngles = new Vector3(transform.eulerAngles.x, camera.transform.eulerAngles.y, transform.eulerAngles.z);
+            // Calculate the distance along the camera forward vector
+            Vector3 toCamera = camera.transform.position - transform.position;
+            float distanceAlongForward = Vector3.Dot(toCamera.With(y:0), camera.transform.forward);
+            float xOffset = (1 - -distanceAlongForward / camera.xSpriteRotationOffset) * camera.xSpriteRotationMultiplier;
+            if (xOffset > 1f) xOffset = 1f;
+            if (xOffset < 0f) xOffset = 0f;
+            transform.eulerAngles = new Vector3(xOffset * cameraXOffsetMax, camera.transform.eulerAngles.y, transform.eulerAngles.z);
+            
         }
 
         void Awake()

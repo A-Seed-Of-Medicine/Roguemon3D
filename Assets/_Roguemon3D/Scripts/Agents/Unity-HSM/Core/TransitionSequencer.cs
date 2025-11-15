@@ -14,7 +14,7 @@ namespace HSM {
         State lastCompletedFrom, lastCompletedTo;
 
         CancellationTokenSource cts;
-        bool UseSequential = false;          // set false to use parallel
+        bool UseSequential = true;          // set false to use parallel
 
         public bool IsTransitioning => sequencer != null;
         public State ActiveTransitionFrom => IsTransitioning ? activeFrom : null;

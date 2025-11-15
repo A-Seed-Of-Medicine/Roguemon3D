@@ -474,6 +474,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 stepTimer.Start(totalDuration);
             }
+            
+            actionStarted?.Invoke();
 
             comboActive = true;
             ApplyStepAnimation(step);
@@ -526,8 +528,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     float playbackSpeed = shouldOverride ? Mathf.Max(0.0001f, speed) : 1f;
                     step.animation.playbackSpeed = playbackSpeed;
                     step.animation.overrideSpeed = shouldOverride;
+                    step.animation.crossFade = step.animationCrossFade;
                 }
-
+                ResetAnimationRequest();
                 SetAnimationRequest(step.animation);
             }
             else

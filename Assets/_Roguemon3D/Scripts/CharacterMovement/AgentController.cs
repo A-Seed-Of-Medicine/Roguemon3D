@@ -277,6 +277,7 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Update()
         {
+            //Debug.Log($"MovementLocked = {IsMovementLocked}");
             if (faceAimDirection && inputReader.isAiming)
             {
                 Vector3 aim = AimDirection;

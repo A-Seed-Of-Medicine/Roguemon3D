@@ -1599,6 +1599,7 @@ MonoBehaviour:
   cinemachineImpulse: {fileID: 330585550}
   cameraFOV: 100
   verticalScale: 1.4142135
+  xSpriteRotationMultiplier: 100
   hitStopSlow:
     curve:
       serializedVersion: 2
@@ -2705,18 +2706,18 @@ MonoBehaviour:
     playbackSpeed: 0
     overrideSpeed: 0
   stunnedAnimation:
-    directionMode: 0
+    directionMode: 2
     mirrorLeftRight: 0
     singleClip: {fileID: 0}
-    northClip: {fileID: 0}
-    southClip: {fileID: 0}
-    eastClip: {fileID: 0}
-    westClip: {fileID: 0}
-    northEastClip: {fileID: 0}
-    southEastClip: {fileID: 0}
-    northWestClip: {fileID: 0}
-    southWestClip: {fileID: 0}
-    crossFade: 0
+    northClip: {fileID: 7400000, guid: b450c7b35f840814ea72e8efae708d4f, type: 2}
+    southClip: {fileID: 7400000, guid: 41cb6dd2a2d58474e901b5ad1b203112, type: 2}
+    eastClip: {fileID: 7400000, guid: 9264714b6e0b82c41bef0251a522cf67, type: 2}
+    westClip: {fileID: 7400000, guid: 3515501e7ab0fd74693d9f2395f83637, type: 2}
+    northEastClip: {fileID: 7400000, guid: 143f15e06959c3947b212e00b79f6d5b, type: 2}
+    southEastClip: {fileID: 7400000, guid: 6af6498e95fc8d7488842bb8f5f22700, type: 2}
+    northWestClip: {fileID: 7400000, guid: 10dbaad887b525a4b969fa755a0f2afa, type: 2}
+    southWestClip: {fileID: 7400000, guid: d0d7e71f14d0990408befb2cfd774d77, type: 2}
+    crossFade: 0.1
     playbackSpeed: 0
     overrideSpeed: 0
   aimProfile: {fileID: 0}
@@ -2750,8 +2751,8 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Constraints: 112
+  m_CollisionDetection: 1
 --- !u!136 &535669723
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -2810,19 +2811,19 @@ MonoBehaviour:
   actionMagnitude: 1
   skipIfActionInProgress: 1
   defaultAnimationRequest:
-    directionMode: 0
+    directionMode: 2
     mirrorLeftRight: 0
     singleClip: {fileID: 0}
-    northClip: {fileID: 0}
-    southClip: {fileID: 0}
-    eastClip: {fileID: 0}
-    westClip: {fileID: 0}
-    northEastClip: {fileID: 0}
-    southEastClip: {fileID: 0}
-    northWestClip: {fileID: 0}
-    southWestClip: {fileID: 0}
+    northClip: {fileID: 7400000, guid: c1a07ba7f2ae3224faae6b566da2fe88, type: 2}
+    southClip: {fileID: 7400000, guid: c5ed648b499345346bc682fb76d8bde5, type: 2}
+    eastClip: {fileID: 7400000, guid: 04026b1095af6e9479b225a2e0d6e1ba, type: 2}
+    westClip: {fileID: 7400000, guid: f7a94d74d06bda946848742ca9bdc014, type: 2}
+    northEastClip: {fileID: 7400000, guid: 46acf4cb81be8554ab3a586bf7958b17, type: 2}
+    southEastClip: {fileID: 7400000, guid: 42dcd66a0dfe6e04e834b8ab05ccc3b0, type: 2}
+    northWestClip: {fileID: 7400000, guid: 544d5e7f051439b45b7bdb3002337779, type: 2}
+    southWestClip: {fileID: 7400000, guid: 9fbaf3cf5e80e524caad91d15ba30a7c, type: 2}
     crossFade: 0
-    playbackSpeed: 0
+    playbackSpeed: 1
     overrideSpeed: 0
   requiresAimInput: 1
   entrySteps:
@@ -2878,10 +2879,10 @@ MonoBehaviour:
       crossFade: 0
       playbackSpeed: 0
       overrideSpeed: 0
-    animationCrossFade: 0
-    animationSpeedMultiplier: 1
+    animationCrossFade: 0.01
+    animationSpeedMultiplier: 0.8
     scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 0
+    overrideAnimationSpeed: 1
   - id: step2
     action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
     magnitudeMultiplier: 1
@@ -2931,10 +2932,10 @@ MonoBehaviour:
       crossFade: 0
       playbackSpeed: 0
       overrideSpeed: 0
-    animationCrossFade: 0
-    animationSpeedMultiplier: 1
+    animationCrossFade: 0.01
+    animationSpeedMultiplier: 0.8
     scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 0
+    overrideAnimationSpeed: 1
   - id: step3
     action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
     magnitudeMultiplier: 1
@@ -2980,10 +2981,10 @@ MonoBehaviour:
       crossFade: 0
       playbackSpeed: 0
       overrideSpeed: 0
-    animationCrossFade: 0
-    animationSpeedMultiplier: 1
+    animationCrossFade: 0.01
+    animationSpeedMultiplier: 0.8
     scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 0
+    overrideAnimationSpeed: 1
   overrideMovementProfile: {fileID: 0}
   queuedInputLifetime: 0.35
 --- !u!114 &535669729
@@ -3562,18 +3563,18 @@ MonoBehaviour:
     playbackSpeed: 0
     overrideSpeed: 0
   stunnedAnimation:
-    directionMode: 0
+    directionMode: 2
     mirrorLeftRight: 0
     singleClip: {fileID: 0}
-    northClip: {fileID: 0}
-    southClip: {fileID: 0}
-    eastClip: {fileID: 0}
-    westClip: {fileID: 0}
-    northEastClip: {fileID: 0}
-    southEastClip: {fileID: 0}
-    northWestClip: {fileID: 0}
-    southWestClip: {fileID: 0}
-    crossFade: 0
+    northClip: {fileID: 7400000, guid: b450c7b35f840814ea72e8efae708d4f, type: 2}
+    southClip: {fileID: 7400000, guid: 41cb6dd2a2d58474e901b5ad1b203112, type: 2}
+    eastClip: {fileID: 7400000, guid: 9264714b6e0b82c41bef0251a522cf67, type: 2}
+    westClip: {fileID: 7400000, guid: 3515501e7ab0fd74693d9f2395f83637, type: 2}
+    northEastClip: {fileID: 7400000, guid: 143f15e06959c3947b212e00b79f6d5b, type: 2}
+    southEastClip: {fileID: 7400000, guid: 6af6498e95fc8d7488842bb8f5f22700, type: 2}
+    northWestClip: {fileID: 7400000, guid: 10dbaad887b525a4b969fa755a0f2afa, type: 2}
+    southWestClip: {fileID: 7400000, guid: d0d7e71f14d0990408befb2cfd774d77, type: 2}
+    crossFade: 0.1
     playbackSpeed: 0
     overrideSpeed: 0
   aimProfile: {fileID: 0}
@@ -3606,8 +3607,8 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Constraints: 112
+  m_CollisionDetection: 1
 --- !u!136 &604436156
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -3667,19 +3668,19 @@ MonoBehaviour:
   actionMagnitude: 1
   skipIfActionInProgress: 1
   defaultAnimationRequest:
-    directionMode: 0
+    directionMode: 2
     mirrorLeftRight: 0
     singleClip: {fileID: 0}
-    northClip: {fileID: 0}
-    southClip: {fileID: 0}
-    eastClip: {fileID: 0}
-    westClip: {fileID: 0}
-    northEastClip: {fileID: 0}
-    southEastClip: {fileID: 0}
-    northWestClip: {fileID: 0}
-    southWestClip: {fileID: 0}
+    northClip: {fileID: 7400000, guid: c1a07ba7f2ae3224faae6b566da2fe88, type: 2}
+    southClip: {fileID: 7400000, guid: c5ed648b499345346bc682fb76d8bde5, type: 2}
+    eastClip: {fileID: 7400000, guid: 04026b1095af6e9479b225a2e0d6e1ba, type: 2}
+    westClip: {fileID: 7400000, guid: f7a94d74d06bda946848742ca9bdc014, type: 2}
+    northEastClip: {fileID: 7400000, guid: 46acf4cb81be8554ab3a586bf7958b17, type: 2}
+    southEastClip: {fileID: 7400000, guid: 42dcd66a0dfe6e04e834b8ab05ccc3b0, type: 2}
+    northWestClip: {fileID: 7400000, guid: 544d5e7f051439b45b7bdb3002337779, type: 2}
+    southWestClip: {fileID: 7400000, guid: 9fbaf3cf5e80e524caad91d15ba30a7c, type: 2}
     crossFade: 0
-    playbackSpeed: 0
+    playbackSpeed: 1
     overrideSpeed: 0
   requiresAimInput: 1
   entrySteps:
@@ -5628,7 +5629,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1018706274}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.3826835, z: -0, w: -0.9238795}
+  m_LocalRotation: {x: -0.07804997, y: 0.38131547, z: -0.032329336, w: -0.92057675}
   m_LocalPosition: {x: 0, y: -0.52, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5650,7 +5651,7 @@ MonoBehaviour:
   defaultClip: {fileID: 7400000, guid: 42dcd66a0dfe6e04e834b8ab05ccc3b0, type: 2}
   playOnAwake: 1
   speedMultiplier: 1
-  faceCamera: 1
+  cameraXOffsetMax: 17
 --- !u!95 &1018706277
 Animator:
   serializedVersion: 7
@@ -5962,7 +5963,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1039137025}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.3826835, z: 0, w: -0.9238795}
+  m_LocalRotation: {x: -0.08974434, y: 0.3808737, z: -0.037173353, w: -0.91951036}
   m_LocalPosition: {x: 2.92, y: 1.74, z: 0.92}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5984,7 +5985,7 @@ MonoBehaviour:
   defaultClip: {fileID: 0}
   playOnAwake: 1
   speedMultiplier: 1
-  faceCamera: 1
+  cameraXOffsetMax: 17
 --- !u!95 &1039137029
 Animator:
   serializedVersion: 7
@@ -7166,7 +7167,7 @@ MonoBehaviour:
   repathFromTargetDelta: 0.75
   cacheTTL: 0.75
   maxSolvesPerFrame: 16
-  drawFinalPaths: 1
+  drawFinalPaths: 0
   pathColor: {r: 0.2, g: 1, b: 0.2, a: 0.9}
   cachedPathColor: {r: 0.2, g: 0.6, b: 1, a: 0.5}
 --- !u!4 &1315240304
@@ -10037,7 +10038,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1931464245}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.3826835, z: 0, w: -0.9238795}
+  m_LocalRotation: {x: -0.11668017, y: 0.3796193, z: -0.04833052, w: -0.9164819}
   m_LocalPosition: {x: 1.7, y: 1.584, z: -4.677}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -10132,7 +10133,7 @@ MonoBehaviour:
   defaultClip: {fileID: 0}
   playOnAwake: 1
   speedMultiplier: 1
-  faceCamera: 1
+  cameraXOffsetMax: 17
 --- !u!1 &1937662111
 GameObject:
   m_ObjectHideFlags: 0
@@ -10160,7 +10161,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1937662111}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.3826835, z: -0, w: -0.9238795}
+  m_LocalRotation: {x: -0.10663548, y: 0.38012588, z: -0.04416987, w: -0.9177049}
   m_LocalPosition: {x: 0, y: -0.52, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -10182,7 +10183,7 @@ MonoBehaviour:
   defaultClip: {fileID: 0}
   playOnAwake: 1
   speedMultiplier: 1
-  faceCamera: 1
+  cameraXOffsetMax: 20
 --- !u!95 &1937662114
 Animator:
   serializedVersion: 7
@@ -10231,7 +10232,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  - {fileID: 2100000, guid: 9fe94e1797d35544cbb48850862df228, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

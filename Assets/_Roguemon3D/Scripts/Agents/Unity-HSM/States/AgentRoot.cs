@@ -189,7 +189,7 @@ namespace HSM {
     {
         public Stunned(AgentController controller, StateMachine machine, State parent = null) : base(controller, machine, parent)
         {
-
+            
         }
 
         protected override State GetTransition()
@@ -207,6 +207,12 @@ namespace HSM {
         protected override AgentAnimationRequest GetAnimationRequest()
         {
             return controller ? controller.StunnedAnimation : AgentAnimationRequest.None;
+        }
+
+        protected override void OnEnter()
+        {
+            controller?.AnimationController.Clear();
+            base.OnEnter();
         }
     }
 }
