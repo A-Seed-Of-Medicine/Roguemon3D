@@ -78,6 +78,9 @@ namespace _PinBoy.Scripts.CharacterMovement
         public Health health { get; private set; }
         public StatusHandler statusHandler { get; private set; }
 
+        public event Action<DamageInfo> DamageTaken;
+        public event Action<DamageInfo> DamageDealt;
+
         [Header("Animation (optional)")]
         [SerializeField] private SpriteAnimator spriteAnimator;
         [Header("State Animations")]
@@ -1076,6 +1079,20 @@ namespace _PinBoy.Scripts.CharacterMovement
         public void ApplyDamage(DamageInfo damageInfo)
         {
             health?.ApplyDamage(damageInfo);
+            if (damageInfo.amount > 0f)
+            {
+                DamageTaken?.Invoke(damageInfo);
+            }
+        }
+
+        internal void NotifyDamageDealt(DamageInfo damageInfo)
+        {
+            if (damageInfo.amount <= 0f)
+            {
+                return;
+            }
+
+            DamageDealt?.Invoke(damageInfo);
         }
         
         protected virtual void OnDrawGizmosSelected()

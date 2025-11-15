@@ -101,10 +101,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             [Header("VFX")]
             public ParticleSystem vfx;
 
+            [Header("Hit Stop")]
+            [Min(0f)] public float hitStopOnExecute;
+            [Min(0f)] public float hitStopOnHit;
+            public bool multiplyHitStopPerHit = true;
+
             [Header("Animation")]
             public AnimationClip animationClip;
             [Min(0f)] public float animationCrossFade = 0.1f;
-            public float animationSpeed = 1f;
+            public float animationSpeedMultiplier = 1f;
+            public bool scaleAnimationSpeedToStepDuration;
             public bool overrideAnimationSpeed;
 
             public float TotalDuration => Mathf.Max(0.0001f, windup + active + recovery);
@@ -149,6 +155,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool nudgePending;
         Vector3 cachedStepDirection = Vector3.forward;
         float pendingComboResetDelay;
+        bool stepHitStopAppliedOnHit;
 
         internal bool IsComboExecuting => comboActive || IsCurrentStepRunning || pendingDelayActive;
 
@@ -427,6 +434,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             nudgePending = false;
             nudgeTimer = 0f;
             pendingComboResetDelay = 0f;
+            stepHitStopAppliedOnHit = false;
 
             inActivePhase = false;
             inRecoveryPhase = false;
@@ -445,6 +453,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             comboActive = true;
             ApplyStepAnimation(step);
+            ApplyStepHitStopOnExecute(step);
 
             if (step.lockMovement)
             {
@@ -478,14 +487,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (step.animationClip != null)
             {
-                float speed = step.animationSpeed <= 0f ? 1f : step.animationSpeed;
+                float speed = step.animationSpeedMultiplier > 0f ? step.animationSpeedMultiplier : 1f;
+                if (step.scaleAnimationSpeedToStepDuration)
+                {
+                    float clipLength = step.animationClip.length;
+                    if (clipLength > 0f)
+                    {
+                        float duration = Mathf.Max(0.0001f, step.TotalDuration);
+                        speed *= clipLength / duration;
+                    }
+                }
+
+                bool shouldOverride = step.overrideAnimationSpeed || step.scaleAnimationSpeedToStepDuration || !Mathf.Approximately(speed, 1f);
+                float playbackSpeed = shouldOverride ? Mathf.Max(0.0001f, speed) : 1f;
+
                 AgentAnimationRequest request = new AgentAnimationRequest
                 {
                     directionMode = AgentAnimationRequest.DirectionMode.Single,
                     singleClip = step.animationClip,
                     crossFade = Mathf.Max(0f, step.animationCrossFade),
-                    playbackSpeed = speed,
-                    overrideSpeed = step.overrideAnimationSpeed
+                    playbackSpeed = playbackSpeed,
+                    overrideSpeed = shouldOverride
                 };
                 SetAnimationRequest(request);
             }
@@ -493,6 +515,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 ResetAnimationRequest();
             }
+        }
+
+        void ApplyStepHitStopOnExecute(ComboStep step)
+        {
+            if (step == null || step.hitStopOnExecute <= 0f)
+            {
+                return;
+            }
+
+            CameraManager.Instance?.TryAddHitStopForAgent(Controller, step.hitStopOnExecute);
         }
 
         void StartWindupPhase(ComboStep step)
@@ -703,6 +735,28 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             float magnitude = Mathf.Max(0f, actionMagnitude) * Mathf.Max(0f, step.magnitudeMultiplier);
             var runtime = new AgentActionRuntime(Controller, this, target, magnitude);
             Controller.ExecuteAction(runtimeAction, runtime).Forget();
+            ApplyStepHitStopOnHit(step);
+        }
+
+        void ApplyStepHitStopOnHit(ComboStep step)
+        {
+            if (step == null || step.hitStopOnHit <= 0f)
+            {
+                return;
+            }
+
+            if (!step.multiplyHitStopPerHit && stepHitStopAppliedOnHit)
+            {
+                return;
+            }
+
+            if (CameraManager.Instance != null && CameraManager.Instance.TryAddHitStopForAgent(Controller, step.hitStopOnHit))
+            {
+                if (!step.multiplyHitStopPerHit)
+                {
+                    stepHitStopAppliedOnHit = true;
+                }
+            }
         }
 
         void ApplyNudge(ComboStep step)

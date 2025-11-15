@@ -32,9 +32,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField] private bool zeroVelocityOnLock = true;
         [SerializeField] private bool faceTargetOnStart = true;
         [SerializeField] private bool faceAimDirectionWhenNoTarget = true;
-        [SerializeField] private AnimationClip animationClip;
-        [SerializeField] private float animationCrossFade = 0.05f;
-        [SerializeField] private float animationPlaybackSpeed = 1f;
         [SerializeReference] [SerializeField] private List<Effect> effects = new();
         [SerializeField] private float baseMagnitude = 1f;
         [Header("VFX")] [SerializeField] private GameObject vfxPrefab;
@@ -73,37 +70,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             else if (faceAimDirectionWhenNoTarget)
             {
                 runtime.FaceDirection(runtime.Direction);
-            }
-
-            float originalAnimatorSpeed = controller.AnimatorSpeed;
-            bool restoreAnimatorSpeed = false;
-            if (animationClip != null)
-            {
-                float playbackSpeed = animationPlaybackSpeed > 0f ? animationPlaybackSpeed : 1f;
-
-                float crossFade = Mathf.Max(0f, animationCrossFade);
-
-                if (runtime.Action != null)
-                {
-                    runtime.Action.ApplyAnimationRequest(new AgentAnimationRequest
-                    {
-                        directionMode = AgentAnimationRequest.DirectionMode.Single,
-                        singleClip = animationClip,
-                        crossFade = crossFade,
-                        playbackSpeed = playbackSpeed,
-                        overrideSpeed = animationPlaybackSpeed > 0f
-                    });
-                }
-                else
-                {
-                    if (animationPlaybackSpeed > 0f)
-                    {
-                        controller.AnimatorSpeed = animationPlaybackSpeed;
-                        restoreAnimatorSpeed = true;
-                    }
-
-                    controller.PlayActionAnimation(animationClip);
-                }
             }
 
             try
@@ -148,13 +114,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 if (vfxPrefab && vfxTiming == VfxTiming.OnEnd)
                 {
                     runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
-                }
-            }
-            finally
-            {
-                if (restoreAnimatorSpeed && animationClip != null)
-                {
-                    controller.AnimatorSpeed = originalAnimatorSpeed;
                 }
             }
         }

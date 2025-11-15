@@ -1,5 +1,6 @@
 using System;
 using _PinBoy.Scripts.CharacterMovement;
+using _PinBoy.Scripts.Gameplay.Effects;
 using _PinBoy.Scripts.Player;
 using _Roguemon3D.Scripts.Utils;
 using ImprovedTimers;
@@ -24,6 +25,7 @@ public class CameraManager : MonoBehaviour
     public float cameraFOV = 80f;
     public float verticalScale = 1.41421356f; // √2
     Matrix4x4 baseProj;
+    PlayerController subscribedPlayer;
 
     [Header("Hit Stop Settings")]
     public AnimCurveScale hitStopScale = new () { scale = 0.2f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
@@ -48,8 +50,9 @@ public class CameraManager : MonoBehaviour
         Instance = this;
         if (Application.isPlaying)
             DontDestroyOnLoad(gameObject);
-        
+
         if (!mainCamera) mainCamera = Camera.main;
+        RefreshPlayerSubscription();
     }
 
     private void OnValidate()
@@ -59,6 +62,10 @@ public class CameraManager : MonoBehaviour
             cinemachineCamera.Lens.FieldOfView = cameraFOV;
         }
         OnPreCull();
+        if (Application.isPlaying)
+        {
+            RefreshPlayerSubscription();
+        }
     }
     
     public void AddDamageTakenHitStop(float amount)
@@ -71,9 +78,26 @@ public class CameraManager : MonoBehaviour
         stopAccumulated += amount * damageDealtMultiplier;
     }
     
-    public void AddHitStop(float amount) 
+    public void AddHitStop(float amount)
     {
         stopAccumulated += amount;
+    }
+
+    public bool TryAddHitStopForAgent(AgentController agent, float amount)
+    {
+        if (!agent || amount <= 0f)
+        {
+            return false;
+        }
+
+        PlayerController target = subscribedPlayer != null ? subscribedPlayer : playerController;
+        if (target == null || agent != target)
+        {
+            return false;
+        }
+
+        AddHitStop(amount);
+        return true;
     }
     
     void HitStopUpdate(float deltaTime)
@@ -95,14 +119,15 @@ public class CameraManager : MonoBehaviour
 
     public void Update()
     {
-        HitStopUpdate(Time.deltaTime);   
+        RefreshPlayerSubscription();
+        HitStopUpdate(Time.deltaTime);
     }
 
     public Camera GetMainCamera()
     {
         return mainCamera;
     }
-    
+
     void LateUpdate()
     {
         if (!mainCamera) return;
@@ -117,13 +142,18 @@ public class CameraManager : MonoBehaviour
     void OnEnable()
     {
         if (!mainCamera) mainCamera = Camera.main;
-        mainCamera.ResetProjectionMatrix();
-        baseProj = mainCamera.projectionMatrix; // capture current
+        if (mainCamera != null)
+        {
+            mainCamera.ResetProjectionMatrix();
+            baseProj = mainCamera.projectionMatrix; // capture current
+        }
+        RefreshPlayerSubscription();
     }
 
     void OnDisable()
     {
         if (mainCamera != null) mainCamera.ResetProjectionMatrix();
+        ClearPlayerSubscription();
     }
 
     void OnPreCull()
@@ -135,5 +165,52 @@ public class CameraManager : MonoBehaviour
         var S = Matrix4x4.identity;
         S[1,1] = verticalScale;   // scale Y in clip space
         mainCamera.projectionMatrix = S * baseProj;
+    }
+
+    void RefreshPlayerSubscription()
+    {
+        if (subscribedPlayer == playerController)
+        {
+            return;
+        }
+
+        ClearPlayerSubscription();
+
+        if (playerController != null)
+        {
+            playerController.DamageTaken += HandlePlayerDamageTaken;
+            playerController.DamageDealt += HandlePlayerDamageDealt;
+            subscribedPlayer = playerController;
+        }
+    }
+
+    void ClearPlayerSubscription()
+    {
+        if (subscribedPlayer != null)
+        {
+            subscribedPlayer.DamageTaken -= HandlePlayerDamageTaken;
+            subscribedPlayer.DamageDealt -= HandlePlayerDamageDealt;
+            subscribedPlayer = null;
+        }
+    }
+
+    void HandlePlayerDamageTaken(DamageInfo damageInfo)
+    {
+        if (damageInfo.amount <= 0f)
+        {
+            return;
+        }
+
+        AddDamageTakenHitStop(damageInfo.amount);
+    }
+
+    void HandlePlayerDamageDealt(DamageInfo damageInfo)
+    {
+        if (damageInfo.amount <= 0f)
+        {
+            return;
+        }
+
+        AddDamageDealtHitStop(damageInfo.amount);
     }
 }
