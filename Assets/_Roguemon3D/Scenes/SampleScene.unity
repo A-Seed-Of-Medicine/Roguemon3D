@@ -1599,7 +1599,8 @@ MonoBehaviour:
   cinemachineImpulse: {fileID: 330585550}
   cameraFOV: 100
   verticalScale: 1.4142135
-  xSpriteRotationMultiplier: 100
+  xSpriteRotationMultiplier: 10
+  xSpriteRotationOffset: 20
   hitStopSlow:
     curve:
       serializedVersion: 2
@@ -5629,7 +5630,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1018706274}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.07804997, y: 0.38131547, z: -0.032329336, w: -0.92057675}
+  m_LocalRotation: {x: -0.13655809, y: 0.37848005, z: -0.05656419, w: -0.9137315}
   m_LocalPosition: {x: 0, y: -0.52, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5963,7 +5964,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1039137025}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.08974434, y: 0.3808737, z: -0.037173353, w: -0.91951036}
+  m_LocalRotation: {x: -0.13655806, y: 0.37848005, z: -0.056564238, w: -0.9137315}
   m_LocalPosition: {x: 2.92, y: 1.74, z: 0.92}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -10038,7 +10039,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1931464245}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.11668017, y: 0.3796193, z: -0.04833052, w: -0.9164819}
+  m_LocalRotation: {x: -0.13655807, y: 0.37848005, z: -0.05656422, w: -0.9137315}
   m_LocalPosition: {x: 1.7, y: 1.584, z: -4.677}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -10161,7 +10162,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1937662111}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.10663548, y: 0.38012588, z: -0.04416987, w: -0.9177049}
+  m_LocalRotation: {x: -0.16043, y: 0.37686968, z: -0.06645229, w: -0.90984374}
   m_LocalPosition: {x: 0, y: -0.52, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
