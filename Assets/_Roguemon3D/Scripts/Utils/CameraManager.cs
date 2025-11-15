@@ -71,6 +71,11 @@ public class CameraManager : MonoBehaviour
         stopAccumulated += amount * damageDealtMultiplier;
     }
     
+    public void AddHitStop(float amount) 
+    {
+        stopAccumulated += amount;
+    }
+    
     void HitStopUpdate(float deltaTime)
     {
         if (stopAccumulated <= 0f)
