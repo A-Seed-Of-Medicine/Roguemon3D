@@ -250,6 +250,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 EditorGUILayout.PropertyField(step.FindPropertyRelative("magnitudeMultiplier"));
                 EditorGUILayout.PropertyField(step.FindPropertyRelative("triggerWhenNoTarget"));
                 EditorGUILayout.PropertyField(step.FindPropertyRelative("allowRepeatedHits"));
+                EditorGUILayout.PropertyField(step.FindPropertyRelative("stunImmune"));
             }
 
             GUILayout.Space(SectionSpacing);
@@ -308,6 +309,29 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             GUILayout.Space(SectionSpacing);
 
+            state.HitStop = EditorGUILayout.BeginFoldoutHeaderGroup(state.HitStop, "Hit Stop");
+            if (state.HitStop)
+            {
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    SerializedProperty hitStopOnExecute = step.FindPropertyRelative("hitStopOnExecute");
+                    SerializedProperty hitStopOnHit = step.FindPropertyRelative("hitStopOnHit");
+                    SerializedProperty multiplyHitStopPerHit = step.FindPropertyRelative("multiplyHitStopPerHit");
+
+                    EditorGUILayout.PropertyField(hitStopOnExecute);
+                    EditorGUILayout.PropertyField(hitStopOnHit);
+
+                    using (new EditorGUI.DisabledScope(hitStopOnHit.floatValue <= 0f))
+                    {
+                        EditorGUILayout.PropertyField(multiplyHitStopPerHit);
+                    }
+                }
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+
+
+            GUILayout.Space(SectionSpacing);
+
             state.Transitions = EditorGUILayout.BeginFoldoutHeaderGroup(state.Transitions, $"Transitions ({step.FindPropertyRelative("transitions").arraySize})");
             if (state.Transitions)
             {
@@ -326,6 +350,34 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
                     EditorGUILayout.PropertyField(step.FindPropertyRelative("vfx"));
+                }
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+
+            GUILayout.Space(SectionSpacing);
+
+            state.Animation = EditorGUILayout.BeginFoldoutHeaderGroup(state.Animation, "Animation");
+            if (state.Animation)
+            {
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    SerializedProperty animationProp = step.FindPropertyRelative("animation");
+                    SerializedProperty crossFadeProp = step.FindPropertyRelative("animationCrossFade");
+                    SerializedProperty scaleSpeedProp = step.FindPropertyRelative("scaleAnimationSpeedToStepDuration");
+                    SerializedProperty overrideSpeedProp = step.FindPropertyRelative("overrideAnimationSpeed");
+                    SerializedProperty speedMultiplierProp = step.FindPropertyRelative("animationSpeedMultiplier");
+
+                    EditorGUILayout.PropertyField(animationProp);
+                    EditorGUILayout.PropertyField(crossFadeProp);
+
+                    EditorGUILayout.PropertyField(scaleSpeedProp);
+                    EditorGUILayout.PropertyField(overrideSpeedProp);
+
+                    bool speedControlsEnabled = scaleSpeedProp.boolValue || overrideSpeedProp.boolValue;
+                    using (new EditorGUI.DisabledScope(!speedControlsEnabled))
+                    {
+                        EditorGUILayout.PropertyField(speedMultiplierProp);
+                    }
                 }
             }
             EditorGUILayout.EndFoldoutHeaderGroup();
@@ -475,6 +527,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("magnitudeMultiplier").floatValue = 1f;
             step.FindPropertyRelative("triggerWhenNoTarget").boolValue = false;
             step.FindPropertyRelative("allowRepeatedHits").boolValue = false;
+            step.FindPropertyRelative("stunImmune").boolValue = false;
             step.FindPropertyRelative("windup").floatValue = 0.05f;
             step.FindPropertyRelative("active").floatValue = 0.15f;
             step.FindPropertyRelative("recovery").floatValue = 0.25f;
@@ -496,6 +549,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             SerializedProperty transitions = step.FindPropertyRelative("transitions");
             ClearArray(transitions);
             step.FindPropertyRelative("vfx").objectReferenceValue = null;
+            step.FindPropertyRelative("hitStopOnExecute").floatValue = 0f;
+            step.FindPropertyRelative("hitStopOnHit").floatValue = 0f;
+            step.FindPropertyRelative("multiplyHitStopPerHit").boolValue = true;
+            step.FindPropertyRelative("animationCrossFade").floatValue = 0.1f;
+            step.FindPropertyRelative("animationSpeedMultiplier").floatValue = 1f;
+            step.FindPropertyRelative("scaleAnimationSpeedToStepDuration").boolValue = false;
+            step.FindPropertyRelative("overrideAnimationSpeed").boolValue = false;
         }
 
         static void ClearArray(SerializedProperty property)
@@ -520,8 +580,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                     Timing = true,
                     Movement = true,
                     HitDetection = true,
+                    HitStop = true,
                     Transitions = true,
-                    Vfx = true
+                    Vfx = true,
+                    Animation = true
                 };
                 foldoutStates[index] = state;
             }
@@ -534,8 +596,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             public bool Timing;
             public bool Movement;
             public bool HitDetection;
+            public bool HitStop;
             public bool Transitions;
             public bool Vfx;
+            public bool Animation;
         }
     }
 }
