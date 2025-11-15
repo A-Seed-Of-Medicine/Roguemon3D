@@ -72,49 +72,46 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 runtime.FaceDirection(runtime.Direction);
             }
 
-            try
+            Transform vfxAnchor = this.vfxAnchor == VfxAnchor.Source ? runtime.Source?.transform : runtime.Target?.transform;
+            
+            if (vfxPrefab && vfxTiming == VfxTiming.OnStart)
             {
-                Transform vfxAnchor = this.vfxAnchor == VfxAnchor.Source ? runtime.Source?.transform : runtime.Target?.transform;
-                
-                if (vfxPrefab && vfxTiming == VfxTiming.OnStart)
-                {
-                    runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
-                }
+                runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
+            }
 
-                float clampedDelay = Mathf.Max(0f, effectDelay);
-                if (clampedDelay > 0f)
-                {
-                    await UniTask.Delay(TimeSpan.FromSeconds(clampedDelay), cancellationToken: cancellationToken);
-                }
+            float clampedDelay = Mathf.Max(0f, effectDelay);
+            if (clampedDelay > 0f)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(clampedDelay), cancellationToken: cancellationToken);
+            }
 
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return;
-                }
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
 
-                if (vfxPrefab && vfxTiming == VfxTiming.OnEffect)
-                {
-                    runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
-                }
+            if (vfxPrefab && vfxTiming == VfxTiming.OnEffect)
+            {
+                runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
+            }
 
-                runtime.ApplyEffects(effects, baseMagnitude);
+            runtime.ApplyEffects(effects, baseMagnitude);
 
-                float totalDuration = Mathf.Max(Duration, clampedDelay);
-                float remaining = Mathf.Max(0f, totalDuration - clampedDelay);
-                if (remaining > 0f)
-                {
-                    await UniTask.Delay(TimeSpan.FromSeconds(remaining), cancellationToken: cancellationToken);
-                }
+            float totalDuration = Mathf.Max(Duration, clampedDelay);
+            float remaining = Mathf.Max(0f, totalDuration - clampedDelay);
+            if (remaining > 0f)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(remaining), cancellationToken: cancellationToken);
+            }
 
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return;
-                }
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
 
-                if (vfxPrefab && vfxTiming == VfxTiming.OnEnd)
-                {
-                    runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
-                }
+            if (vfxPrefab && vfxTiming == VfxTiming.OnEnd)
+            {
+                runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
             }
         }
     }

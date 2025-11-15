@@ -19,26 +19,27 @@ public class CameraManager : MonoBehaviour
     [SerializeField]
     private CinemachineCamera cinemachineCamera;
     [SerializeField]
-    private CinemachineBasicMultiChannelPerlin cinemachineNoise;
+    private CinemachineImpulseSource cinemachineImpulse;
     private Vector3 cachedCameraPosition;
     public Action<Vector3, Vector3> OnCameraPositionUpdated;
     public float cameraFOV = 80f;
     public float verticalScale = 1.41421356f; // √2
     Matrix4x4 baseProj;
-    PlayerController subscribedPlayer;
 
     [Header("Hit Stop Settings")]
-    public AnimCurveScale hitStopScale = new () { scale = 0.2f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
-    public AnimCurveScale hitStopZoom = new () { scale = 0.5f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
-    public AnimCurveScale hitStopShake = new () { scale = 0.5f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
-    public AnimCurveScale hitStopDecay = new () { scale = 0.2f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
+    public AnimCurveScale hitStopSlow = new () { scale = 0.2f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
+    public AnimCurveScale hitCameraZoom = new () { scale = 0.5f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
+    public AnimCurveScale hitStopDuration = new () { scale = 0.2f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
+    public AnimCurveScale hitShakeIntensity = new () { scale = 0.5f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
+    public AnimCurveScale hitShakeDuration = new () { scale = 0.5f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
 
     [SerializeField]
     private float damageTakenMultiplier = 1f;
     [SerializeField]
     private float damageDealtMultiplier = 1f;
     
-    private float stopAccumulated;
+    private float stopMultiplier;
+    private float timeAccumulated;
 
     private void Awake()
     {
@@ -52,7 +53,6 @@ public class CameraManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
         if (!mainCamera) mainCamera = Camera.main;
-        RefreshPlayerSubscription();
     }
 
     private void OnValidate()
@@ -62,25 +62,30 @@ public class CameraManager : MonoBehaviour
             cinemachineCamera.Lens.FieldOfView = cameraFOV;
         }
         OnPreCull();
-        if (Application.isPlaying)
-        {
-            RefreshPlayerSubscription();
-        }
     }
     
     public void AddDamageTakenHitStop(float amount)
     {
-        stopAccumulated += amount * damageTakenMultiplier;
+        if (amount * damageTakenMultiplier < stopMultiplier)
+            return;
+        stopMultiplier = amount * damageTakenMultiplier;
+        timeAccumulated = 0f;
     }
     
     public void AddDamageDealtHitStop(float amount)
     {
-        stopAccumulated += amount * damageDealtMultiplier;
+        if (amount * damageDealtMultiplier < stopMultiplier)
+            return;
+        stopMultiplier = amount * damageDealtMultiplier;
+        timeAccumulated = 0f;
     }
     
     public void AddHitStop(float amount)
     {
-        stopAccumulated += amount;
+        if (amount * damageDealtMultiplier < stopMultiplier)
+            return;
+        stopMultiplier = amount;
+        timeAccumulated = 0f;
     }
 
     public bool TryAddHitStopForAgent(AgentController agent, float amount)
@@ -90,37 +95,35 @@ public class CameraManager : MonoBehaviour
             return false;
         }
 
-        PlayerController target = subscribedPlayer != null ? subscribedPlayer : playerController;
-        if (target == null || agent != target)
-        {
+        PlayerController target = playerController;
+        if (!playerController || !target || agent != target)
             return false;
-        }
 
-        AddHitStop(amount);
+        AddDamageDealtHitStop(amount);
         return true;
     }
     
     void HitStopUpdate(float deltaTime)
     {
-        if (stopAccumulated <= 0f)
+        if (stopMultiplier <= 0f)
             return;
-
-        float zoom = hitStopZoom.InverseEvaluate(stopAccumulated);
-        float scale = hitStopScale.InverseEvaluate(stopAccumulated);
-        float shake = hitStopShake.InverseEvaluate(stopAccumulated);
-        Time.timeScale = scale;
-        cinemachineNoise.AmplitudeGain = shake;
-        cinemachineCamera.Lens.FieldOfView = cameraFOV + zoom;
         
-        stopAccumulated -= deltaTime * hitStopDecay.Evaluate(stopAccumulated);
-        if (stopAccumulated < 0f)
-            stopAccumulated = 0f;
+        timeAccumulated += deltaTime;
+        float t = hitStopDuration.Evaluate(timeAccumulated) * stopMultiplier;
+        float zoom = hitCameraZoom.Evaluate(t);
+        float scale = hitStopSlow.Evaluate(t);
+        Time.timeScale = 1 - scale;
+        cinemachineCamera.Lens.FieldOfView = cameraFOV + zoom;
+        if (t > 0) return;
+        stopMultiplier = 0f;
+        Time.timeScale = 1f;
+        cinemachineCamera.Lens.FieldOfView = cameraFOV;
+        timeAccumulated = 0f;
     }
 
     public void Update()
     {
-        RefreshPlayerSubscription();
-        HitStopUpdate(Time.deltaTime);
+        HitStopUpdate(Time.unscaledDeltaTime);
     }
 
     public Camera GetMainCamera()
@@ -147,13 +150,11 @@ public class CameraManager : MonoBehaviour
             mainCamera.ResetProjectionMatrix();
             baseProj = mainCamera.projectionMatrix; // capture current
         }
-        RefreshPlayerSubscription();
     }
 
     void OnDisable()
     {
         if (mainCamera != null) mainCamera.ResetProjectionMatrix();
-        ClearPlayerSubscription();
     }
 
     void OnPreCull()
@@ -167,44 +168,24 @@ public class CameraManager : MonoBehaviour
         mainCamera.projectionMatrix = S * baseProj;
     }
 
-    void RefreshPlayerSubscription()
-    {
-        if (subscribedPlayer == playerController)
-        {
-            return;
-        }
-
-        ClearPlayerSubscription();
-
-        if (playerController != null)
-        {
-            playerController.DamageTaken += HandlePlayerDamageTaken;
-            playerController.DamageDealt += HandlePlayerDamageDealt;
-            subscribedPlayer = playerController;
-        }
-    }
-
-    void ClearPlayerSubscription()
-    {
-        if (subscribedPlayer != null)
-        {
-            subscribedPlayer.DamageTaken -= HandlePlayerDamageTaken;
-            subscribedPlayer.DamageDealt -= HandlePlayerDamageDealt;
-            subscribedPlayer = null;
-        }
-    }
-
-    void HandlePlayerDamageTaken(DamageInfo damageInfo)
+    public void HandlePlayerDamageTaken(DamageInfo damageInfo)
     {
         if (damageInfo.amount <= 0f)
         {
             return;
         }
+        float amount = damageInfo.amount * damageTakenMultiplier;
+        
+        float shake = hitShakeIntensity.Evaluate(amount);
+        cinemachineImpulse.ImpulseDefinition.ImpulseDuration = hitShakeDuration.Evaluate(amount);
+        cinemachineImpulse.DefaultVelocity = new Vector3(damageInfo.direction.x, cinemachineImpulse.DefaultVelocity.y, damageInfo.direction.z);
+        cinemachineImpulse.GenerateImpulseWithForce(shake);
+        
 
         AddDamageTakenHitStop(damageInfo.amount);
     }
 
-    void HandlePlayerDamageDealt(DamageInfo damageInfo)
+    public void HandlePlayerDamageDealt(DamageInfo damageInfo)
     {
         if (damageInfo.amount <= 0f)
         {

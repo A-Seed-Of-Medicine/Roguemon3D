@@ -9,6 +9,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using HSM;
 using ImprovedTimers;
+using UnityEngine.Events;
 
 namespace _PinBoy.Scripts.CharacterMovement
 {
@@ -74,12 +75,12 @@ namespace _PinBoy.Scripts.CharacterMovement
         
         [field: SerializeField]
         public AllegianceType allegiance { get; set; }
-        [field: SerializeField]
-        public Health health { get; private set; }
+
+        [field: SerializeField] public Health health { get; set; } = new (100);
         public StatusHandler statusHandler { get; private set; }
 
-        public event Action<DamageInfo> DamageTaken;
-        public event Action<DamageInfo> DamageDealt;
+        public UnityEvent<DamageInfo> DamageTaken;
+        public UnityEvent<DamageInfo> DamageDealt;
 
         [Header("Animation (optional)")]
         [SerializeField] private SpriteAnimator spriteAnimator;

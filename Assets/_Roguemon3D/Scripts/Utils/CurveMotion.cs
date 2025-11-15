@@ -17,17 +17,7 @@ namespace _Roguemon3D.Scripts.Utils
         public float InverseEvaluate(float value)
         {
             if (scale == 0f) return 0f;
-            float targetValue = value / scale;
-            float t = 0f;
-            float step = 0.001f;
-            for (t = 0f; t <= 1f; t += step)
-            {
-                if (Mathf.Approximately(curve.Evaluate(t), targetValue) || curve.Evaluate(t) > targetValue)
-                {
-                    return t;
-                }
-            }
-            return 1f;
+            return curve.Evaluate(value / scale);
         }
 
         public float UnScaledEvaluate(float t) => curve.Evaluate(t);

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -48,7 +49,7 @@ namespace _PinBoy.Scripts.Animation
         
         void FaceCamera(CameraManager camera)
         {
-            if (!faceCamera || camera == null)
+            if (!faceCamera || !camera)
                 return;
             
             transform.eulerAngles = new Vector3(transform.eulerAngles.x, camera.transform.eulerAngles.y, transform.eulerAngles.z);
@@ -74,6 +75,12 @@ namespace _PinBoy.Scripts.Animation
             {
                 PauseGraph();
             }
+        }
+
+        public void Start()
+        {
+            if (CameraManager.Instance)
+                CameraManager.Instance.OnCameraPositionUpdated += (position, position2) => FaceCamera(CameraManager.Instance);
         }
 
         void OnEnable()

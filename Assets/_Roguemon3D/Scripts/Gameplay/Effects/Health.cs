@@ -4,25 +4,31 @@ using UnityEngine.Events;
 
 namespace _PinBoy.Scripts.Gameplay.Effects
 {
-    public class Health : MonoBehaviour
+    [Serializable]
+    public class Health
     {
+        public Health (float maxHealth)
+        {
+            this.max = Mathf.Max(1f, maxHealth);
+            current = this.max;
+            isDead = false;
+        }
+        
         [Serializable]
         public class DamageEvent : UnityEvent<DamageInfo> { }
         
-        [SerializeField, Min(1f)] private float maxHealth = 100f;
-        [SerializeField] private DamageEvent onDamaged = new();
-        [SerializeField] private UnityEvent onDeath = new();
+        [SerializeField, Min(1f)] private float max = 100f;
+        [SerializeField, Min(1f)] private float current;
+        [SerializeField] private bool isDead;
+        private IDamageable damageable;
 
-        private float currentHealth;
-        private bool isDead;
-
-        public float CurrentHealth => currentHealth;
-        public float MaxHealth => maxHealth;
+        public float Current => current;
+        public float Max => max;
         public bool IsDead => isDead;
 
         private void Awake()
         {
-            currentHealth = Mathf.Max(1f, maxHealth);
+            current = Mathf.Max(1f, max);
             isDead = false;
         }
 
@@ -35,13 +41,11 @@ namespace _PinBoy.Scripts.Gameplay.Effects
                 return;
             }
 
-            currentHealth = Mathf.Max(0f, currentHealth - Mathf.Max(0f, damageInfo.amount));
-            onDamaged.Invoke(damageInfo);
+            current = Mathf.Max(0f, current - Mathf.Max(0f, damageInfo.amount));
 
-            if (currentHealth <= 0f)
+            if (current <= 0f)
             {
                 isDead = true;
-                onDeath.Invoke();
             }
         }
         
@@ -52,8 +56,8 @@ namespace _PinBoy.Scripts.Gameplay.Effects
                 return;
             }
 
-            currentHealth = Mathf.Clamp(currentHealth + amount, 0f, maxHealth);
-            if (currentHealth > 0f)
+            current = Mathf.Clamp(current + amount, 0f, max);
+            if (current > 0f)
             {
                 isDead = false;
             }
