@@ -23,6 +23,7 @@ MonoBehaviour:
   effects:
   - rid: 234841993414705229
   - rid: 8319330821021368425
+  - rid: 8319330842412318799
   baseMagnitude: 1
   vfxPrefab: {fileID: 2336955926572963415, guid: 30042e234964e5642a864a048db3e407, type: 3}
   vfxAnchor: 1
@@ -47,3 +48,11 @@ MonoBehaviour:
       data:
         amount: 5
         scaleWithMagnitude: 1
+    - rid: 8319330842412318799
+      type: {class: ApplyStatusEffect, ns: _PinBoy.Scripts.Gameplay.Effects, asm: Assembly-CSharp}
+      data:
+        statusType: 0
+        recipient: 0
+        duration: 0.5
+        minimumDuration: 0
+        scaleByMagnitude: 0

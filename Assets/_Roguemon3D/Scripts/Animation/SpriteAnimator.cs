@@ -52,6 +52,7 @@ namespace _PinBoy.Scripts.Animation
             if (!faceCamera || !camera)
                 return;
             
+            Debug.Log("FaceCamera called");
             transform.eulerAngles = new Vector3(transform.eulerAngles.x, camera.transform.eulerAngles.y, transform.eulerAngles.z);
         }
 

@@ -274,7 +274,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         AgentAnimationRequest currentRequest = AgentAnimationRequest.None;
         Vector2 cachedInput;
         Vector3 cachedFacing;
-        int currentDirectionIndex = -1;
+        public int currentDirectionIndex { get; private set; } = -1;
 
         public void Initialize(SpriteAnimator targetAnimator)
         {
@@ -411,6 +411,14 @@ namespace _PinBoy.Scripts.CharacterMovement
             {
                 spriteAnimator.Play();
             }
+        }
+
+        public AnimationClip GetClip(AgentAnimationRequest request)
+        {
+            // Return animation clip based on the current direction index
+            if (currentDirectionIndex < 0)
+                currentDirectionIndex = ComputeDirectionIndex(cachedInput, cachedFacing);
+            return request.TryResolveClip(currentDirectionIndex, out AnimationClip clip, out _) ? clip : null;
         }
 
         void RestoreDefaultSpeed()

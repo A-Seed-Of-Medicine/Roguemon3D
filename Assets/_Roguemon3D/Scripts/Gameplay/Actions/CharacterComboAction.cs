@@ -109,7 +109,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool multiplyHitStopPerHit = true;
 
             [Header("Animation")]
-            public AnimationClip animationClip;
+            public AgentAnimationRequest animation;
             [Min(0f)] public float animationCrossFade = 0.1f;
             public float animationSpeedMultiplier = 1f;
             public bool scaleAnimationSpeedToStepDuration;
@@ -508,32 +508,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 ResetAnimationRequest();
                 return;
             }
-
-            if (step.animationClip != null)
+            
+            
+            if (step.animation.IsValid)
             {
-                float speed = step.animationSpeedMultiplier > 0f ? step.animationSpeedMultiplier : 1f;
                 if (step.scaleAnimationSpeedToStepDuration)
                 {
-                    float clipLength = step.animationClip.length;
+                    AnimationClip resolvedClip = Controller.AnimationController.GetClip(step.animation);
+                    float speed = step.animationSpeedMultiplier > 0f ? step.animationSpeedMultiplier : 1f;
+                    float clipLength = resolvedClip.length;
                     if (clipLength > 0f)
                     {
                         float duration = Mathf.Max(0.0001f, step.TotalDuration);
                         speed *= clipLength / duration;
                     }
+                    bool shouldOverride = step.overrideAnimationSpeed || step.scaleAnimationSpeedToStepDuration || !Mathf.Approximately(speed, 1f);
+                    float playbackSpeed = shouldOverride ? Mathf.Max(0.0001f, speed) : 1f;
+                    step.animation.playbackSpeed = playbackSpeed;
+                    step.animation.overrideSpeed = shouldOverride;
                 }
 
-                bool shouldOverride = step.overrideAnimationSpeed || step.scaleAnimationSpeedToStepDuration || !Mathf.Approximately(speed, 1f);
-                float playbackSpeed = shouldOverride ? Mathf.Max(0.0001f, speed) : 1f;
-
-                AgentAnimationRequest request = new AgentAnimationRequest
-                {
-                    directionMode = AgentAnimationRequest.DirectionMode.Single,
-                    singleClip = step.animationClip,
-                    crossFade = Mathf.Max(0f, step.animationCrossFade),
-                    playbackSpeed = playbackSpeed,
-                    overrideSpeed = shouldOverride
-                };
-                SetAnimationRequest(request);
+                SetAnimationRequest(step.animation);
             }
             else
             {

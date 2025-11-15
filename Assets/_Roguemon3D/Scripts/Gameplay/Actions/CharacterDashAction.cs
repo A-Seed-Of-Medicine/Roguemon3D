@@ -146,7 +146,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected override void OnActionReleased()
         {
-            Debug.Log("Dash released");
             // Dash is time based, releasing early does not cancel by default.
         }
 
