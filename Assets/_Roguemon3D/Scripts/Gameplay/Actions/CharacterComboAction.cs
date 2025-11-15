@@ -65,6 +65,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool triggerWhenNoTarget;
             [Tooltip("If false a target will only be affected once per active window.")]
             public bool allowRepeatedHits;
+            [Tooltip("If true the step will continue even when the agent is stunned.")]
+            public bool stunImmune;
 
             [Header("Timing")]
             [Min(0f)] public float windup = 0.05f;
@@ -133,6 +135,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         readonly HashSet<IDamageable> stepHitTargets = new();
         readonly Dictionary<ComboInput, UnityEngine.Events.UnityAction<bool>> inputHandlers = new();
         readonly Collider[] colliderCache = new Collider[16];
+        bool statusEventsRegistered;
 
         struct StepOverlapSettings
         {
@@ -202,6 +205,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             BuildLookups();
         }
 
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            SubscribeStatusEvents();
+            if (Controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
+            {
+                HandleStunStatusStarted(Controller.statusHandler.StunnedStatus);
+            }
+        }
+
         void OnValidate()
         {
             BuildLookups();
@@ -219,12 +232,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected override void OnDisable()
         {
+            UnsubscribeStatusEvents();
             base.OnDisable();
             ResetComboState();
         }
 
         protected override void OnDestroy()
         {
+            UnsubscribeStatusEvents();
             if (windupTimer != null)
             {
                 windupTimer.OnTimerFinish -= HandleWindupTimerFinished;
@@ -420,6 +435,15 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (!isContinuation && currentStep == null && skipIfActionInProgress && Controller.IsPerformingAction)
             {
                 return;
+            }
+
+            if (Controller.statusHandler?.StunnedStatus?.IsActive ?? false)
+            {
+                if (!step.stunImmune)
+                {
+                    AbortComboDueToStun();
+                    return;
+                }
             }
 
             ResetPendingTransition();
@@ -1015,6 +1039,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void ResetComboState()
         {
+            Controller?.RemoveMovementModifier(overrideMovementProfile);
             ResetPendingTransition();
             ResetStepState();
             comboResetTimer.Cancel();
@@ -1024,6 +1049,86 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 comboActive = false;
                 actionComplete?.Invoke();
             }
+        }
+
+        void SubscribeStatusEvents()
+        {
+            if (statusEventsRegistered)
+            {
+                return;
+            }
+
+            if (Controller?.statusHandler?.StunnedStatus == null)
+            {
+                return;
+            }
+
+            Controller.statusHandler.StunnedStatus.OnStart += HandleStunStatusStarted;
+            Controller.statusHandler.StunnedStatus.OnEnd += HandleStunStatusEnded;
+            statusEventsRegistered = true;
+        }
+
+        void UnsubscribeStatusEvents()
+        {
+            if (!statusEventsRegistered)
+            {
+                return;
+            }
+
+            if (Controller?.statusHandler?.StunnedStatus != null)
+            {
+                Controller.statusHandler.StunnedStatus.OnStart -= HandleStunStatusStarted;
+                Controller.statusHandler.StunnedStatus.OnEnd -= HandleStunStatusEnded;
+            }
+
+            statusEventsRegistered = false;
+        }
+
+        void HandleStunStatusStarted(IStatusEffect _)
+        {
+            if (currentStep != null && !currentStep.stunImmune)
+            {
+                AbortComboDueToStun();
+                return;
+            }
+
+            if (pendingStep != null && !pendingStep.stunImmune)
+            {
+                ResetPendingTransition();
+            }
+
+            if (comboActive && currentStep == null)
+            {
+                ResetComboState();
+            }
+        }
+
+        void HandleStunStatusEnded(IStatusEffect _)
+        {
+            if (Controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
+            {
+                return;
+            }
+
+            if (!comboActive)
+            {
+                return;
+            }
+
+            if (currentStep != null && currentStep.stunImmune)
+            {
+                return;
+            }
+
+            if (currentStep == null)
+            {
+                ResetComboState();
+            }
+        }
+
+        void AbortComboDueToStun()
+        {
+            ResetComboState();
         }
 
         Vector3 ResolveStepDirection(ComboStep step)

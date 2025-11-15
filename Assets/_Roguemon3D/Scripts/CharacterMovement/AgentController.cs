@@ -201,6 +201,11 @@ namespace _PinBoy.Scripts.CharacterMovement
         protected virtual void Awake()
         {
             statusHandler = new StatusHandler(this);
+            if (statusHandler?.StunnedStatus != null)
+            {
+                statusHandler.StunnedStatus.OnStart += HandleStunnedStatusStarted;
+                statusHandler.StunnedStatus.OnEnd += HandleStunnedStatusEnded;
+            }
             agentRoot = new AgentRoot(null, this);
             machine = new StateMachineBuilder(agentRoot).Build();
             
@@ -248,6 +253,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         protected virtual void OnEnable()
         {
             inputReader.EnableCharacterActions(true);
+            inputReader.SetStunned(statusHandler?.StunnedStatus?.IsActive ?? false);
         }
 
         protected virtual void OnDisable()
@@ -259,6 +265,11 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void OnDestroy()
         {
+            if (statusHandler?.StunnedStatus != null)
+            {
+                statusHandler.StunnedStatus.OnStart -= HandleStunnedStatusStarted;
+                statusHandler.StunnedStatus.OnEnd -= HandleStunnedStatusEnded;
+            }
             UnsubscribeFromInput();
             CancelActiveActionTask();
             ClearMovementOverrideTasks();
@@ -661,6 +672,24 @@ namespace _PinBoy.Scripts.CharacterMovement
             activeActionToken = linkedToken;
             isActionRunning = true;
             return RunActionAsync(action, runtime, linkedToken);
+        }
+
+        void HandleStunnedStatusStarted(IStatusEffect effect)
+        {
+            inputReader?.SetStunned(true);
+            CancelActiveActionTask();
+            pendingActionState = null;
+            currentVelocity = Vector3.zero;
+            verticalSpeed = 0f;
+            if (rb)
+            {
+                rb.linearVelocity = Vector3.zero;
+            }
+        }
+
+        void HandleStunnedStatusEnded(IStatusEffect effect)
+        {
+            inputReader?.SetStunned(false);
         }
 
         void CancelActiveActionTask()
