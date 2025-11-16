@@ -3,7 +3,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.LowLevel;
 
-namespace ImprovedTimers {
+namespace _Roguemon3D.Scripts.ThirdParty.ImprovedTimers {
     public static class PlayerLoopUtils {
         public static void RemoveSystem<T>(ref PlayerLoopSystem loop, in PlayerLoopSystem systemToRemove) {
             if (loop.subSystemList == null) return;

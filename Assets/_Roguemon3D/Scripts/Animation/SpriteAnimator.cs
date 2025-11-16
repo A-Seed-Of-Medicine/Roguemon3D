@@ -126,7 +126,7 @@ namespace _PinBoy.Scripts.Animation
             graph = PlayableGraph.Create($"SpriteAnimator_{name}");
             graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
 
-            mixer = AnimationMixerPlayable.Create(graph, 1, true);
+            mixer = AnimationMixerPlayable.Create(graph, 1);
             var output = AnimationPlayableOutput.Create(graph, "SpriteAnimation", animator);
             output.SetSourcePlayable(mixer);
             graph.Play();

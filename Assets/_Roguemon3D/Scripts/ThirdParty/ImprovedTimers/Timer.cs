@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ImprovedTimers {
+namespace _Roguemon3D.Scripts.ThirdParty.ImprovedTimers {
     public abstract class Timer : IDisposable {
         public float CurrentTime { get; protected set; }
         public bool IsRunning { get; private set; }
@@ -21,7 +21,7 @@ namespace ImprovedTimers {
             CurrentTime = initialTime;
             if (!IsRunning) {
                 IsRunning = true;
-                TimerManager.RegisterTimer(this);
+                _Roguemon3D.Scripts.ThirdParty.ImprovedTimers.TimerManager.RegisterTimer(this);
                 OnTimerStart.Invoke();
             }
         }
@@ -29,7 +29,7 @@ namespace ImprovedTimers {
         public void Stop() {
             if (IsRunning) {
                 IsRunning = false;
-                TimerManager.DeregisterTimer(this);
+                _Roguemon3D.Scripts.ThirdParty.ImprovedTimers.TimerManager.DeregisterTimer(this);
                 OnTimerStop.Invoke();
             }
         }
@@ -62,7 +62,7 @@ namespace ImprovedTimers {
             if (disposed) return;
 
             if (disposing) {
-                TimerManager.DeregisterTimer(this);
+                _Roguemon3D.Scripts.ThirdParty.ImprovedTimers.TimerManager.DeregisterTimer(this);
             }
 
             disposed = true;
