@@ -75,10 +75,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
                 Header("Hit Detection");
                 EditorGUI.indentLevel++;
-                DrawProperty(property.FindPropertyRelative("hitColliders"));
-                DrawProperty(property.FindPropertyRelative("targetLayers"));
-                DrawProperty(property.FindPropertyRelative("includeTriggerColliders"));
-                DrawProperty(property.FindPropertyRelative("allegianceMask"));
+                DrawProperty(property.FindPropertyRelative("hitDetectorPrefab"));
+                DrawProperty(property.FindPropertyRelative("parentHitDetectorToPivot"));
+                DrawProperty(property.FindPropertyRelative("hitDetectorPositionOffset"));
+                DrawProperty(property.FindPropertyRelative("hitDetectorRotationOffset"));
                 DrawProperty(property.FindPropertyRelative("fallbackDirection"));
                 EditorGUI.indentLevel--;
 
@@ -183,10 +183,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             // Hit Detection
             AddHeader();
-            AddProperty(property.FindPropertyRelative("hitColliders"));
-            AddProperty(property.FindPropertyRelative("targetLayers"));
-            AddProperty(property.FindPropertyRelative("includeTriggerColliders"));
-            AddProperty(property.FindPropertyRelative("allegianceMask"));
+            AddProperty(property.FindPropertyRelative("hitDetectorPrefab"));
+            AddProperty(property.FindPropertyRelative("parentHitDetectorToPivot"));
+            AddProperty(property.FindPropertyRelative("hitDetectorPositionOffset"));
+            AddProperty(property.FindPropertyRelative("hitDetectorRotationOffset"));
             AddProperty(property.FindPropertyRelative("fallbackDirection"));
 
             // Branches

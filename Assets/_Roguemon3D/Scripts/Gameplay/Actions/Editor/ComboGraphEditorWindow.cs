@@ -12,8 +12,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         const float SectionSpacing = 6f;
 
         CharacterComboAction targetAction;
-        SerializedObject serializedAction;
+        CharacterComboDefinition targetDefinition;
+        SerializedObject serializedDefinition;
         SerializedProperty requiresAimProperty;
+        SerializedProperty queuedInputLifetimeProperty;
         SerializedProperty entryStepsProperty;
         SerializedProperty stepsProperty;
 
@@ -47,8 +49,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
         void OnDisable()
         {
-            serializedAction = null;
+            serializedDefinition = null;
             requiresAimProperty = null;
+            queuedInputLifetimeProperty = null;
             entryStepsProperty = null;
             stepsProperty = null;
         }
@@ -63,15 +66,22 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 return;
             }
 
-            if (serializedAction == null)
+            if (targetDefinition == null)
+            {
+                EditorGUILayout.HelpBox("The selected CharacterComboAction does not reference a CharacterComboDefinition.", MessageType.Warning);
+                return;
+            }
+
+            if (serializedDefinition == null)
             {
                 CreateSerializedObject();
             }
 
-            serializedAction.UpdateIfRequiredOrScript();
+            serializedDefinition.UpdateIfRequiredOrScript();
 
             GUILayout.Space(SectionSpacing);
             EditorGUILayout.PropertyField(requiresAimProperty);
+            EditorGUILayout.PropertyField(queuedInputLifetimeProperty);
 
             GUILayout.Space(SectionSpacing);
             DrawEntrySteps();
@@ -79,7 +89,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             GUILayout.Space(SectionSpacing);
             DrawStepTabs();
 
-            serializedAction.ApplyModifiedProperties();
+            serializedDefinition.ApplyModifiedProperties();
         }
 
         void DrawTargetSelector()
@@ -98,10 +108,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         void SetTarget(CharacterComboAction action)
         {
             targetAction = action;
-            if (targetAction == null)
+            targetDefinition = action != null ? action.ComboDefinition : null;
+            if (targetAction == null || targetDefinition == null)
             {
-                serializedAction = null;
+                serializedDefinition = null;
                 requiresAimProperty = null;
+                queuedInputLifetimeProperty = null;
                 entryStepsProperty = null;
                 stepsProperty = null;
                 selectedStepIndex = 0;
@@ -120,10 +132,22 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 return;
             }
 
-            serializedAction = new SerializedObject(targetAction);
-            requiresAimProperty = serializedAction.FindProperty("requiresAimInput");
-            entryStepsProperty = serializedAction.FindProperty("entrySteps");
-            stepsProperty = serializedAction.FindProperty("steps");
+            targetDefinition = targetAction.ComboDefinition;
+            if (targetDefinition == null)
+            {
+                serializedDefinition = null;
+                requiresAimProperty = null;
+                queuedInputLifetimeProperty = null;
+                entryStepsProperty = null;
+                stepsProperty = null;
+                return;
+            }
+
+            serializedDefinition = new SerializedObject(targetDefinition);
+            requiresAimProperty = serializedDefinition.FindProperty("requiresAimInput");
+            queuedInputLifetimeProperty = serializedDefinition.FindProperty("queuedInputLifetime");
+            entryStepsProperty = serializedDefinition.FindProperty("entrySteps");
+            stepsProperty = serializedDefinition.FindProperty("steps");
             selectedStepIndex = Mathf.Clamp(selectedStepIndex, 0, Mathf.Max(0, stepsProperty.arraySize - 1));
         }
 
