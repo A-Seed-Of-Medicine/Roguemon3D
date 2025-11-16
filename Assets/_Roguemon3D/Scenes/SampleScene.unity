@@ -3000,171 +3000,8 @@ MonoBehaviour:
     crossFade: 0
     playbackSpeed: 1
     overrideSpeed: 0
-  requiresAimInput: 1
-  entrySteps:
-  - input: 0
-    stepId: step1
-  steps:
-  - id: step1
-    action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
-    magnitudeMultiplier: 1
-    triggerWhenNoTarget: 0
-    allowRepeatedHits: 0
-    stunImmune: 0
-    windup: 0.05
-    active: 0.15
-    recovery: 0.1
-    comboResetDelay: 0.3
-    transitionWindowOpen: 0.35
-    transitionWindowClose: 0.9
-    lockMovement: 1
-    lockAim: 1
-    zeroVelocityOnStart: 1
-    missNudgeImpulse: 200
-    missNudgeDelay: 0
-    applyNudgeWhenHit: 0
-    hitColliders:
-    - {fileID: 2026537602}
-    targetLayers:
-      serializedVersion: 2
-      m_Bits: 4294967291
-    includeTriggerColliders: 1
-    allegianceMask: 01000000
-    fallbackDirection: {x: 0, y: 0, z: 1}
-    transitions:
-    - input: 0
-      nextStepId: step2
-      queueUntilWindow: 1
-      transitionDelay: 0
-    vfx: {fileID: 1066386242}
-    hitStopOnExecute: 0
-    hitStopOnHit: 0
-    multiplyHitStopPerHit: 1
-    animation:
-      directionMode: 2
-      mirrorLeftRight: 0
-      singleClip: {fileID: 0}
-      northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
-      southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
-      eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
-      westClip: {fileID: 7400000, guid: 7ce345db03f5d9148b1e1583d31985cd, type: 2}
-      northEastClip: {fileID: 7400000, guid: 4fade7068c9e8d24099b97383adb71fc, type: 2}
-      southEastClip: {fileID: 7400000, guid: 101e943b71ae9874f9d74a4aba38a50e, type: 2}
-      northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
-      southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
-      crossFade: 0
-      playbackSpeed: 0
-      overrideSpeed: 0
-    animationCrossFade: 0.01
-    animationSpeedMultiplier: 0.8
-    scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 1
-  - id: step2
-    action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
-    magnitudeMultiplier: 1
-    triggerWhenNoTarget: 0
-    allowRepeatedHits: 0
-    stunImmune: 0
-    windup: 0.05
-    active: 0.15
-    recovery: 0.1
-    comboResetDelay: 0.3
-    transitionWindowOpen: 0.35
-    transitionWindowClose: 0.9
-    lockMovement: 1
-    lockAim: 1
-    zeroVelocityOnStart: 1
-    missNudgeImpulse: 100
-    missNudgeDelay: 0
-    applyNudgeWhenHit: 0
-    hitColliders:
-    - {fileID: 2026537602}
-    targetLayers:
-      serializedVersion: 2
-      m_Bits: 4294967291
-    includeTriggerColliders: 1
-    allegianceMask: 01000000
-    fallbackDirection: {x: 0, y: 0, z: 1}
-    transitions:
-    - input: 0
-      nextStepId: step3
-      queueUntilWindow: 1
-      transitionDelay: 0
-    vfx: {fileID: 1066386242}
-    hitStopOnExecute: 0
-    hitStopOnHit: 0
-    multiplyHitStopPerHit: 1
-    animation:
-      directionMode: 2
-      mirrorLeftRight: 0
-      singleClip: {fileID: 0}
-      northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
-      southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
-      eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
-      westClip: {fileID: 7400000, guid: 7ce345db03f5d9148b1e1583d31985cd, type: 2}
-      northEastClip: {fileID: 7400000, guid: 4fade7068c9e8d24099b97383adb71fc, type: 2}
-      southEastClip: {fileID: 7400000, guid: 101e943b71ae9874f9d74a4aba38a50e, type: 2}
-      northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
-      southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
-      crossFade: 0
-      playbackSpeed: 0
-      overrideSpeed: 0
-    animationCrossFade: 0.01
-    animationSpeedMultiplier: 0.8
-    scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 1
-  - id: step3
-    action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
-    magnitudeMultiplier: 1
-    triggerWhenNoTarget: 0
-    allowRepeatedHits: 0
-    stunImmune: 0
-    windup: 0.05
-    active: 0.15
-    recovery: 0.25
-    comboResetDelay: 0
-    transitionWindowOpen: 0.35
-    transitionWindowClose: 0.9
-    lockMovement: 1
-    lockAim: 1
-    zeroVelocityOnStart: 1
-    missNudgeImpulse: 100
-    missNudgeDelay: 0
-    applyNudgeWhenHit: 0
-    hitColliders:
-    - {fileID: 2026537602}
-    targetLayers:
-      serializedVersion: 2
-      m_Bits: 4294967291
-    includeTriggerColliders: 1
-    allegianceMask: 01000000
-    fallbackDirection: {x: 0, y: 0, z: 1}
-    transitions: []
-    vfx: {fileID: 1066386242}
-    hitStopOnExecute: 0
-    hitStopOnHit: 0
-    multiplyHitStopPerHit: 1
-    animation:
-      directionMode: 2
-      mirrorLeftRight: 0
-      singleClip: {fileID: 0}
-      northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
-      southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
-      eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
-      westClip: {fileID: 7400000, guid: 7ce345db03f5d9148b1e1583d31985cd, type: 2}
-      northEastClip: {fileID: 7400000, guid: 4fade7068c9e8d24099b97383adb71fc, type: 2}
-      southEastClip: {fileID: 7400000, guid: 101e943b71ae9874f9d74a4aba38a50e, type: 2}
-      northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
-      southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
-      crossFade: 0
-      playbackSpeed: 0
-      overrideSpeed: 0
-    animationCrossFade: 0.01
-    animationSpeedMultiplier: 0.8
-    scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 1
+  comboDefinition: {fileID: 11400000, guid: 13914a94b4f9b0c48bf77dec38255389, type: 2}
   overrideMovementProfile: {fileID: 0}
-  queuedInputLifetime: 0.35
 --- !u!114 &535669729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3875,171 +3712,8 @@ MonoBehaviour:
     crossFade: 0
     playbackSpeed: 1
     overrideSpeed: 0
-  requiresAimInput: 1
-  entrySteps:
-  - input: 0
-    stepId: step1
-  steps:
-  - id: step1
-    action: {fileID: 11400000, guid: 3164d2070ae92b34c8d7c99506046c40, type: 2}
-    magnitudeMultiplier: 1
-    triggerWhenNoTarget: 0
-    allowRepeatedHits: 0
-    stunImmune: 0
-    windup: 0.5
-    active: 0.15
-    recovery: 0.3
-    comboResetDelay: 0.3
-    transitionWindowOpen: 0.35
-    transitionWindowClose: 0.9
-    lockMovement: 1
-    lockAim: 1
-    zeroVelocityOnStart: 1
-    missNudgeImpulse: 200
-    missNudgeDelay: 0
-    applyNudgeWhenHit: 0
-    hitColliders:
-    - {fileID: 1836662727}
-    targetLayers:
-      serializedVersion: 2
-      m_Bits: 4294967291
-    includeTriggerColliders: 1
-    allegianceMask: 00000000
-    fallbackDirection: {x: 0, y: 0, z: 1}
-    transitions:
-    - input: 0
-      nextStepId: step2
-      queueUntilWindow: 1
-      transitionDelay: 0
-    vfx: {fileID: 987389470}
-    hitStopOnExecute: 0
-    hitStopOnHit: 0
-    multiplyHitStopPerHit: 1
-    animation:
-      directionMode: 2
-      mirrorLeftRight: 0
-      singleClip: {fileID: 0}
-      northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
-      southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
-      eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
-      westClip: {fileID: 7400000, guid: 7ce345db03f5d9148b1e1583d31985cd, type: 2}
-      northEastClip: {fileID: 7400000, guid: 4fade7068c9e8d24099b97383adb71fc, type: 2}
-      southEastClip: {fileID: 7400000, guid: 101e943b71ae9874f9d74a4aba38a50e, type: 2}
-      northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
-      southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
-      crossFade: 0
-      playbackSpeed: 0
-      overrideSpeed: 0
-    animationCrossFade: 0
-    animationSpeedMultiplier: 1
-    scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 0
-  - id: step2
-    action: {fileID: 11400000, guid: 3164d2070ae92b34c8d7c99506046c40, type: 2}
-    magnitudeMultiplier: 1
-    triggerWhenNoTarget: 0
-    allowRepeatedHits: 0
-    stunImmune: 0
-    windup: 0.5
-    active: 0.15
-    recovery: 0.3
-    comboResetDelay: 0.3
-    transitionWindowOpen: 0.35
-    transitionWindowClose: 0.9
-    lockMovement: 1
-    lockAim: 1
-    zeroVelocityOnStart: 1
-    missNudgeImpulse: 100
-    missNudgeDelay: 0
-    applyNudgeWhenHit: 0
-    hitColliders:
-    - {fileID: 1836662727}
-    targetLayers:
-      serializedVersion: 2
-      m_Bits: 4294967291
-    includeTriggerColliders: 1
-    allegianceMask: 00000000
-    fallbackDirection: {x: 0, y: 0, z: 1}
-    transitions:
-    - input: 0
-      nextStepId: step3
-      queueUntilWindow: 1
-      transitionDelay: 0
-    vfx: {fileID: 987389470}
-    hitStopOnExecute: 0
-    hitStopOnHit: 0
-    multiplyHitStopPerHit: 1
-    animation:
-      directionMode: 2
-      mirrorLeftRight: 0
-      singleClip: {fileID: 0}
-      northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
-      southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
-      eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
-      westClip: {fileID: 7400000, guid: 7ce345db03f5d9148b1e1583d31985cd, type: 2}
-      northEastClip: {fileID: 7400000, guid: 4fade7068c9e8d24099b97383adb71fc, type: 2}
-      southEastClip: {fileID: 7400000, guid: 101e943b71ae9874f9d74a4aba38a50e, type: 2}
-      northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
-      southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
-      crossFade: 0
-      playbackSpeed: 0
-      overrideSpeed: 0
-    animationCrossFade: 0
-    animationSpeedMultiplier: 1
-    scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 0
-  - id: step3
-    action: {fileID: 11400000, guid: 3164d2070ae92b34c8d7c99506046c40, type: 2}
-    magnitudeMultiplier: 1
-    triggerWhenNoTarget: 0
-    allowRepeatedHits: 0
-    stunImmune: 0
-    windup: 0.5
-    active: 0.15
-    recovery: 0.5
-    comboResetDelay: 0
-    transitionWindowOpen: 0.35
-    transitionWindowClose: 0.9
-    lockMovement: 1
-    lockAim: 1
-    zeroVelocityOnStart: 1
-    missNudgeImpulse: 100
-    missNudgeDelay: 0
-    applyNudgeWhenHit: 0
-    hitColliders:
-    - {fileID: 1836662727}
-    targetLayers:
-      serializedVersion: 2
-      m_Bits: 4294967291
-    includeTriggerColliders: 1
-    allegianceMask: 00000000
-    fallbackDirection: {x: 0, y: 0, z: 1}
-    transitions: []
-    vfx: {fileID: 987389470}
-    hitStopOnExecute: 0
-    hitStopOnHit: 0
-    multiplyHitStopPerHit: 1
-    animation:
-      directionMode: 2
-      mirrorLeftRight: 0
-      singleClip: {fileID: 0}
-      northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
-      southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
-      eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
-      westClip: {fileID: 7400000, guid: 7ce345db03f5d9148b1e1583d31985cd, type: 2}
-      northEastClip: {fileID: 7400000, guid: 4fade7068c9e8d24099b97383adb71fc, type: 2}
-      southEastClip: {fileID: 7400000, guid: 101e943b71ae9874f9d74a4aba38a50e, type: 2}
-      northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
-      southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
-      crossFade: 0
-      playbackSpeed: 0
-      overrideSpeed: 0
-    animationCrossFade: 0
-    animationSpeedMultiplier: 1
-    scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 0
+  comboDefinition: {fileID: 0}
   overrideMovementProfile: {fileID: 0}
-  queuedInputLifetime: 0.35
 --- !u!1 &609796659
 GameObject:
   m_ObjectHideFlags: 0
@@ -4317,6 +3991,50 @@ Transform:
   m_Children:
   - {fileID: 1726944358}
   m_Father: {fileID: 1021419550}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &678617543
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 678617545}
+  - component: {fileID: 678617544}
+  m_Layer: 0
+  m_Name: PoolManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &678617544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 678617543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f28b4b68297bd7a4988663aefa1074d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_Roguemon3D.Scripts.Utils.PoolManager
+--- !u!4 &678617545
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 678617543}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -50.37376, y: -16.82541, z: 19.94028}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &702107373
 GameObject:
@@ -4744,7 +4462,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e65ece85ea171b49b7f1d295ef2b3aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TriggerTemplate
-  triggerCollider: {fileID: 0}
+  triggerColliders: []
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967291
+  includeTriggerColliders: 1
+  allegianceMask: 
+  activeAnimation: {fileID: 0}
 --- !u!4 &774633816
 Transform:
   m_ObjectHideFlags: 0
@@ -5800,11 +5524,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
   m_PrefabInstance: {fileID: 1915009543}
   m_PrefabAsset: {fileID: 0}
---- !u!198 &987389470 stripped
-ParticleSystem:
-  m_CorrespondingSourceObject: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
-  m_PrefabInstance: {fileID: 1915009543}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &988102224
 GameObject:
   m_ObjectHideFlags: 0
@@ -6305,11 +6024,6 @@ Transform:
 --- !u!4 &1066386240 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
-  m_PrefabInstance: {fileID: 1611569199}
-  m_PrefabAsset: {fileID: 0}
---- !u!198 &1066386242 stripped
-ParticleSystem:
-  m_CorrespondingSourceObject: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
   m_PrefabInstance: {fileID: 1611569199}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1067405784
@@ -11136,3 +10850,4 @@ SceneRoots:
   - {fileID: 1931464249}
   - {fileID: 1922376181}
   - {fileID: 774633816}
+  - {fileID: 678617545}

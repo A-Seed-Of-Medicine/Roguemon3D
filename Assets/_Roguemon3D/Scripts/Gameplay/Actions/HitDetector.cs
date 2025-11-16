@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using _PinBoy.Scripts.CharacterMovement;
+using _PinBoy.Scripts.Gameplay.Actions;
+using _PinBoy.Scripts.Gameplay.Effects;
 using UnityEngine;
 
 public class HitDetector : MonoBehaviour
