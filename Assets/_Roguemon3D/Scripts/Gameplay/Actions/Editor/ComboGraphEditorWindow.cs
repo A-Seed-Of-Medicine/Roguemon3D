@@ -279,6 +279,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
                     EditorGUILayout.PropertyField(step.FindPropertyRelative("lockMovement"));
+                    EditorGUILayout.PropertyField(step.FindPropertyRelative("lockAim"));
                     EditorGUILayout.PropertyField(step.FindPropertyRelative("zeroVelocityOnStart"));
                     EditorGUILayout.PropertyField(step.FindPropertyRelative("missNudgeImpulse"));
                     EditorGUILayout.PropertyField(step.FindPropertyRelative("missNudgeDelay"));
@@ -539,6 +540,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("transitionWindowOpen").floatValue = 0.35f;
             step.FindPropertyRelative("transitionWindowClose").floatValue = 0.9f;
             step.FindPropertyRelative("lockMovement").boolValue = true;
+            step.FindPropertyRelative("lockAim").boolValue = true;
             step.FindPropertyRelative("zeroVelocityOnStart").boolValue = true;
             step.FindPropertyRelative("missNudgeImpulse").floatValue = 0f;
             step.FindPropertyRelative("missNudgeDelay").floatValue = 0f;

@@ -83,6 +83,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             [Header("Movement")]
             public bool lockMovement = true;
+            public bool lockAim = true;
             public bool zeroVelocityOnStart = true;
             [Tooltip("Impulse applied along the aim direction if the step doesn't connect with a target.")]
             public float missNudgeImpulse;
@@ -485,6 +486,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 float lockTime = step.windup + step.active;
                 Controller.LockMovement(lockTime, step.zeroVelocityOnStart);
+            }
+            
+            if (step.lockAim)
+            {
+                float lockTime = step.windup + step.active;
+                Controller.LockAim(lockTime);
             }
 
             if (step.zeroVelocityOnStart && body != null)
