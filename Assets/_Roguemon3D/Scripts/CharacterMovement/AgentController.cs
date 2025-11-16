@@ -127,9 +127,6 @@ namespace _PinBoy.Scripts.CharacterMovement
             get
             {
                 if (IsMovementLocked)
-                    Debug.Log("Move input requested while movement is locked.");
-                
-                if (IsMovementLocked)
                     return Vector2.zero;
 
                 if (inputReader?.moveInput.sqrMagnitude > 0.0001f && snapFacingTo8)
