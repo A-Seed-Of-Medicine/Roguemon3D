@@ -200,6 +200,7 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Awake()
         {
+            health.Init();
             statusHandler = new StatusHandler(this);
             if (statusHandler?.StunnedStatus != null)
             {

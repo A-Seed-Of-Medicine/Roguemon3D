@@ -9,27 +9,30 @@ namespace _PinBoy.Scripts.Gameplay.Effects
     {
         public Health (float maxHealth)
         {
-            this.max = Mathf.Max(1f, maxHealth);
-            current = this.max;
+            max = Mathf.Max(1f, maxHealth);
+            current = max;
             isDead = false;
         }
         
         [Serializable]
         public class DamageEvent : UnityEvent<DamageInfo> { }
         
-        [SerializeField, Min(1f)] private float max = 100f;
+        [SerializeField, Min(1f)] private float max = 10f;
         [SerializeField, Min(1f)] private float current;
         [SerializeField] private bool isDead;
+        public UnityEvent<Health> OnHealthChanged;
         private IDamageable damageable;
 
         public float Current => current;
         public float Max => max;
         public bool IsDead => isDead;
+        public float Ratio => current / max;
 
-        private void Awake()
+        public void Init()
         {
             current = Mathf.Max(1f, max);
             isDead = false;
+            OnHealthChanged?.Invoke(this);
         }
 
         public AllegianceType allegiance { get; }
@@ -47,20 +50,37 @@ namespace _PinBoy.Scripts.Gameplay.Effects
             {
                 isDead = true;
             }
+            OnHealthChanged?.Invoke(this);
         }
         
         public void Heal(float amount)
         {
             if (amount <= 0f)
-            {
                 return;
-            }
 
             current = Mathf.Clamp(current + amount, 0f, max);
             if (current > 0f)
             {
                 isDead = false;
             }
+            OnHealthChanged?.Invoke(this);
+        }
+
+        public void SetMaxHealth(float newMaxHealth,  bool adjustCurrentProportionally = false)
+        {
+            if (adjustCurrentProportionally)
+            {
+                float healthRatio = current / max;
+                max = Mathf.Max(1f, newMaxHealth);
+                current = max * healthRatio;
+                OnHealthChanged?.Invoke(this);
+            }
+            else
+            {
+                max = Mathf.Max(1f, newMaxHealth);
+                current = Mathf.Min(current, max);
+            }
+            OnHealthChanged?.Invoke(this);
         }
     }
 }
