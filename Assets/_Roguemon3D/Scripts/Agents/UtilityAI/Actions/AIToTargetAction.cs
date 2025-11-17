@@ -80,7 +80,7 @@ namespace UtilityAI
 
             Vector3 dir3 = ticket.ClosestPathDirection(agentPos3);
             Vector2 planarDir = new Vector2(dir3.x, dir3.z);
-            Debug.Log($"AIToTargetAction: Moving towards target at {targetPos3} from {agentPos3} with direction {planarDir}");
+            //Debug.Log($"AIToTargetAction: Moving towards target at {targetPos3} from {agentPos3} with direction {planarDir}");
             inputReader.InvokeMove(planarDir);
         }
 

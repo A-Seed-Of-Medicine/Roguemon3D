@@ -267,14 +267,14 @@ namespace _PinBoy.Scripts.CharacterMovement
 
     public sealed class AgentAnimationController
     {
-        readonly Dictionary<State, AgentAnimationRequest> requests = new();
+        readonly Dictionary<AgentState, AgentAnimationRequest> requests = new();
         SpriteAnimator spriteAnimator;
         float defaultSpeed = 1f;
-        State currentOwner;
+        AgentState currentOwner;
         AgentAnimationRequest currentRequest = AgentAnimationRequest.None;
         Vector2 cachedInput;
         Vector3 cachedFacing;
-        int currentDirectionIndex = -1;
+        public int currentDirectionIndex { get; private set; } = -1;
 
         public void Initialize(SpriteAnimator targetAnimator)
         {
@@ -288,7 +288,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             currentDirectionIndex = ComputeDirectionIndex(cachedInput, cachedFacing);
         }
 
-        public void Register(State owner, AgentAnimationRequest request)
+        public void Register(AgentState owner, AgentAnimationRequest request)
         {
             if (owner == null)
                 return;
@@ -308,12 +308,12 @@ namespace _PinBoy.Scripts.CharacterMovement
             Evaluate();
         }
 
-        public void Update(State owner, AgentAnimationRequest request)
+        public void Update(AgentState owner, AgentAnimationRequest request)
         {
             Register(owner, request);
         }
 
-        public void Unregister(State owner)
+        public void Unregister(AgentState owner)
         {
             if (owner == null)
             {
@@ -325,14 +325,23 @@ namespace _PinBoy.Scripts.CharacterMovement
                 Evaluate();
             }
         }
+        
+        public void Clear()
+        {
+            requests.Clear();
+            RestoreDefaultSpeed();
+            currentOwner = null;
+            currentRequest = AgentAnimationRequest.None;
+            spriteAnimator?.Stop();
+        }
 
         void Evaluate()
         {
-            State bestOwner = null;
+            AgentState bestOwner = null;
             AgentAnimationRequest bestRequest = AgentAnimationRequest.None;
             int bestDepth = -1;
 
-            foreach ((State owner, AgentAnimationRequest request) in requests)
+            foreach ((AgentState owner, AgentAnimationRequest request) in requests)
             {
                 if (owner == null)
                 {
@@ -357,7 +366,7 @@ namespace _PinBoy.Scripts.CharacterMovement
                 return;
             }
 
-            if (currentOwner == bestOwner && currentRequest.Equals(bestRequest))
+            if (currentOwner == bestOwner && currentRequest.Equals(bestRequest) && spriteAnimator.IsPlaying())
             {
                 return;
             }
@@ -411,6 +420,14 @@ namespace _PinBoy.Scripts.CharacterMovement
             {
                 spriteAnimator.Play();
             }
+        }
+
+        public AnimationClip GetClip(AgentAnimationRequest request)
+        {
+            // Return animation clip based on the current direction index
+            if (currentDirectionIndex < 0)
+                currentDirectionIndex = ComputeDirectionIndex(cachedInput, cachedFacing);
+            return request.TryResolveClip(currentDirectionIndex, out AnimationClip clip, out _) ? clip : null;
         }
 
         void RestoreDefaultSpeed()

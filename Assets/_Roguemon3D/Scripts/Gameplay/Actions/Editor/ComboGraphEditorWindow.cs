@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Actions;
 
 namespace _PinBoy.Scripts.Gameplay.Actions.Editor
@@ -250,6 +251,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 EditorGUILayout.PropertyField(step.FindPropertyRelative("magnitudeMultiplier"));
                 EditorGUILayout.PropertyField(step.FindPropertyRelative("triggerWhenNoTarget"));
                 EditorGUILayout.PropertyField(step.FindPropertyRelative("allowRepeatedHits"));
+                EditorGUILayout.PropertyField(step.FindPropertyRelative("stunImmune"));
             }
 
             GUILayout.Space(SectionSpacing);
@@ -326,6 +328,60 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
                     EditorGUILayout.PropertyField(step.FindPropertyRelative("vfx"));
+                }
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+
+            GUILayout.Space(SectionSpacing);
+
+            state.HitStop = EditorGUILayout.BeginFoldoutHeaderGroup(state.HitStop, "Hit Stop");
+            if (state.HitStop)
+            {
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    SerializedProperty executeStop = step.FindPropertyRelative("hitStopOnExecute");
+                    SerializedProperty hitStopOnHit = step.FindPropertyRelative("hitStopOnHit");
+                    SerializedProperty multiply = step.FindPropertyRelative("multiplyHitStopPerHit");
+
+                    EditorGUILayout.PropertyField(executeStop, new GUIContent("On Execute"));
+                    EditorGUILayout.PropertyField(hitStopOnHit, new GUIContent("On Hit"));
+
+                    using (new EditorGUI.DisabledScope(hitStopOnHit.floatValue <= 0f))
+                    {
+                        EditorGUILayout.PropertyField(multiply, new GUIContent("Multiply Per Hit"));
+                    }
+                }
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+
+            GUILayout.Space(SectionSpacing);
+
+            state.Animation = EditorGUILayout.BeginFoldoutHeaderGroup(state.Animation, "Animation");
+            if (state.Animation)
+            {
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    SerializedProperty animation = step.FindPropertyRelative("animation");
+                    SerializedProperty crossFade = step.FindPropertyRelative("animationCrossFade");
+                    SerializedProperty speedMultiplier = step.FindPropertyRelative("animationSpeedMultiplier");
+                    SerializedProperty scaleToDuration = step.FindPropertyRelative("scaleAnimationSpeedToStepDuration");
+                    SerializedProperty overrideSpeed = step.FindPropertyRelative("overrideAnimationSpeed");
+
+                    EditorGUILayout.PropertyField(animation);
+
+                    using (new EditorGUI.DisabledScope(!HasAnyAnimationClip(animation)))
+                    {
+                        EditorGUILayout.PropertyField(crossFade, new GUIContent("Cross Fade"));
+                    }
+
+                    EditorGUILayout.PropertyField(scaleToDuration, new GUIContent("Scale Speed To Step Duration"));
+                    EditorGUILayout.PropertyField(overrideSpeed, new GUIContent("Force Override Speed"));
+
+                    bool enableMultiplier = scaleToDuration.boolValue || overrideSpeed.boolValue;
+                    using (new EditorGUI.DisabledScope(!enableMultiplier))
+                    {
+                        EditorGUILayout.PropertyField(speedMultiplier, new GUIContent("Speed Multiplier"));
+                    }
                 }
             }
             EditorGUILayout.EndFoldoutHeaderGroup();
@@ -475,6 +531,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("magnitudeMultiplier").floatValue = 1f;
             step.FindPropertyRelative("triggerWhenNoTarget").boolValue = false;
             step.FindPropertyRelative("allowRepeatedHits").boolValue = false;
+            step.FindPropertyRelative("stunImmune").boolValue = false;
             step.FindPropertyRelative("windup").floatValue = 0.05f;
             step.FindPropertyRelative("active").floatValue = 0.15f;
             step.FindPropertyRelative("recovery").floatValue = 0.25f;
@@ -496,6 +553,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             SerializedProperty transitions = step.FindPropertyRelative("transitions");
             ClearArray(transitions);
             step.FindPropertyRelative("vfx").objectReferenceValue = null;
+            ResetAnimation(step.FindPropertyRelative("animation"));
+            step.FindPropertyRelative("hitStopOnExecute").floatValue = 0f;
+            step.FindPropertyRelative("hitStopOnHit").floatValue = 0f;
+            step.FindPropertyRelative("multiplyHitStopPerHit").boolValue = true;
+            step.FindPropertyRelative("animationCrossFade").floatValue = 0.1f;
+            step.FindPropertyRelative("animationSpeedMultiplier").floatValue = 1f;
+            step.FindPropertyRelative("scaleAnimationSpeedToStepDuration").boolValue = false;
+            step.FindPropertyRelative("overrideAnimationSpeed").boolValue = false;
         }
 
         static void ClearArray(SerializedProperty property)
@@ -521,7 +586,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                     Movement = true,
                     HitDetection = true,
                     Transitions = true,
-                    Vfx = true
+                    Vfx = true,
+                    HitStop = true,
+                    Animation = true
                 };
                 foldoutStates[index] = state;
             }
@@ -536,6 +603,49 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             public bool HitDetection;
             public bool Transitions;
             public bool Vfx;
+            public bool HitStop;
+            public bool Animation;
+        }
+
+        static bool HasAnyAnimationClip(SerializedProperty animationProperty)
+        {
+            if (animationProperty == null)
+            {
+                return false;
+            }
+
+            return animationProperty.FindPropertyRelative("singleClip").objectReferenceValue != null ||
+                   animationProperty.FindPropertyRelative("northClip").objectReferenceValue != null ||
+                   animationProperty.FindPropertyRelative("southClip").objectReferenceValue != null ||
+                   animationProperty.FindPropertyRelative("eastClip").objectReferenceValue != null ||
+                   animationProperty.FindPropertyRelative("westClip").objectReferenceValue != null ||
+                   animationProperty.FindPropertyRelative("northEastClip").objectReferenceValue != null ||
+                   animationProperty.FindPropertyRelative("southEastClip").objectReferenceValue != null ||
+                   animationProperty.FindPropertyRelative("northWestClip").objectReferenceValue != null ||
+                   animationProperty.FindPropertyRelative("southWestClip").objectReferenceValue != null;
+        }
+
+        static void ResetAnimation(SerializedProperty animation)
+        {
+            if (animation == null)
+            {
+                return;
+            }
+
+            animation.FindPropertyRelative("directionMode").enumValueIndex = (int)AgentAnimationRequest.DirectionMode.Single;
+            animation.FindPropertyRelative("mirrorLeftRight").boolValue = false;
+            animation.FindPropertyRelative("singleClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("northClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("southClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("eastClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("westClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("northEastClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("southEastClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("northWestClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("southWestClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("crossFade").floatValue = 0f;
+            animation.FindPropertyRelative("playbackSpeed").floatValue = 1f;
+            animation.FindPropertyRelative("overrideSpeed").boolValue = false;
         }
     }
 }

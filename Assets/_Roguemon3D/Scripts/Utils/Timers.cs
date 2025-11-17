@@ -1,5 +1,4 @@
 using System;
-using ImprovedTimers;
 using UnityEngine;
 
 namespace ImprovedTimers {

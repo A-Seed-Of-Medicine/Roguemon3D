@@ -2,6 +2,7 @@ using System;
 using _PinBoy.Scripts.CharacterMovement;
 using AdvancedController;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace _PinBoy.Scripts.Gameplay.Effects
 {
@@ -38,7 +39,6 @@ namespace _PinBoy.Scripts.Gameplay.Effects
         void ApplyDamage(DamageInfo damageInfo);
         Health health { get;  }
         StatusHandler statusHandler { get;  }
-
     }
     
     public interface IDamager

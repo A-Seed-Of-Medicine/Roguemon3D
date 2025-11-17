@@ -9,6 +9,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using HSM;
 using ImprovedTimers;
+using UnityEngine.Events;
 
 namespace _PinBoy.Scripts.CharacterMovement
 {
@@ -74,9 +75,12 @@ namespace _PinBoy.Scripts.CharacterMovement
         
         [field: SerializeField]
         public AllegianceType allegiance { get; set; }
-        [field: SerializeField]
-        public Health health { get; private set; }
+
+        [field: SerializeField] public Health health { get; set; } = new (100);
         public StatusHandler statusHandler { get; private set; }
+
+        public UnityEvent<DamageInfo> DamageTaken;
+        public UnityEvent<DamageInfo> DamageDealt;
 
         [Header("Animation (optional)")]
         [SerializeField] private SpriteAnimator spriteAnimator;
@@ -196,7 +200,13 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Awake()
         {
+            health.Init();
             statusHandler = new StatusHandler(this);
+            if (statusHandler?.StunnedStatus != null)
+            {
+                statusHandler.StunnedStatus.OnStart += HandleStunnedStatusStarted;
+                statusHandler.StunnedStatus.OnEnd += HandleStunnedStatusEnded;
+            }
             agentRoot = new AgentRoot(null, this);
             machine = new StateMachineBuilder(agentRoot).Build();
             
@@ -244,6 +254,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         protected virtual void OnEnable()
         {
             inputReader.EnableCharacterActions(true);
+            inputReader.SetStunned(statusHandler?.StunnedStatus?.IsActive ?? false);
         }
 
         protected virtual void OnDisable()
@@ -255,6 +266,11 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void OnDestroy()
         {
+            if (statusHandler?.StunnedStatus != null)
+            {
+                statusHandler.StunnedStatus.OnStart -= HandleStunnedStatusStarted;
+                statusHandler.StunnedStatus.OnEnd -= HandleStunnedStatusEnded;
+            }
             UnsubscribeFromInput();
             CancelActiveActionTask();
             ClearMovementOverrideTasks();
@@ -262,6 +278,7 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Update()
         {
+            //Debug.Log($"MovementLocked = {IsMovementLocked}");
             if (faceAimDirection && inputReader.isAiming)
             {
                 Vector3 aim = AimDirection;
@@ -657,6 +674,24 @@ namespace _PinBoy.Scripts.CharacterMovement
             activeActionToken = linkedToken;
             isActionRunning = true;
             return RunActionAsync(action, runtime, linkedToken);
+        }
+
+        void HandleStunnedStatusStarted(IStatusEffect effect)
+        {
+            inputReader?.SetStunned(true);
+            CancelActiveActionTask();
+            pendingActionState = null;
+            currentVelocity = Vector3.zero;
+            verticalSpeed = 0f;
+            if (rb)
+            {
+                rb.linearVelocity = Vector3.zero;
+            }
+        }
+
+        void HandleStunnedStatusEnded(IStatusEffect effect)
+        {
+            inputReader?.SetStunned(false);
         }
 
         void CancelActiveActionTask()
@@ -1076,6 +1111,20 @@ namespace _PinBoy.Scripts.CharacterMovement
         public void ApplyDamage(DamageInfo damageInfo)
         {
             health?.ApplyDamage(damageInfo);
+            if (damageInfo.amount > 0f)
+            {
+                DamageTaken?.Invoke(damageInfo);
+            }
+        }
+
+        internal void NotifyDamageDealt(DamageInfo damageInfo)
+        {
+            if (damageInfo.amount <= 0f)
+            {
+                return;
+            }
+
+            DamageDealt?.Invoke(damageInfo);
         }
         
         protected virtual void OnDrawGizmosSelected()

@@ -1,6 +1,8 @@
+using System;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityUtils;
 
 namespace _PinBoy.Scripts.Animation
 {
@@ -13,6 +15,9 @@ namespace _PinBoy.Scripts.Animation
         [SerializeField] private AnimationClip defaultClip;
         [SerializeField] private bool playOnAwake = true;
         [SerializeField, Min(0f)] private float speedMultiplier = 1f;
+        
+        [Header("Rendering")]
+        [Min(0)] public float cameraXOffsetMax = 17f;
 
         Animator animator;
         SpriteRenderer spriteRenderer;
@@ -38,6 +43,26 @@ namespace _PinBoy.Scripts.Animation
             }
         }
 
+        void OnValidate()
+        {
+            FaceCamera(Camera.main?.GetComponent<CameraManager>());
+        }
+        
+        void FaceCamera(CameraManager camera)
+        {
+            if (cameraXOffsetMax <= 0 || !camera)
+                return;
+            
+            // Calculate the distance along the camera forward vector
+            Vector3 toCamera = camera.transform.position - transform.position;
+            float distanceAlongForward = Vector3.Dot(toCamera.With(y:0), camera.transform.forward);
+            float xOffset = (1 - -distanceAlongForward / camera.xSpriteRotationOffset) * camera.xSpriteRotationMultiplier;
+            if (xOffset > 1f) xOffset = 1f;
+            if (xOffset < 0f) xOffset = 0f;
+            transform.eulerAngles = new Vector3(xOffset * cameraXOffsetMax, camera.transform.eulerAngles.y, transform.eulerAngles.z);
+            
+        }
+
         void Awake()
         {
             animator = GetComponent<Animator>();
@@ -58,6 +83,12 @@ namespace _PinBoy.Scripts.Animation
             {
                 PauseGraph();
             }
+        }
+
+        public void Start()
+        {
+            if (CameraManager.Instance)
+                CameraManager.Instance.OnCameraPositionUpdated += (position, position2) => FaceCamera(CameraManager.Instance);
         }
 
         void OnEnable()

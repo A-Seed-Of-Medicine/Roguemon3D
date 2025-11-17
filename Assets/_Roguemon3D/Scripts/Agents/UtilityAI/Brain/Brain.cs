@@ -34,7 +34,6 @@ namespace UtilityAI {
                 }
 
                 action.Initialize(context);
-                Debug.Log($"Action {action.GetType().Name} initialized.");
             }
 
             RefreshDetectedTargets();

@@ -4,26 +4,35 @@ using UnityEngine.Events;
 
 namespace _PinBoy.Scripts.Gameplay.Effects
 {
-    public class Health : MonoBehaviour
+    [Serializable]
+    public class Health
     {
+        public Health (float maxHealth)
+        {
+            max = Mathf.Max(1f, maxHealth);
+            current = max;
+            isDead = false;
+        }
+        
         [Serializable]
         public class DamageEvent : UnityEvent<DamageInfo> { }
         
-        [SerializeField, Min(1f)] private float maxHealth = 100f;
-        [SerializeField] private DamageEvent onDamaged = new();
-        [SerializeField] private UnityEvent onDeath = new();
+        [SerializeField, Min(1f)] private float max = 10f;
+        [SerializeField, Min(1f)] private float current;
+        [SerializeField] private bool isDead;
+        public UnityEvent<Health> OnHealthChanged;
+        private IDamageable damageable;
 
-        private float currentHealth;
-        private bool isDead;
-
-        public float CurrentHealth => currentHealth;
-        public float MaxHealth => maxHealth;
+        public float Current => current;
+        public float Max => max;
         public bool IsDead => isDead;
+        public float Ratio => current / max;
 
-        private void Awake()
+        public void Init()
         {
-            currentHealth = Mathf.Max(1f, maxHealth);
+            current = Mathf.Max(1f, max);
             isDead = false;
+            OnHealthChanged?.Invoke(this);
         }
 
         public AllegianceType allegiance { get; }
@@ -35,28 +44,43 @@ namespace _PinBoy.Scripts.Gameplay.Effects
                 return;
             }
 
-            currentHealth = Mathf.Max(0f, currentHealth - Mathf.Max(0f, damageInfo.amount));
-            onDamaged.Invoke(damageInfo);
+            current = Mathf.Max(0f, current - Mathf.Max(0f, damageInfo.amount));
 
-            if (currentHealth <= 0f)
+            if (current <= 0f)
             {
                 isDead = true;
-                onDeath.Invoke();
             }
+            OnHealthChanged?.Invoke(this);
         }
         
         public void Heal(float amount)
         {
             if (amount <= 0f)
-            {
                 return;
-            }
 
-            currentHealth = Mathf.Clamp(currentHealth + amount, 0f, maxHealth);
-            if (currentHealth > 0f)
+            current = Mathf.Clamp(current + amount, 0f, max);
+            if (current > 0f)
             {
                 isDead = false;
             }
+            OnHealthChanged?.Invoke(this);
+        }
+
+        public void SetMaxHealth(float newMaxHealth,  bool adjustCurrentProportionally = false)
+        {
+            if (adjustCurrentProportionally)
+            {
+                float healthRatio = current / max;
+                max = Mathf.Max(1f, newMaxHealth);
+                current = max * healthRatio;
+                OnHealthChanged?.Invoke(this);
+            }
+            else
+            {
+                max = Mathf.Max(1f, newMaxHealth);
+                current = Mathf.Min(current, max);
+            }
+            OnHealthChanged?.Invoke(this);
         }
     }
 }

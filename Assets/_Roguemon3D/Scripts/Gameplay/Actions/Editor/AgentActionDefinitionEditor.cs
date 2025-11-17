@@ -18,9 +18,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         SerializedProperty zeroVelocityOnLockProp;
         SerializedProperty faceTargetOnStartProp;
         SerializedProperty faceAimDirectionProp;
-        SerializedProperty animationClipProp;
-        SerializedProperty animationCrossFadeProp;
-        SerializedProperty animationPlaybackSpeedProp;
         SerializedProperty effectsProp;
         SerializedProperty baseMagnitudeProp;
         SerializedProperty vfxPrefabProp;
@@ -42,9 +39,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             zeroVelocityOnLockProp = serializedObject.FindProperty("zeroVelocityOnLock");
             faceTargetOnStartProp = serializedObject.FindProperty("faceTargetOnStart");
             faceAimDirectionProp = serializedObject.FindProperty("faceAimDirectionWhenNoTarget");
-            animationClipProp = serializedObject.FindProperty("animationClip");
-            animationCrossFadeProp = serializedObject.FindProperty("animationCrossFade");
-            animationPlaybackSpeedProp = serializedObject.FindProperty("animationPlaybackSpeed");
             effectsProp = serializedObject.FindProperty("effects");
             baseMagnitudeProp = serializedObject.FindProperty("baseMagnitude");
             vfxPrefabProp = serializedObject.FindProperty("vfxPrefab");
@@ -97,8 +91,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             DrawCoreSettings();
             EditorGUILayout.Space();
-            DrawAnimationSettings();
-            EditorGUILayout.Space();
             DrawEffectsSection();
             EditorGUILayout.Space();
             DrawVfxSettings();
@@ -130,14 +122,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                     EditorGUILayout.PropertyField(faceAimDirectionProp);
                 }
             }
-        }
-
-        void DrawAnimationSettings()
-        {
-            EditorGUILayout.LabelField("Animation", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(animationClipProp);
-            EditorGUILayout.PropertyField(animationCrossFadeProp);
-            EditorGUILayout.PropertyField(animationPlaybackSpeedProp);
         }
 
         void DrawEffectsSection()

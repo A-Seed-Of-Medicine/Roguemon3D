@@ -32,9 +32,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField] private bool zeroVelocityOnLock = true;
         [SerializeField] private bool faceTargetOnStart = true;
         [SerializeField] private bool faceAimDirectionWhenNoTarget = true;
-        [SerializeField] private AnimationClip animationClip;
-        [SerializeField] private float animationCrossFade = 0.05f;
-        [SerializeField] private float animationPlaybackSpeed = 1f;
         [SerializeReference] [SerializeField] private List<Effect> effects = new();
         [SerializeField] private float baseMagnitude = 1f;
         [Header("VFX")] [SerializeField] private GameObject vfxPrefab;
@@ -75,87 +72,46 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 runtime.FaceDirection(runtime.Direction);
             }
 
-            float originalAnimatorSpeed = controller.AnimatorSpeed;
-            bool restoreAnimatorSpeed = false;
-            if (animationClip != null)
+            Transform vfxAnchor = this.vfxAnchor == VfxAnchor.Source ? runtime.Source?.transform : runtime.Target?.transform;
+            
+            if (vfxPrefab && vfxTiming == VfxTiming.OnStart)
             {
-                float playbackSpeed = animationPlaybackSpeed > 0f ? animationPlaybackSpeed : 1f;
-
-                float crossFade = Mathf.Max(0f, animationCrossFade);
-
-                if (runtime.Action != null)
-                {
-                    runtime.Action.ApplyAnimationRequest(new AgentAnimationRequest
-                    {
-                        directionMode = AgentAnimationRequest.DirectionMode.Single,
-                        singleClip = animationClip,
-                        crossFade = crossFade,
-                        playbackSpeed = playbackSpeed,
-                        overrideSpeed = animationPlaybackSpeed > 0f
-                    });
-                }
-                else
-                {
-                    if (animationPlaybackSpeed > 0f)
-                    {
-                        controller.AnimatorSpeed = animationPlaybackSpeed;
-                        restoreAnimatorSpeed = true;
-                    }
-
-                    controller.PlayActionAnimation(animationClip);
-                }
+                runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
             }
 
-            try
+            float clampedDelay = Mathf.Max(0f, effectDelay);
+            if (clampedDelay > 0f)
             {
-                Transform vfxAnchor = this.vfxAnchor == VfxAnchor.Source ? runtime.Source?.transform : runtime.Target?.transform;
-                
-                if (vfxPrefab && vfxTiming == VfxTiming.OnStart)
-                {
-                    runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
-                }
-
-                float clampedDelay = Mathf.Max(0f, effectDelay);
-                if (clampedDelay > 0f)
-                {
-                    await UniTask.Delay(TimeSpan.FromSeconds(clampedDelay), cancellationToken: cancellationToken);
-                }
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                if (vfxPrefab && vfxTiming == VfxTiming.OnEffect)
-                {
-                    runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
-                }
-
-                runtime.ApplyEffects(effects, baseMagnitude);
-
-                float totalDuration = Mathf.Max(Duration, clampedDelay);
-                float remaining = Mathf.Max(0f, totalDuration - clampedDelay);
-                if (remaining > 0f)
-                {
-                    await UniTask.Delay(TimeSpan.FromSeconds(remaining), cancellationToken: cancellationToken);
-                }
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                if (vfxPrefab && vfxTiming == VfxTiming.OnEnd)
-                {
-                    runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
-                }
+                await UniTask.Delay(TimeSpan.FromSeconds(clampedDelay), cancellationToken: cancellationToken);
             }
-            finally
+
+            if (cancellationToken.IsCancellationRequested)
             {
-                if (restoreAnimatorSpeed && animationClip != null)
-                {
-                    controller.AnimatorSpeed = originalAnimatorSpeed;
-                }
+                return;
+            }
+
+            if (vfxPrefab && vfxTiming == VfxTiming.OnEffect)
+            {
+                runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
+            }
+
+            runtime.ApplyEffects(effects, baseMagnitude);
+
+            float totalDuration = Mathf.Max(Duration, clampedDelay);
+            float remaining = Mathf.Max(0f, totalDuration - clampedDelay);
+            if (remaining > 0f)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(remaining), cancellationToken: cancellationToken);
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            if (vfxPrefab && vfxTiming == VfxTiming.OnEnd)
+            {
+                runtime.SpawnVfx(vfxPrefab, vfxAnchor, vfxOffset, parentVfxToAnchor, vfxLifetime);
             }
         }
     }
