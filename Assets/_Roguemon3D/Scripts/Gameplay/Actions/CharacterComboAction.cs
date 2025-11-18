@@ -566,6 +566,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             windupTimer.Cancel();
 
+            activeHitDetector?.HandlePhaseStart(HitDetector.ExecutionPhase.Windup, step);
+
             if (step.windup > 0f)
             {
                 windupTimer.Start(step.windup);
@@ -583,6 +585,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
+            activeHitDetector?.HandlePhaseEnd(HitDetector.ExecutionPhase.Windup);
             StartActivePhase();
         }
 
@@ -595,6 +598,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             inActivePhase = currentStep.active > 0f;
             activeTimer.Cancel();
+
+            activeHitDetector?.HandlePhaseStart(HitDetector.ExecutionPhase.Active, currentStep);
 
             if (currentStep.vfx)
             {
@@ -637,6 +642,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
+            activeHitDetector?.HandlePhaseEnd(HitDetector.ExecutionPhase.Active);
             StartRecoveryPhase();
         }
 
@@ -649,6 +655,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             inRecoveryPhase = currentStep.recovery > 0f;
             recoveryTimer.Cancel();
+
+            activeHitDetector?.HandlePhaseStart(HitDetector.ExecutionPhase.Recovery, currentStep);
 
             if (inRecoveryPhase)
             {
@@ -669,6 +677,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
+            activeHitDetector?.HandlePhaseEnd(HitDetector.ExecutionPhase.Recovery);
             CompleteCurrentStep();
         }
 
