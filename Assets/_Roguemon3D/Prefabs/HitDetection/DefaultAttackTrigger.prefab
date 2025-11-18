@@ -72,7 +72,7 @@ MonoBehaviour:
   targetLayers:
     serializedVersion: 2
     m_Bits: 243
-  includeTriggerColliders: 1
+  includeTriggerColliders: 0
   allegianceMask: 01000000
   activeAnimation: {fileID: 0}
 --- !u!1001 &2638343471001939951

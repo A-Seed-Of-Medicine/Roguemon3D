@@ -8,7 +8,6 @@ namespace _PinBoy.Scripts.Animation
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Animator))]
-    [RequireComponent(typeof(SpriteRenderer))]
     public sealed class SpriteAnimator : MonoBehaviour
     {
         [Header("Animation")]
@@ -20,7 +19,6 @@ namespace _PinBoy.Scripts.Animation
         [Min(0)] public float cameraXOffsetMax = 17f;
 
         Animator animator;
-        SpriteRenderer spriteRenderer;
         PlayableGraph graph;
         AnimationMixerPlayable mixer;
         AnimationClipPlayable currentPlayable;
@@ -31,16 +29,16 @@ namespace _PinBoy.Scripts.Animation
         public AnimationClip CurrentClip => currentClip;
         public float SpeedMultiplier => speedMultiplier;
 
-        public bool flipX
+        public bool IsFlipped => animator && animator.transform.localScale.x < 0;
+        
+        public void FlipX(bool flipped)
         {
-            get => spriteRenderer != null && spriteRenderer.flipX;
-            set
-            {
-                if (spriteRenderer != null)
-                {
-                    spriteRenderer.flipX = value;
-                }
-            }
+            if (!animator)
+                return;
+            if (flipped && animator.transform.localScale.x > 0)
+                animator.transform.localScale = new Vector3(-animator.transform.localScale.x, animator.transform.localScale.y, animator.transform.localScale.z);
+            else if (!flipped && animator.transform.localScale.x < 0)
+                animator.transform.localScale = new Vector3(animator.transform.localScale.x, animator.transform.localScale.y, animator.transform.localScale.z);
         }
 
         void OnValidate()
@@ -66,7 +64,6 @@ namespace _PinBoy.Scripts.Animation
         void Awake()
         {
             animator = GetComponent<Animator>();
-            spriteRenderer = GetComponent<SpriteRenderer>();
             speedMultiplier = Mathf.Max(0f, speedMultiplier);
             EnsureGraph();
 

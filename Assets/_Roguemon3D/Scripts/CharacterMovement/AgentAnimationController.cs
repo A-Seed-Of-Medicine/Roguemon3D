@@ -409,9 +409,9 @@ namespace _PinBoy.Scripts.CharacterMovement
                 return;
             }
 
-            if (spriteAnimator.flipX != flipX)
+            if (spriteAnimator.IsFlipped != flipX)
             {
-                spriteAnimator.flipX = flipX;
+                spriteAnimator.FlipX(flipX);
             }
 
             bool forceRestart = request.crossFade > 0f || directionChanged;

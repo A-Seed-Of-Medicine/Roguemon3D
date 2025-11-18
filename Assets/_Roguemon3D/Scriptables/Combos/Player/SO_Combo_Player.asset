@@ -24,9 +24,9 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.05
+    windup: 1
     active: 0.15
-    recovery: 0.25
+    recovery: 0.1
     comboResetDelay: 1.2
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
@@ -51,9 +51,9 @@ MonoBehaviour:
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
     animation:
-      directionMode: 2
-      mirrorLeftRight: 0
-      singleClip: {fileID: 0}
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: b732c89fe6f06f049b0c269840bec2e9, type: 2}
       northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
       southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
       eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
@@ -63,11 +63,11 @@ MonoBehaviour:
       northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
       southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
       crossFade: 0.1
-      playbackSpeed: 3.1481483
+      playbackSpeed: 1
       overrideSpeed: 1
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
-    scaleAnimationSpeedToStepDuration: 1
+    scaleAnimationSpeedToStepDuration: 0
     overrideAnimationSpeed: 0
   - id: step2
     action: {fileID: 0}
@@ -75,10 +75,10 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.05
+    windup: 1
     active: 0.15
-    recovery: 0.25
-    comboResetDelay: 1.2
+    recovery: 0.1
+    comboResetDelay: 0
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
     lockMovement: 1
@@ -102,9 +102,9 @@ MonoBehaviour:
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
     animation:
-      directionMode: 2
-      mirrorLeftRight: 0
-      singleClip: {fileID: 0}
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: b732c89fe6f06f049b0c269840bec2e9, type: 2}
       northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
       southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
       eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
@@ -114,11 +114,11 @@ MonoBehaviour:
       northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
       southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
       crossFade: 0.1
-      playbackSpeed: 3.1481483
+      playbackSpeed: 1
       overrideSpeed: 1
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
-    scaleAnimationSpeedToStepDuration: 1
+    scaleAnimationSpeedToStepDuration: 0
     overrideAnimationSpeed: 0
   - id: step3
     action: {fileID: 0}
@@ -126,10 +126,10 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.05
+    windup: 1
     active: 0.15
-    recovery: 0.25
-    comboResetDelay: 0
+    recovery: 0.1
+    comboResetDelay: 0.2
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
     lockMovement: 1
@@ -153,9 +153,9 @@ MonoBehaviour:
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
     animation:
-      directionMode: 2
-      mirrorLeftRight: 0
-      singleClip: {fileID: 0}
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: b732c89fe6f06f049b0c269840bec2e9, type: 2}
       northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
       southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
       eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
@@ -165,9 +165,9 @@ MonoBehaviour:
       northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
       southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
       crossFade: 0.1
-      playbackSpeed: 3.1481483
+      playbackSpeed: 1
       overrideSpeed: 1
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
-    scaleAnimationSpeedToStepDuration: 1
+    scaleAnimationSpeedToStepDuration: 0
     overrideAnimationSpeed: 0
