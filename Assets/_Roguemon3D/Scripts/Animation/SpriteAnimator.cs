@@ -31,14 +31,14 @@ namespace _PinBoy.Scripts.Animation
 
         public bool IsFlipped => animator && animator.transform.localScale.x < 0;
         
-        public void FlipX(bool flipped)
+        public void SetFlipX(bool flipped)
         {
             if (!animator)
                 return;
             if (flipped && animator.transform.localScale.x > 0)
                 animator.transform.localScale = new Vector3(-animator.transform.localScale.x, animator.transform.localScale.y, animator.transform.localScale.z);
             else if (!flipped && animator.transform.localScale.x < 0)
-                animator.transform.localScale = new Vector3(animator.transform.localScale.x, animator.transform.localScale.y, animator.transform.localScale.z);
+                animator.transform.localScale = new Vector3(-animator.transform.localScale.x, animator.transform.localScale.y, animator.transform.localScale.z);
         }
 
         void OnValidate()

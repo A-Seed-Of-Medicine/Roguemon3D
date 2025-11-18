@@ -83,7 +83,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         public UnityEvent<DamageInfo> DamageDealt;
 
         [Header("Animation (optional)")]
-        [SerializeField] private SpriteAnimator spriteAnimator;
+        [field: SerializeField] public SpriteAnimator spriteAnimator { get; private set; }
         [Header("State Animations")]
         [SerializeField] private AgentAnimationRequest idleAnimation;
         [SerializeField] private AgentAnimationRequest movingAnimation;

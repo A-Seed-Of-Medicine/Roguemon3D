@@ -120,6 +120,7 @@ MonoBehaviour:
   canvasRectTransform: {fileID: 3168626464043955584}
   uiCamera: {fileID: 0}
   faceTarget: 0
+  pivotObject: {fileID: 0}
   canvasGroup: {fileID: 3958241340106152420}
   fadeSmoothTime: 0.2
   slider: {fileID: 417054971955770342}

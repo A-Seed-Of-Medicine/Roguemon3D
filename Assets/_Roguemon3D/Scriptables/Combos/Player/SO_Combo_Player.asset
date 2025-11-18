@@ -24,10 +24,10 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 1
+    windup: 0.1
     active: 0.15
     recovery: 0.1
-    comboResetDelay: 1.2
+    comboResetDelay: 0
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
     lockMovement: 1
@@ -63,11 +63,11 @@ MonoBehaviour:
       northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
       southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
       crossFade: 0.1
-      playbackSpeed: 1
+      playbackSpeed: 1.7857141
       overrideSpeed: 1
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
-    scaleAnimationSpeedToStepDuration: 0
+    scaleAnimationSpeedToStepDuration: 1
     overrideAnimationSpeed: 0
   - id: step2
     action: {fileID: 0}
@@ -75,7 +75,7 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 1
+    windup: 0.1
     active: 0.15
     recovery: 0.1
     comboResetDelay: 0
@@ -87,7 +87,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
+    hitDetectorPrefab: {fileID: 6643509938996099555, guid: d54c4ae9fa297d9498601193c5146b24, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -114,11 +114,11 @@ MonoBehaviour:
       northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
       southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
       crossFade: 0.1
-      playbackSpeed: 1
+      playbackSpeed: 1.7857141
       overrideSpeed: 1
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
-    scaleAnimationSpeedToStepDuration: 0
+    scaleAnimationSpeedToStepDuration: 1
     overrideAnimationSpeed: 0
   - id: step3
     action: {fileID: 0}
@@ -126,7 +126,7 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 1
+    windup: 0.1
     active: 0.15
     recovery: 0.1
     comboResetDelay: 0.2
@@ -165,9 +165,9 @@ MonoBehaviour:
       northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
       southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
       crossFade: 0.1
-      playbackSpeed: 1
+      playbackSpeed: 1.7857141
       overrideSpeed: 1
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
-    scaleAnimationSpeedToStepDuration: 0
+    scaleAnimationSpeedToStepDuration: 1
     overrideAnimationSpeed: 0
