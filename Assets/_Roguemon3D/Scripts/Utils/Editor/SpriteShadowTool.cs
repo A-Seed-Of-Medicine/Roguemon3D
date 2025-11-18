@@ -8,6 +8,7 @@ namespace _PinBoy.Scripts.Utils.Editor
     public class SpriteShadowTool : EditorWindow
     {
         Transform rootTransform;
+        Material material;
 
         [MenuItem("Tools/Sprite Shadow Tool")]
         static void ShowWindow()
@@ -35,6 +36,7 @@ namespace _PinBoy.Scripts.Utils.Editor
             EditorGUILayout.Space();
 
             rootTransform = (Transform)EditorGUILayout.ObjectField("Root Transform", rootTransform, typeof(Transform), true);
+            material = (Material)EditorGUILayout.ObjectField("Material", material, typeof(Material), true);
 
             using (new EditorGUI.DisabledScope(rootTransform == null && Selection.activeTransform == null))
             {
@@ -60,16 +62,16 @@ namespace _PinBoy.Scripts.Utils.Editor
             }
 
             SpriteRenderer[] renderers = target.GetComponentsInChildren<SpriteRenderer>(true);
-            ApplySettings(renderers);
+            ApplySettings(renderers, material);
         }
 
         void ApplyToScene()
         {
             SpriteRenderer[] renderers = FindObjectsOfType<SpriteRenderer>(true);
-            ApplySettings(renderers);
+            ApplySettings(renderers, material);
         }
 
-        static void ApplySettings(IEnumerable<SpriteRenderer> renderers)
+        static void ApplySettings(IEnumerable<SpriteRenderer> renderers, Material material)
         {
             foreach (SpriteRenderer spriteRenderer in renderers)
             {
@@ -81,6 +83,8 @@ namespace _PinBoy.Scripts.Utils.Editor
                 Undo.RecordObject(spriteRenderer, "Update Sprite Shadows");
                 spriteRenderer.receiveShadows = true;
                 spriteRenderer.shadowCastingMode = ShadowCastingMode.TwoSided;
+                if (material)
+                    spriteRenderer.material = material;
                 EditorUtility.SetDirty(spriteRenderer);
             }
         }
