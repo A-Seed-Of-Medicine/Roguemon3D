@@ -14,7 +14,7 @@ namespace _Roguemon3D.Scripts.Utils
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
-                pools = new Dictionary<Type,  Stack<MonoBehaviour>>();
+                pools = new Dictionary<String,  Stack<MonoBehaviour>>();
             }
             else
             {
@@ -22,30 +22,43 @@ namespace _Roguemon3D.Scripts.Utils
             }
         }
         
-        private Dictionary<Type, Stack<MonoBehaviour>> pools = new();
+        private Dictionary<String, Stack<MonoBehaviour>> pools = new();
 
         public T Spawn<T>(T prefab,  Vector3 position = default, Vector3 rotation = default, Transform parent = null) where T : MonoBehaviour
         {
-            if (!pools.TryGetValue(typeof(T), out var stack))
+            if (!pools.TryGetValue(prefab.name, out var stack))
             {
                 stack = new Stack<MonoBehaviour>();
-                pools[typeof(T)] = stack;
+                pools[prefab.name] = stack;
             }
-            T inst = (stack.Count > 0 ? stack.Pop() : Instantiate(prefab)) as T;
+            
+            T inst;
+            if (stack.Count > 0)
+                inst = stack.Pop() as T;
+            else
+                inst = Instantiate(prefab);
+            
+            inst.name = prefab.name + "_Instance";
             if (inst == null)
-                throw new Exception("PoolManager: Spawn failed for type " + typeof(T).Name);
+                throw new Exception("PoolManager: Spawn failed for type " + inst);
             inst.transform.SetParent(parent);
-            inst.transform.SetPositionAndRotation(position, Quaternion.Euler(rotation));
+            
+            if (parent)
+                inst.transform.SetLocalPositionAndRotation(position, Quaternion.Euler(rotation));
+            else 
+                inst.transform.SetPositionAndRotation(position, Quaternion.Euler(rotation));
             inst.gameObject.SetActive(true);
             return inst;
         }
 
-        public void Despawn<T>(MonoBehaviour b)
+        public void Despawn(MonoBehaviour b)
         {
-            if (!pools.TryGetValue(typeof(T), out var stack))
+            string key = b.name.Replace("_Instance", "");
+            
+            if (!pools.TryGetValue(key, out var stack))
             {
                 stack = new Stack<MonoBehaviour>();
-                pools[typeof(T)] = stack;
+                pools[key] = stack;
             }
             b.gameObject.SetActive(false);
             stack.Push(b);

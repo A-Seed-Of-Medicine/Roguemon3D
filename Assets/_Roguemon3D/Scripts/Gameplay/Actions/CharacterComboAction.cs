@@ -495,7 +495,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 Controller.LockAim(lockTime);
             }
 
-            if (step.zeroVelocityOnStart && body != null)
+            if (step.zeroVelocityOnStart && body)
             {
                 Vector3 currentVelocity = body.linearVelocity;
                 body.linearVelocity = new Vector3(0f, currentVelocity.y, 0f);
@@ -725,22 +725,22 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             ReleaseActiveHitDetector();
 
-            if (step?.hitDetectorPrefab == null || Controller == null)
-            {
+            if (!step?.hitDetectorPrefab || !Controller)
                 return;
-            }
 
             Transform parent = step.parentHitDetectorToPivot && Controller.aimPivotObject
                 ? Controller.aimPivotObject.transform
-                : Controller.transform;
+                : null;
 
             Vector3 worldPosition = Controller.transform.TransformPoint(step.hitDetectorPositionOffset);
             Quaternion worldRotation = Controller.transform.rotation * Quaternion.Euler(step.hitDetectorRotationOffset);
 
             if (PoolManager.Instance != null)
             {
-                activeHitDetector = PoolManager.Instance.Spawn(step.hitDetectorPrefab, worldPosition,
-                    worldRotation.eulerAngles, parent);
+                if (parent)
+                    activeHitDetector = PoolManager.Instance.Spawn(step.hitDetectorPrefab, step.hitDetectorPositionOffset, step.hitDetectorRotationOffset, parent);
+                else
+                    activeHitDetector = PoolManager.Instance.Spawn(step.hitDetectorPrefab, worldPosition, worldRotation.eulerAngles);
             }
             else
             {
@@ -751,9 +751,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 return;
             }
-
-            activeHitDetector.transform.SetPositionAndRotation(worldPosition, worldRotation);
-            activeHitDetector.transform.SetParent(parent);
+            
             activeHitDetector.Initialize(Controller);
         }
 
@@ -766,9 +764,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             activeHitDetector.Deactivate();
 
-            if (PoolManager.Instance != null)
+            if (PoolManager.Instance)
             {
-                PoolManager.Instance.Despawn<HitDetector>(activeHitDetector);
+                PoolManager.Instance.Despawn(activeHitDetector);
             }
             else
             {
@@ -781,13 +779,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void ExecuteStepAction(ComboStep step, IDamageable target)
         {
             AgentActionDefinition runtimeAction = step.action ? step.action : actionDefinition;
-            if (!runtimeAction || Controller == null)
+            if (!runtimeAction || !Controller)
             {
                 return;
             }
 
             float magnitude = Mathf.Max(0f, actionMagnitude) * Mathf.Max(0f, step.magnitudeMultiplier);
-            var runtime = new AgentActionRuntime(Controller, this, target, magnitude);
+            AgentActionRuntime runtime = new AgentActionRuntime(Controller, this, target, magnitude);
             Controller.ExecuteAction(runtimeAction, runtime).Forget();
             ApplyStepHitStopOnHit(step);
         }
@@ -815,7 +813,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void ApplyNudge(ComboStep step)
         {
-            if (!Controller || body == null)
+            if (!Controller || !body)
             {
                 return;
             }
