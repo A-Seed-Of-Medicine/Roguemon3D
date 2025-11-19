@@ -37,7 +37,8 @@ namespace HSM {
         internal void Update(float deltaTime) {
             State t = GetTransition();
             if (t != null) {
-                Machine.Sequencer.RequestTransition(this, t);
+                if (ActiveChild != null) Machine.Sequencer.RequestTransition(ActiveChild, t);
+                else Machine.Sequencer.RequestTransition(this, t);
                 return;
             }
             

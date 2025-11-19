@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Actions;
 
 namespace _PinBoy.Scripts.Gameplay.Actions.Editor
@@ -11,8 +12,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         const float SectionSpacing = 6f;
 
         CharacterComboAction targetAction;
-        SerializedObject serializedAction;
+        CharacterComboDefinition targetDefinition;
+        SerializedObject serializedDefinition;
         SerializedProperty requiresAimProperty;
+        SerializedProperty queuedInputLifetimeProperty;
         SerializedProperty entryStepsProperty;
         SerializedProperty stepsProperty;
 
@@ -20,8 +23,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         Vector2 entryScroll;
         Vector2 stepScroll;
         bool entryFoldout = true;
-
-        readonly Dictionary<int, StepFoldoutState> foldoutStates = new();
 
         [MenuItem("Window/Gameplay/Combo Graph Editor")] 
         static void ShowWindow()
@@ -32,13 +33,20 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         public static void Open(CharacterComboAction action)
         {
             ComboGraphEditorWindow window = GetWindow<ComboGraphEditorWindow>("Combo Graph Editor");
-            window.SetTarget(action);
+            window.SetTargetAction(action);
+            window.Focus();
+        }
+
+        public static void Open(CharacterComboDefinition definition)
+        {
+            ComboGraphEditorWindow window = GetWindow<ComboGraphEditorWindow>("Combo Graph Editor");
+            window.SetTargetDefinition(definition);
             window.Focus();
         }
 
         void OnEnable()
         {
-            if (targetAction != null)
+            if (targetDefinition != null)
             {
                 CreateSerializedObject();
             }
@@ -46,8 +54,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
         void OnDisable()
         {
-            serializedAction = null;
+            serializedDefinition = null;
             requiresAimProperty = null;
+            queuedInputLifetimeProperty = null;
             entryStepsProperty = null;
             stepsProperty = null;
         }
@@ -56,21 +65,22 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         {
             DrawTargetSelector();
 
-            if (targetAction == null)
+            if (targetDefinition == null)
             {
-                EditorGUILayout.HelpBox("Assign a CharacterComboAction component to begin editing its combo graph.", MessageType.Info);
+                EditorGUILayout.HelpBox("Assign a CharacterComboDefinition asset or a CharacterComboAction with a definition to begin editing its combo graph.", MessageType.Info);
                 return;
             }
 
-            if (serializedAction == null)
+            if (serializedDefinition == null)
             {
                 CreateSerializedObject();
             }
 
-            serializedAction.UpdateIfRequiredOrScript();
+            serializedDefinition.UpdateIfRequiredOrScript();
 
             GUILayout.Space(SectionSpacing);
             EditorGUILayout.PropertyField(requiresAimProperty);
+            EditorGUILayout.PropertyField(queuedInputLifetimeProperty);
 
             GUILayout.Space(SectionSpacing);
             DrawEntrySteps();
@@ -78,33 +88,49 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             GUILayout.Space(SectionSpacing);
             DrawStepTabs();
 
-            serializedAction.ApplyModifiedProperties();
+            serializedDefinition.ApplyModifiedProperties();
         }
 
         void DrawTargetSelector()
         {
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("Combo Controller", EditorStyles.boldLabel);
-                CharacterComboAction selected = (CharacterComboAction)EditorGUILayout.ObjectField("Target", targetAction, typeof(CharacterComboAction), true);
-                if (selected != targetAction)
+                EditorGUILayout.LabelField("Combo Sources", EditorStyles.boldLabel);
+
+                CharacterComboAction selectedAction = (CharacterComboAction)EditorGUILayout.ObjectField("Action", targetAction, typeof(CharacterComboAction), true);
+                if (selectedAction != targetAction)
                 {
-                    SetTarget(selected);
+                    SetTargetAction(selectedAction);
+                }
+
+                CharacterComboDefinition selectedDefinition = (CharacterComboDefinition)EditorGUILayout.ObjectField("Combo Definition", targetDefinition, typeof(CharacterComboDefinition), false);
+                if (selectedDefinition != targetDefinition)
+                {
+                    SetTargetDefinition(selectedDefinition);
+                }
+
+                if (targetAction != null && targetAction.ComboDefinition != targetDefinition)
+                {
+                    EditorGUILayout.HelpBox("The selected action references a different combo definition. Editing will apply to the definition shown above.", MessageType.Warning);
                 }
             }
         }
 
-        void SetTarget(CharacterComboAction action)
+        void SetTargetAction(CharacterComboAction action)
         {
             targetAction = action;
-            if (targetAction == null)
+            if (targetAction != null)
             {
-                serializedAction = null;
-                requiresAimProperty = null;
-                entryStepsProperty = null;
-                stepsProperty = null;
-                selectedStepIndex = 0;
-                foldoutStates.Clear();
+                SetTargetDefinition(targetAction.ComboDefinition);
+            }
+        }
+
+        void SetTargetDefinition(CharacterComboDefinition definition)
+        {
+            targetDefinition = definition;
+            if (targetDefinition == null)
+            {
+                ClearSerializedState();
             }
             else
             {
@@ -112,17 +138,28 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             }
         }
 
+        void ClearSerializedState()
+        {
+            serializedDefinition = null;
+            requiresAimProperty = null;
+            queuedInputLifetimeProperty = null;
+            entryStepsProperty = null;
+            stepsProperty = null;
+            selectedStepIndex = 0;
+        }
+
         void CreateSerializedObject()
         {
-            if (targetAction == null)
+            if (targetDefinition == null)
             {
+                ClearSerializedState();
                 return;
             }
-
-            serializedAction = new SerializedObject(targetAction);
-            requiresAimProperty = serializedAction.FindProperty("requiresAimInput");
-            entryStepsProperty = serializedAction.FindProperty("entrySteps");
-            stepsProperty = serializedAction.FindProperty("steps");
+            serializedDefinition = new SerializedObject(targetDefinition);
+            requiresAimProperty = serializedDefinition.FindProperty("requiresAimInput");
+            queuedInputLifetimeProperty = serializedDefinition.FindProperty("queuedInputLifetime");
+            entryStepsProperty = serializedDefinition.FindProperty("entrySteps");
+            stepsProperty = serializedDefinition.FindProperty("steps");
             selectedStepIndex = Mathf.Clamp(selectedStepIndex, 0, Mathf.Max(0, stepsProperty.arraySize - 1));
         }
 
@@ -204,7 +241,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             using (var scroll = new EditorGUILayout.ScrollViewScope(stepScroll))
             {
                 stepScroll = scroll.scrollPosition;
-                DrawStepInspector(step, selectedStepIndex);
+                EditorGUILayout.PropertyField(step, new GUIContent($"Step {selectedStepIndex + 1}"), true);
             }
 
             GUILayout.Space(SectionSpacing);
@@ -238,182 +275,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             return labels;
         }
 
-        void DrawStepInspector(SerializedProperty step, int index)
-        {
-            StepFoldoutState state = GetFoldoutState(index);
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUILayout.LabelField("Identity", EditorStyles.boldLabel);
-                EditorGUILayout.PropertyField(step.FindPropertyRelative("id"));
-                EditorGUILayout.PropertyField(step.FindPropertyRelative("action"));
-                EditorGUILayout.PropertyField(step.FindPropertyRelative("magnitudeMultiplier"));
-                EditorGUILayout.PropertyField(step.FindPropertyRelative("triggerWhenNoTarget"));
-                EditorGUILayout.PropertyField(step.FindPropertyRelative("allowRepeatedHits"));
-            }
-
-            GUILayout.Space(SectionSpacing);
-
-            state.Timing = EditorGUILayout.BeginFoldoutHeaderGroup(state.Timing, "Timing");
-            if (state.Timing)
-            {
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                {
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("windup"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("active"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("recovery"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("comboResetDelay"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("transitionWindowOpen"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("transitionWindowClose"));
-                }
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-
-            GUILayout.Space(SectionSpacing);
-
-            state.Movement = EditorGUILayout.BeginFoldoutHeaderGroup(state.Movement, "Movement");
-            if (state.Movement)
-            {
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                {
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("lockMovement"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("zeroVelocityOnStart"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("missNudgeImpulse"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("missNudgeDelay"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("applyNudgeWhenHit"));
-                }
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-
-            GUILayout.Space(SectionSpacing);
-
-            state.HitDetection = EditorGUILayout.BeginFoldoutHeaderGroup(state.HitDetection, "Hit Detection");
-            if (state.HitDetection)
-            {
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                {
-                    // Draw arrays without their own header groups
-                    DrawArrayNoHeader(step.FindPropertyRelative("hitColliders"), "Hit Colliders");
-
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("targetLayers"));
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("includeTriggerColliders"));
-
-                    DrawArrayNoHeader(step.FindPropertyRelative("allegianceMask"), "Allegiance Mask");
-
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("fallbackDirection"));
-                }
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-
-
-            GUILayout.Space(SectionSpacing);
-
-            state.Transitions = EditorGUILayout.BeginFoldoutHeaderGroup(state.Transitions, $"Transitions ({step.FindPropertyRelative("transitions").arraySize})");
-            if (state.Transitions)
-            {
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                {
-                    DrawTransitions(step.FindPropertyRelative("transitions"));
-                }
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-
-            GUILayout.Space(SectionSpacing);
-
-            state.Vfx = EditorGUILayout.BeginFoldoutHeaderGroup(state.Vfx, "VFX");
-            if (state.Vfx)
-            {
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                {
-                    EditorGUILayout.PropertyField(step.FindPropertyRelative("vfx"));
-                }
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-
-            foldoutStates[index] = state;
-        }
-
-        void DrawTransitions(SerializedProperty transitions)
-        {
-            for (int i = 0; i < transitions.arraySize; i++)
-            {
-                SerializedProperty transition = transitions.GetArrayElementAtIndex(i);
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                {
-                    EditorGUILayout.PropertyField(transition.FindPropertyRelative("input"));
-                    EditorGUILayout.PropertyField(transition.FindPropertyRelative("nextStepId"));
-                    EditorGUILayout.PropertyField(transition.FindPropertyRelative("queueUntilWindow"));
-                    EditorGUILayout.PropertyField(transition.FindPropertyRelative("transitionDelay"));
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        GUILayout.FlexibleSpace();
-                        if (GUILayout.Button("Remove", GUILayout.Width(80f)))
-                        {
-                            transitions.DeleteArrayElementAtIndex(i);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Add Transition", GUILayout.Width(140f)))
-                {
-                    transitions.InsertArrayElementAtIndex(transitions.arraySize);
-                    SerializedProperty newTransition = transitions.GetArrayElementAtIndex(transitions.arraySize - 1);
-                    newTransition.FindPropertyRelative("input").enumValueIndex = 0;
-                    newTransition.FindPropertyRelative("nextStepId").stringValue = string.Empty;
-                    newTransition.FindPropertyRelative("queueUntilWindow").boolValue = true;
-                    newTransition.FindPropertyRelative("transitionDelay").floatValue = 0f;
-                }
-                GUILayout.FlexibleSpace();
-            }
-        }
-        
-        static void DrawArrayNoHeader(SerializedProperty arrayProp, string label)
-        {
-            if (arrayProp == null || !arrayProp.isArray) return;
-
-            EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
-            EditorGUI.indentLevel++;
-           // int newSize = Mathf.Max(0, EditorGUILayout.IntField("Size", arrayProp.arraySize));
-            //if (newSize != arrayProp.arraySize) arrayProp.arraySize = newSize;
-            // New Horizontal layout for buttons
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                if (GUILayout.Button("Add Element", GUILayout.Width(120f)))
-                {
-                    arrayProp.InsertArrayElementAtIndex(arrayProp.arraySize);
-                }
-
-                if (GUILayout.Button("Remove Last Element", GUILayout.Width(150f)))
-                {
-                    if (arrayProp.arraySize > 0)
-                    {
-                        arrayProp.DeleteArrayElementAtIndex(arrayProp.arraySize - 1);
-                    }
-                }
-            }
-
-            for (int i = 0; i < arrayProp.arraySize; i++)
-            {
-                var elem = arrayProp.GetArrayElementAtIndex(i);
-                // Draw each element without creating another header group
-                EditorGUILayout.PropertyField(elem, new GUIContent($"Element {i}"), true);
-            }
-            EditorGUI.indentLevel--;
-        }
-
-
         void AddStep()
         {
             stepsProperty.InsertArrayElementAtIndex(stepsProperty.arraySize);
             SerializedProperty step = stepsProperty.GetArrayElementAtIndex(stepsProperty.arraySize - 1);
             ResetStep(step);
             selectedStepIndex = stepsProperty.arraySize - 1;
-            foldoutStates.Clear();
         }
 
         void DuplicateStep(int index)
@@ -428,7 +295,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             SerializedProperty id = newStep.FindPropertyRelative("id");
             id.stringValue = GenerateUniqueStepId(id.stringValue);
             selectedStepIndex = index + 1;
-            foldoutStates.Clear();
         }
 
         void RemoveStep(int index)
@@ -440,7 +306,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             stepsProperty.DeleteArrayElementAtIndex(index);
             selectedStepIndex = Mathf.Clamp(selectedStepIndex, 0, stepsProperty.arraySize - 1);
-            foldoutStates.Clear();
         }
 
         string GenerateUniqueStepId(string baseId = "step")
@@ -475,6 +340,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("magnitudeMultiplier").floatValue = 1f;
             step.FindPropertyRelative("triggerWhenNoTarget").boolValue = false;
             step.FindPropertyRelative("allowRepeatedHits").boolValue = false;
+            step.FindPropertyRelative("stunImmune").boolValue = false;
             step.FindPropertyRelative("windup").floatValue = 0.05f;
             step.FindPropertyRelative("active").floatValue = 0.15f;
             step.FindPropertyRelative("recovery").floatValue = 0.25f;
@@ -482,20 +348,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("transitionWindowOpen").floatValue = 0.35f;
             step.FindPropertyRelative("transitionWindowClose").floatValue = 0.9f;
             step.FindPropertyRelative("lockMovement").boolValue = true;
+            step.FindPropertyRelative("lockAim").boolValue = true;
             step.FindPropertyRelative("zeroVelocityOnStart").boolValue = true;
             step.FindPropertyRelative("missNudgeImpulse").floatValue = 0f;
             step.FindPropertyRelative("missNudgeDelay").floatValue = 0f;
             step.FindPropertyRelative("applyNudgeWhenHit").boolValue = false;
-            SerializedProperty colliders = step.FindPropertyRelative("hitColliders");
-            ClearArray(colliders);
-            step.FindPropertyRelative("targetLayers").intValue = Physics.DefaultRaycastLayers;
-            step.FindPropertyRelative("includeTriggerColliders").boolValue = true;
-            SerializedProperty allegiance = step.FindPropertyRelative("allegianceMask");
-            ClearArray(allegiance);
+            step.FindPropertyRelative("hitDetectorPrefab").objectReferenceValue = null;
+            step.FindPropertyRelative("parentHitDetectorToPivot").boolValue = true;
+            step.FindPropertyRelative("hitDetectorPositionOffset").vector3Value = Vector3.zero;
+            step.FindPropertyRelative("hitDetectorRotationOffset").vector3Value = Vector3.zero;
             step.FindPropertyRelative("fallbackDirection").vector3Value = Vector3.forward;
             SerializedProperty transitions = step.FindPropertyRelative("transitions");
             ClearArray(transitions);
             step.FindPropertyRelative("vfx").objectReferenceValue = null;
+            ResetAnimation(step.FindPropertyRelative("animation"));
+            step.FindPropertyRelative("hitStopOnExecute").floatValue = 0f;
+            step.FindPropertyRelative("hitStopOnHit").floatValue = 0f;
+            step.FindPropertyRelative("multiplyHitStopPerHit").boolValue = true;
+            step.FindPropertyRelative("animationCrossFade").floatValue = 0.1f;
+            step.FindPropertyRelative("animationSpeedMultiplier").floatValue = 1f;
+            step.FindPropertyRelative("scaleAnimationSpeedToStepDuration").boolValue = false;
+            step.FindPropertyRelative("overrideAnimationSpeed").boolValue = false;
         }
 
         static void ClearArray(SerializedProperty property)
@@ -511,31 +384,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             }
         }
 
-        StepFoldoutState GetFoldoutState(int index)
+        static void ResetAnimation(SerializedProperty animation)
         {
-            if (!foldoutStates.TryGetValue(index, out StepFoldoutState state))
+            if (animation == null)
             {
-                state = new StepFoldoutState
-                {
-                    Timing = true,
-                    Movement = true,
-                    HitDetection = true,
-                    Transitions = true,
-                    Vfx = true
-                };
-                foldoutStates[index] = state;
+                return;
             }
 
-            return state;
-        }
-
-        struct StepFoldoutState
-        {
-            public bool Timing;
-            public bool Movement;
-            public bool HitDetection;
-            public bool Transitions;
-            public bool Vfx;
+            animation.FindPropertyRelative("directionMode").enumValueIndex = (int)AgentAnimationRequest.DirectionMode.Single;
+            animation.FindPropertyRelative("mirrorLeftRight").boolValue = false;
+            animation.FindPropertyRelative("singleClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("northClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("southClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("eastClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("westClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("northEastClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("southEastClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("northWestClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("southWestClip").objectReferenceValue = null;
+            animation.FindPropertyRelative("crossFade").floatValue = 0f;
+            animation.FindPropertyRelative("playbackSpeed").floatValue = 1f;
+            animation.FindPropertyRelative("overrideSpeed").boolValue = false;
         }
     }
 }

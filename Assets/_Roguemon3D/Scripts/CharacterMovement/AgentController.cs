@@ -9,6 +9,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using HSM;
 using ImprovedTimers;
+using UnityEngine.Events;
 
 namespace _PinBoy.Scripts.CharacterMovement
 {
@@ -74,12 +75,15 @@ namespace _PinBoy.Scripts.CharacterMovement
         
         [field: SerializeField]
         public AllegianceType allegiance { get; set; }
-        [field: SerializeField]
-        public Health health { get; private set; }
+
+        [field: SerializeField] public Health health { get; set; } = new (100);
         public StatusHandler statusHandler { get; private set; }
 
+        public UnityEvent<DamageInfo> DamageTaken;
+        public UnityEvent<DamageInfo> DamageDealt;
+
         [Header("Animation (optional)")]
-        [SerializeField] private SpriteAnimator spriteAnimator;
+        [field: SerializeField] public SpriteAnimator spriteAnimator { get; private set; }
         [Header("State Animations")]
         [SerializeField] private AgentAnimationRequest idleAnimation;
         [SerializeField] private AgentAnimationRequest movingAnimation;
@@ -130,9 +134,22 @@ namespace _PinBoy.Scripts.CharacterMovement
                 return inputReader?.moveInput ?? Vector2.zero;
             }
         }
+        
+        protected bool isAiming {
+            get
+            {
+                if (aimLockTimer.IsRunning)
+                    return false;
+                
+                return inputReader?.isAiming ?? false;
+            }
+    }
+        
         protected Vector3 currentVelocity;
         protected Vector3 facingDirection = Vector3.forward;
         protected MyCountTimer movementLockTimer;
+        protected MyCountTimer aimLockTimer;
+        
         public bool IsMovementLocked => movementLockTimer.IsRunning;
 
         readonly Dictionary<MovementProfile, CancellationTokenSource> movementOverrideTokens = new Dictionary<MovementProfile, CancellationTokenSource>();
@@ -196,11 +213,18 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Awake()
         {
+            health.Init();
             statusHandler = new StatusHandler(this);
+            if (statusHandler?.StunnedStatus != null)
+            {
+                statusHandler.StunnedStatus.OnStart += HandleStunnedStatusStarted;
+                statusHandler.StunnedStatus.OnEnd += HandleStunnedStatusEnded;
+            }
             agentRoot = new AgentRoot(null, this);
             machine = new StateMachineBuilder(agentRoot).Build();
             
             movementLockTimer = new MyCountTimer(0f);
+            aimLockTimer = new MyCountTimer(0f);
             inputReader ??= new InputReader();
             inputReader.controller = this;
             rb = GetComponent<Rigidbody>();
@@ -244,6 +268,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         protected virtual void OnEnable()
         {
             inputReader.EnableCharacterActions(true);
+            inputReader.SetStunned(statusHandler?.StunnedStatus?.IsActive ?? false);
         }
 
         protected virtual void OnDisable()
@@ -255,6 +280,11 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void OnDestroy()
         {
+            if (statusHandler?.StunnedStatus != null)
+            {
+                statusHandler.StunnedStatus.OnStart -= HandleStunnedStatusStarted;
+                statusHandler.StunnedStatus.OnEnd -= HandleStunnedStatusEnded;
+            }
             UnsubscribeFromInput();
             CancelActiveActionTask();
             ClearMovementOverrideTasks();
@@ -262,7 +292,7 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Update()
         {
-            if (faceAimDirection && inputReader.isAiming)
+            if (faceAimDirection && isAiming)
             {
                 Vector3 aim = AimDirection;
                 if (aim.sqrMagnitude > 0.0001f)
@@ -276,14 +306,7 @@ namespace _PinBoy.Scripts.CharacterMovement
                 facingDirection = moveDir.sqrMagnitude > 0.0001f ? moveDir.normalized : facingDirection;
             }
 
-            if (inputReader.isAiming)
-            {
-                SetAimIndicator(AimDirection);
-            }
-            else
-            {
-                SetAimIndicator(facingDirection);
-            }
+            SetAimIndicator(isAiming ? AimDirection : facingDirection);
 
             animationController.UpdateDirection(moveInput, facingDirection);
 
@@ -379,7 +402,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             return AimOrigin + aimDir.normalized * aimOffset;
         }
 
-        public Vector3 SetAimIndicator(Vector3 direction)
+        public void SetAimIndicator(Vector3 direction)
         {
             Vector3 aimDir = direction;
             if (aimDir.sqrMagnitude <= 0.0001f)
@@ -397,8 +420,6 @@ namespace _PinBoy.Scripts.CharacterMovement
                     aimPivotObject.transform.rotation = Quaternion.LookRotation(-planarDirection, Vector3.up);
                 }
             }
-
-            return position;
         }
 
         protected virtual void SubscribeToInput()
@@ -586,6 +607,17 @@ namespace _PinBoy.Scripts.CharacterMovement
             }
         }
         
+        public void LockAim(float duration)
+        {
+            aimLockTimer.Start(duration);
+        }
+        
+        public void UnlockAim()
+        {
+            if (aimLockTimer.IsRunning)
+                aimLockTimer.Stop();
+        }
+        
         public void UnlockMovement()
         {
             if (IsMovementLocked)
@@ -596,7 +628,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         {
             get
             {
-                if (inputReader.isAiming)
+                if (isAiming)
                 {
                     Vector2 aim = inputReader.aimDirection;
                     if (aim.sqrMagnitude > 0.0001f)
@@ -657,6 +689,24 @@ namespace _PinBoy.Scripts.CharacterMovement
             activeActionToken = linkedToken;
             isActionRunning = true;
             return RunActionAsync(action, runtime, linkedToken);
+        }
+
+        void HandleStunnedStatusStarted(IStatusEffect effect)
+        {
+            inputReader?.SetStunned(true);
+            CancelActiveActionTask();
+            pendingActionState = null;
+            currentVelocity = Vector3.zero;
+            verticalSpeed = 0f;
+            if (rb)
+            {
+                rb.linearVelocity = Vector3.zero;
+            }
+        }
+
+        void HandleStunnedStatusEnded(IStatusEffect effect)
+        {
+            inputReader?.SetStunned(false);
         }
 
         void CancelActiveActionTask()
@@ -1063,19 +1113,24 @@ namespace _PinBoy.Scripts.CharacterMovement
             Vector2 snapped2D = new Vector2(Mathf.Cos(snapped), Mathf.Sin(snapped));
             return new Vector3(snapped2D.x, 0f, snapped2D.y).normalized;
         }
-
-        static int FacingIndex(Vector3 dir)
-        {
-            if (dir.sqrMagnitude < 0.0001f) return 0;
-            Vector2 planar = new Vector2(dir.x, dir.z);
-            if (planar.sqrMagnitude < 0.0001f) return 0;
-            float angleDeg = Mathf.Repeat(Mathf.Atan2(planar.y, planar.x) * Mathf.Rad2Deg + 90f + 22.5f, 360f);
-            return Mathf.FloorToInt(angleDeg / 45f) % 8;
-        }
         
         public void ApplyDamage(DamageInfo damageInfo)
         {
             health?.ApplyDamage(damageInfo);
+            if (damageInfo.amount > 0f)
+            {
+                DamageTaken?.Invoke(damageInfo);
+            }
+        }
+
+        internal void NotifyDamageDealt(DamageInfo damageInfo)
+        {
+            if (damageInfo.amount <= 0f)
+            {
+                return;
+            }
+
+            DamageDealt?.Invoke(damageInfo);
         }
         
         protected virtual void OnDrawGizmosSelected()

@@ -99,7 +99,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return AgentRoot.Stunned;
             }
 
-            if (!comboAction.IsComboExecuting)
+            if (!comboAction.IsCurrentStepRunning)
             {
                 if (!controller)
                     return null;

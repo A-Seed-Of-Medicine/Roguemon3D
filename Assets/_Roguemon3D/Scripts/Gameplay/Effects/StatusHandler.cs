@@ -11,6 +11,13 @@ using UnityEngine.Events;
 
 namespace AdvancedController
 {
+    public enum StatusType
+    {
+        Stunned,
+        Silenced,
+        Rooted
+    }
+
     /// <summary>
     /// A countdown manager for status effects
     /// </summary>
@@ -22,7 +29,7 @@ namespace AdvancedController
         public readonly TimerStatus RootedStatus;
 
         public readonly IDamageable Damageable;
-        
+
         public StatusHandler( IDamageable damageable)
         {
             Damageable = damageable;
@@ -30,7 +37,17 @@ namespace AdvancedController
             SilencedStatus = new TimerStatus(this);
             RootedStatus = new TimerStatus(this);
         }
-        
+
+        public IStatusEffect GetStatus(StatusType type)
+        {
+            return type switch
+            {
+                StatusType.Stunned => StunnedStatus,
+                StatusType.Silenced => SilencedStatus,
+                StatusType.Rooted => RootedStatus,
+                _ => null
+            };
+        }
     }
     
     public interface IStatusEffect
@@ -60,6 +77,7 @@ namespace AdvancedController
             Handler = handler;
             Timer = new MyCountTimer(0);
             Timer.OnTimerFinish += Finish;
+            Timer.OnTimerTick += Tick;
         }
         
         protected virtual void Tick(float deltaTime)

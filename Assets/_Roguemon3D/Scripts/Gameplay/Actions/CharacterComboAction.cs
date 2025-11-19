@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using HSM;
 using ImprovedTimers;
+using _Roguemon3D.Scripts.Utils;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
 {
@@ -65,6 +66,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool triggerWhenNoTarget;
             [Tooltip("If false a target will only be affected once per active window.")]
             public bool allowRepeatedHits;
+            [Tooltip("If true the step will continue even when the agent is stunned.")]
+            public bool stunImmune;
 
             [Header("Timing")]
             [Min(0f)] public float windup = 0.05f;
@@ -81,6 +84,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             [Header("Movement")]
             public bool lockMovement = true;
+            public bool lockAim = true;
             public bool zeroVelocityOnStart = true;
             [Tooltip("Impulse applied along the aim direction if the step doesn't connect with a target.")]
             public float missNudgeImpulse;
@@ -88,10 +92,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool applyNudgeWhenHit;
 
             [Header("Hit Detection")]
-            public Collider[] hitColliders = Array.Empty<Collider>();
-            public LayerMask targetLayers = Physics.DefaultRaycastLayers;
-            public bool includeTriggerColliders = true;
-            public List<AllegianceType> allegianceMask = new();
+            public HitDetector hitDetectorPrefab;
+            public bool parentHitDetectorToPivot = true;
+            public Vector3 hitDetectorPositionOffset;
+            public Vector3 hitDetectorRotationOffset;
             [Tooltip("Fallback direction if aim input is not available.")]
             public Vector3 fallbackDirection = Vector3.forward;
 
@@ -101,10 +105,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             [Header("VFX")]
             public ParticleSystem vfx;
 
+            [Header("Hit Stop")]
+            [Min(0f)] public float hitStopOnExecute;
+            [Min(0f)] public float hitStopOnHit;
+            public bool multiplyHitStopPerHit = true;
+
             [Header("Animation")]
-            public AnimationClip animationClip;
+            public AgentAnimationRequest animation;
             [Min(0f)] public float animationCrossFade = 0.1f;
-            public float animationSpeed = 1f;
+            public float animationSpeedMultiplier = 1f;
+            public bool scaleAnimationSpeedToStepDuration;
             public bool overrideAnimationSpeed;
 
             public float TotalDuration => Mathf.Max(0.0001f, windup + active + recovery);
@@ -112,27 +122,25 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public float TransitionCloseTime => Mathf.Clamp01(transitionWindowClose) * TotalDuration;
         }
 
-        [Header("Combo Graph")]
-        [SerializeField] bool requiresAimInput = true;
-        [SerializeField] ComboEntry[] entrySteps = Array.Empty<ComboEntry>();
-        [SerializeField] ComboStep[] steps = Array.Empty<ComboStep>();
+        [Header("Combo Definition")]
+        [SerializeField] CharacterComboDefinition comboDefinition;
 
         [Header("Runtime Behaviour")]
         public MovementProfile overrideMovementProfile;
-        [SerializeField, Tooltip("How long queued input remains valid before it expires.")]
-        [Min(0f)] float queuedInputLifetime = 0.35f;
 
         readonly Dictionary<string, ComboStep> stepLookup = new();
-        readonly Dictionary<ComboStep, StepOverlapSettings> overlapSettingsCache = new();
         readonly HashSet<IDamageable> stepHitTargets = new();
         readonly Dictionary<ComboInput, UnityEngine.Events.UnityAction<bool>> inputHandlers = new();
-        readonly Collider[] colliderCache = new Collider[16];
+        bool statusEventsRegistered;
+        HitDetector activeHitDetector;
 
-        struct StepOverlapSettings
-        {
-            public LayerMask LayerMask;
-            public QueryTriggerInteraction Query;
-        }
+        const float DefaultQueuedInputLifetime = 0.35f;
+
+        ComboEntry[] EntrySteps => comboDefinition ? comboDefinition.EntrySteps : Array.Empty<ComboEntry>();
+        ComboStep[] Steps => comboDefinition ? comboDefinition.Steps : Array.Empty<ComboStep>();
+        float QueuedInputLifetime => comboDefinition ? comboDefinition.QueuedInputLifetime : DefaultQueuedInputLifetime;
+
+        public CharacterComboDefinition ComboDefinition => comboDefinition;
 
         ComboStep currentStep;
         ComboStep pendingStep;
@@ -149,6 +157,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool nudgePending;
         Vector3 cachedStepDirection = Vector3.forward;
         float pendingComboResetDelay;
+        bool stepHitStopAppliedOnHit;
 
         internal bool IsComboExecuting => comboActive || IsCurrentStepRunning || pendingDelayActive;
 
@@ -170,7 +179,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool inActivePhase;
         bool inRecoveryPhase;
 
-        protected override bool UsesAimInput => requiresAimInput;
+        protected override bool UsesAimInput => comboDefinition ? comboDefinition.RequiresAimInput : true;
 
         protected override void Awake()
         {
@@ -195,6 +204,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             BuildLookups();
         }
 
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            SubscribeStatusEvents();
+            if (Controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
+            {
+                HandleStunStatusStarted(Controller.statusHandler.StunnedStatus);
+            }
+        }
+
         void OnValidate()
         {
             BuildLookups();
@@ -212,12 +231,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected override void OnDisable()
         {
+            UnsubscribeStatusEvents();
             base.OnDisable();
             ResetComboState();
         }
 
         protected override void OnDestroy()
         {
+            UnsubscribeStatusEvents();
             if (windupTimer != null)
             {
                 windupTimer.OnTimerFinish -= HandleWindupTimerFinished;
@@ -380,6 +401,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 return;
             }
+
+            activeHitDetector?.Deactivate();
         }
 
         void CompleteCurrentStep()
@@ -415,6 +438,15 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
+            if (Controller.statusHandler?.StunnedStatus?.IsActive ?? false)
+            {
+                if (!step.stunImmune)
+                {
+                    AbortComboDueToStun();
+                    return;
+                }
+            }
+
             ResetPendingTransition();
             comboResetTimer.Cancel();
             currentStep = step;
@@ -427,6 +459,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             nudgePending = false;
             nudgeTimer = 0f;
             pendingComboResetDelay = 0f;
+            stepHitStopAppliedOnHit = false;
 
             inActivePhase = false;
             inRecoveryPhase = false;
@@ -443,16 +476,26 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 stepTimer.Start(totalDuration);
             }
 
+            actionStarted?.Invoke();
+
             comboActive = true;
+            SpawnHitDetectorForStep(step);
             ApplyStepAnimation(step);
+            ApplyStepHitStopOnExecute(step);
 
             if (step.lockMovement)
             {
                 float lockTime = step.windup + step.active;
                 Controller.LockMovement(lockTime, step.zeroVelocityOnStart);
             }
+            
+            if (step.lockAim)
+            {
+                float lockTime = step.windup + step.active;
+                Controller.LockAim(lockTime);
+            }
 
-            if (step.zeroVelocityOnStart && body != null)
+            if (step.zeroVelocityOnStart && body)
             {
                 Vector3 currentVelocity = body.linearVelocity;
                 body.linearVelocity = new Vector3(0f, currentVelocity.y, 0f);
@@ -475,24 +518,43 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 ResetAnimationRequest();
                 return;
             }
-
-            if (step.animationClip != null)
+            
+            
+            if (step.animation.IsValid)
             {
-                float speed = step.animationSpeed <= 0f ? 1f : step.animationSpeed;
-                AgentAnimationRequest request = new AgentAnimationRequest
+                if (step.scaleAnimationSpeedToStepDuration)
                 {
-                    directionMode = AgentAnimationRequest.DirectionMode.Single,
-                    singleClip = step.animationClip,
-                    crossFade = Mathf.Max(0f, step.animationCrossFade),
-                    playbackSpeed = speed,
-                    overrideSpeed = step.overrideAnimationSpeed
-                };
-                SetAnimationRequest(request);
+                    AnimationClip resolvedClip = Controller.AnimationController.GetClip(step.animation);
+                    float speed = step.animationSpeedMultiplier > 0f ? step.animationSpeedMultiplier : 1f;
+                    float clipLength = resolvedClip.length;
+                    if (clipLength > 0f)
+                    {
+                        float duration = Mathf.Max(0.0001f, step.TotalDuration);
+                        speed *= clipLength / duration;
+                    }
+                    bool shouldOverride = step.overrideAnimationSpeed || step.scaleAnimationSpeedToStepDuration || !Mathf.Approximately(speed, 1f);
+                    float playbackSpeed = shouldOverride ? Mathf.Max(0.0001f, speed) : 1f;
+                    step.animation.playbackSpeed = playbackSpeed;
+                    step.animation.overrideSpeed = shouldOverride;
+                    step.animation.crossFade = step.animationCrossFade;
+                }
+                ResetAnimationRequest();
+                SetAnimationRequest(step.animation);
             }
             else
             {
                 ResetAnimationRequest();
             }
+        }
+
+        void ApplyStepHitStopOnExecute(ComboStep step)
+        {
+            if (step == null || step.hitStopOnExecute <= 0f)
+            {
+                return;
+            }
+
+            CameraManager.Instance?.TryAddHitStopForAgent(Controller, step.hitStopOnExecute);
         }
 
         void StartWindupPhase(ComboStep step)
@@ -503,6 +565,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             windupTimer.Cancel();
+
+            activeHitDetector?.HandlePhaseStart(HitDetector.ExecutionPhase.Windup, step);
 
             if (step.windup > 0f)
             {
@@ -521,6 +585,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
+            activeHitDetector?.HandlePhaseEnd(HitDetector.ExecutionPhase.Windup);
             StartActivePhase();
         }
 
@@ -534,11 +599,15 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             inActivePhase = currentStep.active > 0f;
             activeTimer.Cancel();
 
+            activeHitDetector?.HandlePhaseStart(HitDetector.ExecutionPhase.Active, currentStep);
+
             if (currentStep.vfx)
             {
                 currentStep.vfx.Clear();
                 currentStep.vfx.Play();
             }
+
+            activeHitDetector?.Activate(currentStep, currentStep.active);
 
             if ((currentStep.applyNudgeWhenHit || !stepRegisteredHit) && currentStep.missNudgeImpulse > 0f)
             {
@@ -573,6 +642,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
+            activeHitDetector?.HandlePhaseEnd(HitDetector.ExecutionPhase.Active);
             StartRecoveryPhase();
         }
 
@@ -585,6 +655,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             inRecoveryPhase = currentStep.recovery > 0f;
             recoveryTimer.Cancel();
+
+            activeHitDetector?.HandlePhaseStart(HitDetector.ExecutionPhase.Recovery, currentStep);
 
             if (inRecoveryPhase)
             {
@@ -605,6 +677,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
+            activeHitDetector?.HandlePhaseEnd(HitDetector.ExecutionPhase.Recovery);
             CompleteCurrentStep();
         }
 
@@ -645,69 +718,111 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void EvaluateStepHits(ComboStep step)
         {
-            if (step.hitColliders == null || step.hitColliders.Length == 0)
+            if (activeHitDetector == null || step == null)
             {
                 return;
             }
 
-            StepOverlapSettings settings = GetOverlapSettings(step);
-            foreach (Collider source in step.hitColliders)
+            activeHitDetector.EvaluateHits(stepHitTargets, step.allowRepeatedHits, damageable =>
             {
-                if (!source)
-                {
-                    continue;
-                }
+                ExecuteStepAction(step, damageable);
+                stepRegisteredHit = true;
+            });
+        }
 
-                int hitCount = OverlapColliderNonAlloc(source, colliderCache, settings);
-                for (int i = 0; i < hitCount; i++)
-                {
-                    Collider other = colliderCache[i];
-                    colliderCache[i] = null;
+        void SpawnHitDetectorForStep(ComboStep step)
+        {
+            ReleaseActiveHitDetector();
 
-                    if (!other || other == source)
-                    {
-                        continue;
-                    }
+            if (!step?.hitDetectorPrefab || !Controller)
+                return;
 
-                    IDamageable damageable = other.GetComponentInParent<IDamageable>();
-                    if (damageable == null || (AgentController)damageable == Controller)
-                    {
-                        continue;
-                    }
+            Transform parent = step.parentHitDetectorToPivot && Controller.aimPivotObject
+                ? Controller.aimPivotObject.transform
+                : null;
 
-                    if (step.allegianceMask is { Count: > 0 } && !step.allegianceMask.Contains(damageable.allegiance))
-                    {
-                        continue;
-                    }
+            Vector3 worldPosition = Controller.transform.TransformPoint(step.hitDetectorPositionOffset);
+            Quaternion worldRotation = Controller.transform.rotation * Quaternion.Euler(step.hitDetectorRotationOffset);
 
-                    if (!step.allowRepeatedHits && stepHitTargets.Contains(damageable))
-                    {
-                        continue;
-                    }
-
-                    stepHitTargets.Add(damageable);
-                    ExecuteStepAction(step, damageable);
-                    stepRegisteredHit = true;
-                }
+            if (PoolManager.Instance != null)
+            {
+                if (parent)
+                    activeHitDetector = PoolManager.Instance.Spawn(step.hitDetectorPrefab, step.hitDetectorPositionOffset, step.hitDetectorRotationOffset, parent);
+                else
+                    activeHitDetector = PoolManager.Instance.Spawn(step.hitDetectorPrefab, worldPosition, worldRotation.eulerAngles);
             }
+            else
+            {
+                activeHitDetector = Instantiate(step.hitDetectorPrefab, worldPosition, worldRotation, parent);
+            }
+
+            if (activeHitDetector == null)
+            {
+                return;
+            }
+            
+            activeHitDetector.Initialize(Controller);
+        }
+
+        void ReleaseActiveHitDetector()
+        {
+            if (activeHitDetector == null)
+            {
+                return;
+            }
+
+            activeHitDetector.Deactivate();
+
+            if (PoolManager.Instance)
+            {
+                PoolManager.Instance.Despawn(activeHitDetector);
+            }
+            else
+            {
+                Destroy(activeHitDetector.gameObject);
+            }
+
+            activeHitDetector = null;
         }
 
         void ExecuteStepAction(ComboStep step, IDamageable target)
         {
             AgentActionDefinition runtimeAction = step.action ? step.action : actionDefinition;
-            if (!runtimeAction || Controller == null)
+            if (!runtimeAction || !Controller)
             {
                 return;
             }
 
             float magnitude = Mathf.Max(0f, actionMagnitude) * Mathf.Max(0f, step.magnitudeMultiplier);
-            var runtime = new AgentActionRuntime(Controller, this, target, magnitude);
+            AgentActionRuntime runtime = new AgentActionRuntime(Controller, this, target, magnitude);
             Controller.ExecuteAction(runtimeAction, runtime).Forget();
+            ApplyStepHitStopOnHit(step);
+        }
+
+        void ApplyStepHitStopOnHit(ComboStep step)
+        {
+            if (step == null || step.hitStopOnHit <= 0f)
+            {
+                return;
+            }
+
+            if (!step.multiplyHitStopPerHit && stepHitStopAppliedOnHit)
+            {
+                return;
+            }
+
+            if (CameraManager.Instance != null && CameraManager.Instance.TryAddHitStopForAgent(Controller, step.hitStopOnHit))
+            {
+                if (!step.multiplyHitStopPerHit)
+                {
+                    stepHitStopAppliedOnHit = true;
+                }
+            }
         }
 
         void ApplyNudge(ComboStep step)
         {
-            if (!Controller || body == null)
+            if (!Controller || !body)
             {
                 return;
             }
@@ -754,7 +869,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             pendingStep = step;
             pendingStepDelay = Mathf.Max(0f, transition.transitionDelay);
-            pendingStepExpireTime = Time.time + queuedInputLifetime;
+            pendingStepExpireTime = Time.time + QueuedInputLifetime;
             pendingDelayActive = false;
             pendingStepReady = false;
             transitionDelayTimer.Cancel();
@@ -896,7 +1011,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         ComboStep ResolveEntryStep(ComboInput input)
         {
             ComboInput bindingInput = MapBindingToInput(binding);
-            foreach (ComboEntry entry in entrySteps)
+            foreach (ComboEntry entry in EntrySteps)
             {
                 ComboInput mapped = entry.input == ComboInput.SameAsBinding ? bindingInput : entry.input;
                 if (mapped == input)
@@ -909,9 +1024,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 }
             }
 
-            if (entrySteps.Length == 0)
+            if (EntrySteps.Length == 0)
             {
-                return steps.Length > 0 ? steps[0] : null;
+                return Steps.Length > 0 ? Steps[0] : null;
             }
 
             return null;
@@ -934,6 +1049,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 currentStep = null;
             }
+            ReleaseActiveHitDetector();
             currentStepElapsed = 0f;
             stepWasActive = false;
             stepRegisteredHit = false;
@@ -961,6 +1077,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void ResetComboState()
         {
+            Controller?.RemoveMovementModifier(overrideMovementProfile);
             ResetPendingTransition();
             ResetStepState();
             comboResetTimer.Cancel();
@@ -970,6 +1087,86 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 comboActive = false;
                 actionComplete?.Invoke();
             }
+        }
+
+        void SubscribeStatusEvents()
+        {
+            if (statusEventsRegistered)
+            {
+                return;
+            }
+
+            if (Controller?.statusHandler?.StunnedStatus == null)
+            {
+                return;
+            }
+
+            Controller.statusHandler.StunnedStatus.OnStart += HandleStunStatusStarted;
+            Controller.statusHandler.StunnedStatus.OnEnd += HandleStunStatusEnded;
+            statusEventsRegistered = true;
+        }
+
+        void UnsubscribeStatusEvents()
+        {
+            if (!statusEventsRegistered)
+            {
+                return;
+            }
+
+            if (Controller?.statusHandler?.StunnedStatus != null)
+            {
+                Controller.statusHandler.StunnedStatus.OnStart -= HandleStunStatusStarted;
+                Controller.statusHandler.StunnedStatus.OnEnd -= HandleStunStatusEnded;
+            }
+
+            statusEventsRegistered = false;
+        }
+
+        void HandleStunStatusStarted(IStatusEffect _)
+        {
+            if (currentStep != null && !currentStep.stunImmune)
+            {
+                AbortComboDueToStun();
+                return;
+            }
+
+            if (pendingStep != null && !pendingStep.stunImmune)
+            {
+                ResetPendingTransition();
+            }
+
+            if (comboActive && currentStep == null)
+            {
+                ResetComboState();
+            }
+        }
+
+        void HandleStunStatusEnded(IStatusEffect _)
+        {
+            if (Controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
+            {
+                return;
+            }
+
+            if (!comboActive)
+            {
+                return;
+            }
+
+            if (currentStep != null && currentStep.stunImmune)
+            {
+                return;
+            }
+
+            if (currentStep == null)
+            {
+                ResetComboState();
+            }
+        }
+
+        void AbortComboDueToStun()
+        {
+            ResetComboState();
         }
 
         Vector3 ResolveStepDirection(ComboStep step)
@@ -1003,116 +1200,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.forward;
         }
 
-        StepOverlapSettings GetOverlapSettings(ComboStep step)
-        {
-            if (overlapSettingsCache.TryGetValue(step, out StepOverlapSettings cached))
-            {
-                return cached;
-            }
-
-            StepOverlapSettings settings = new StepOverlapSettings
-            {
-                LayerMask = step.targetLayers,
-                Query = step.includeTriggerColliders ? QueryTriggerInteraction.Collide : QueryTriggerInteraction.Ignore
-            };
-            overlapSettingsCache[step] = settings;
-            return settings;
-        }
-
-        static int OverlapColliderNonAlloc(Collider source, Collider[] results, StepOverlapSettings settings)
-        {
-            return OverlapColliderNonAlloc(source, results, settings.LayerMask, settings.Query);
-        }
-
-        static int OverlapColliderNonAlloc(Collider source, Collider[] results, LayerMask layerMask, QueryTriggerInteraction query)
-        {
-            if (!source)
-            {
-                return 0;
-            }
-
-            switch (source)
-            {
-                case BoxCollider box:
-                    return OverlapBoxCollider(box, results, layerMask, query);
-                case SphereCollider sphere:
-                    return OverlapSphereCollider(sphere, results, layerMask, query);
-                case CapsuleCollider capsule:
-                    return OverlapCapsuleCollider(capsule, results, layerMask, query);
-                default:
-                    Bounds bounds = source.bounds;
-                    return Physics.OverlapBoxNonAlloc(bounds.center, bounds.extents, results, Quaternion.identity, layerMask, query);
-            }
-        }
-
-        static int OverlapBoxCollider(BoxCollider collider, Collider[] results, LayerMask layerMask, QueryTriggerInteraction query)
-        {
-            Vector3 center = collider.transform.TransformPoint(collider.center);
-            Vector3 lossyScale = collider.transform.lossyScale;
-            Vector3 halfExtents = Vector3.Scale(collider.size * 0.5f, new Vector3(Mathf.Abs(lossyScale.x), Mathf.Abs(lossyScale.y), Mathf.Abs(lossyScale.z)));
-            Quaternion orientation = collider.transform.rotation;
-            return Physics.OverlapBoxNonAlloc(center, halfExtents, results, orientation, layerMask, query);
-        }
-
-        static int OverlapSphereCollider(SphereCollider collider, Collider[] results, LayerMask layerMask, QueryTriggerInteraction query)
-        {
-            Vector3 center = collider.transform.TransformPoint(collider.center);
-            float radius = collider.radius * MaxAbsComponent(collider.transform.lossyScale);
-            return Physics.OverlapSphereNonAlloc(center, radius, results, layerMask, query);
-        }
-
-        static int OverlapCapsuleCollider(CapsuleCollider collider, Collider[] results, LayerMask layerMask, QueryTriggerInteraction query)
-        {
-            GetCapsulePoints(collider, out Vector3 point0, out Vector3 point1, out float radius);
-            return Physics.OverlapCapsuleNonAlloc(point0, point1, radius, results, layerMask, query);
-        }
-
-        static void GetCapsulePoints(CapsuleCollider collider, out Vector3 point0, out Vector3 point1, out float radius)
-        {
-            Transform transform = collider.transform;
-            Vector3 center = transform.TransformPoint(collider.center);
-            Vector3 lossyScale = transform.lossyScale;
-
-            switch (collider.direction)
-            {
-                case 0:
-                {
-                    radius = collider.radius * Mathf.Max(Mathf.Abs(lossyScale.y), Mathf.Abs(lossyScale.z));
-                    float height = Mathf.Max(radius * 2f, collider.height * Mathf.Abs(lossyScale.x));
-                    Vector3 axis = transform.right;
-                    float offset = Mathf.Max(0f, height * 0.5f - radius);
-                    point0 = center + axis * offset;
-                    point1 = center - axis * offset;
-                    break;
-                }
-                case 1:
-                {
-                    radius = collider.radius * Mathf.Max(Mathf.Abs(lossyScale.x), Mathf.Abs(lossyScale.z));
-                    float height = Mathf.Max(radius * 2f, collider.height * Mathf.Abs(lossyScale.y));
-                    Vector3 axis = transform.up;
-                    float offset = Mathf.Max(0f, height * 0.5f - radius);
-                    point0 = center + axis * offset;
-                    point1 = center - axis * offset;
-                    break;
-                }
-                case 2:
-                default:
-                {
-                    radius = collider.radius * Mathf.Max(Mathf.Abs(lossyScale.x), Mathf.Abs(lossyScale.y));
-                    float height = Mathf.Max(radius * 2f, collider.height * Mathf.Abs(lossyScale.z));
-                    Vector3 axis = transform.forward;
-                    float offset = Mathf.Max(0f, height * 0.5f - radius);
-                    point0 = center + axis * offset;
-                    point1 = center - axis * offset;
-                    break;
-                }
-            }
-        }
-
-        static float MaxAbsComponent(Vector3 vector)
-        {
-            return Mathf.Max(Mathf.Abs(vector.x), Mathf.Abs(vector.y), Mathf.Abs(vector.z));
-        }
 
         void SubscribeComboInputs(InputReader reader)
         {
@@ -1204,12 +1291,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             HashSet<ComboInput> result = new();
             result.Add(ComboInput.SameAsBinding);
 
-            foreach (ComboEntry entry in entrySteps)
+            foreach (ComboEntry entry in EntrySteps)
             {
                 result.Add(entry.input);
             }
 
-            foreach (ComboStep step in steps)
+            foreach (ComboStep step in Steps)
             {
                 if (step.transitions == null)
                 {
@@ -1253,14 +1340,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void BuildLookups()
         {
             stepLookup.Clear();
-            overlapSettingsCache.Clear();
 
-            if (steps == null)
+            if (Steps == null)
             {
                 return;
             }
 
-            foreach (ComboStep step in steps)
+            foreach (ComboStep step in Steps)
             {
                 if (step == null || string.IsNullOrEmpty(step.id))
                 {

@@ -1,6 +1,7 @@
 using System;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Player;
+using _Roguemon3D.Scripts.ThirdParty.ImprovedTimers;
 using UnityEngine;
 using UnityEngine.Serialization;
 using HSM;
@@ -146,7 +147,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected override void OnActionReleased()
         {
-            Debug.Log("Dash released");
             // Dash is time based, releasing early does not cancel by default.
         }
 

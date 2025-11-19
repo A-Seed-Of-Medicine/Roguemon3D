@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using UnityEngine;
+using ImprovedTimers;
 
-namespace ImprovedTimers {
+namespace _Roguemon3D.Scripts.ThirdParty.ImprovedTimers {
     public interface IFixedUpdateTimer { }
 
     public static class TimerManager {

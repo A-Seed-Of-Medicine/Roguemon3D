@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Actions;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace HSM {
     public class AgentRoot : State {
@@ -123,7 +124,7 @@ namespace HSM {
             Idle = new Idle(controller, m, this);
             Moving = new Moving(controller, m, this);
         }
-        
+
         protected override State GetInitialState() => Idle;
 
         protected override State GetTransition() {
@@ -163,6 +164,16 @@ namespace HSM {
         public Moving(AgentController controller, StateMachine machine, State parent = null) : base(controller, machine, parent)
         {
         }
+        
+        protected override void OnUpdate(float deltaTime)
+        {
+            base.OnUpdate(deltaTime);
+
+
+            controller.MovingAnimation.TryResolveClip(controller.AnimationController.currentDirectionIndex,
+                out AnimationClip clip, out bool flipX);
+            controller.spriteAnimator.SetFlipX(flipX);
+        }
 
         protected override State GetTransition() {
             if (controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
@@ -189,7 +200,7 @@ namespace HSM {
     {
         public Stunned(AgentController controller, StateMachine machine, State parent = null) : base(controller, machine, parent)
         {
-
+            
         }
 
         protected override State GetTransition()
@@ -207,6 +218,12 @@ namespace HSM {
         protected override AgentAnimationRequest GetAnimationRequest()
         {
             return controller ? controller.StunnedAnimation : AgentAnimationRequest.None;
+        }
+
+        protected override void OnEnter()
+        {
+            controller?.AnimationController.Clear();
+            base.OnEnter();
         }
     }
 }

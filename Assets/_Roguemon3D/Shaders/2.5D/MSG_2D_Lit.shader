@@ -1,26 +1,32 @@
-Shader "Custom/URP/SpriteLitDoubleSidedGPU"
+Shader "Universal Render Pipeline/Sprites/SpriteLit3D_TwoSided_GPU"
 {
     Properties
     {
-        [MainTexture] _MainTex("Sprite Texture", 2D) = "white" {}
-        [MainColor]   _Color("Color", Color)        = (1,1,1,1)
+        [MainTexture] _MainTex ("Sprite Texture", 2D) = "white" {}
+        [MainColor]   _Color   ("Tint", Color)        = (1,1,1,1)
 
-        _Smoothness("Smoothness", Range(0,1))       = 0.5
-        _SpecColor("Specular Color", Color)         = (1,1,1,1)
+        _Smoothness ("Smoothness", Range(0,1)) = 0.4
+        _SpecColor  ("Specular Color", Color)  = (1,1,1,1)
+
+        // These match what SpriteRenderer normally drives
+        [HideInInspector] _RendererColor       ("RendererColor", Color) = (1,1,1,1)
+        [HideInInspector] _AlphaTex            ("External Alpha", 2D)   = "white" {}
+        [HideInInspector] _EnableExternalAlpha ("Enable External Alpha", Float) = 0
     }
 
     SubShader
     {
         Tags
         {
-            "Queue"          = "Transparent"
-            "RenderType"     = "Transparent"
-            "RenderPipeline" = "UniversalPipeline"
+            "Queue"              = "Transparent"
+            "RenderType"         = "Transparent"
+            "RenderPipeline"     = "UniversalPipeline"
+            "IgnoreProjector"    = "True"
+            "CanUseSpriteAtlas"  = "True"
         }
 
-        // Standard transparent sprite settings
-        Blend SrcAlpha OneMinusSrcAlpha
-        Cull Off                // draw both sides of the quad
+        Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
+        Cull Off          // draw both sides
         ZWrite Off
 
         Pass
@@ -33,30 +39,37 @@ Shader "Custom/URP/SpriteLitDoubleSidedGPU"
             #pragma vertex   vert
             #pragma fragment frag
 
-            // URP lighting feature variants (same family as URP/Lit)
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            // URP lighting feature variants
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
 
-            // GPU Sprite Skinning
+            // Fog and instancing
+            #pragma multi_compile_fog
+            #pragma multi_compile_instancing
+
+            // GPU sprite skinning (SpriteSkin)
             #pragma multi_compile _ SKINNED_SPRITE
 
-            // Includes
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/2D/Include/Core2D.hlsl"
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
+            TEXTURE2D(_AlphaTex);
+            SAMPLER(sampler_AlphaTex);
 
-            // NOTE: Keep material properties in a single CBUFFER for SRP Batcher.
             CBUFFER_START(UnityPerMaterial)
+                float4 _MainTex_ST;
                 float4 _Color;
+                float4 _RendererColor;
                 float  _Smoothness;
                 float4 _SpecColor;
+                float  _EnableExternalAlpha;
             CBUFFER_END
 
-            // Per-vertex data from Sprite mesh
             struct Attributes
             {
                 float3 positionOS : POSITION;
@@ -67,127 +80,135 @@ Shader "Custom/URP/SpriteLitDoubleSidedGPU"
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
-            // Data interpolated to the fragment shader
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv         : TEXCOORD0;
-                float4 color      : COLOR0;
-                float3 positionWS : TEXCOORD1;
+                float4 color      : COLOR;
+                float3 worldPos   : TEXCOORD1;
                 float3 normalWS   : TEXCOORD2;
-
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            Varyings vert(Attributes v)
+            // Sprite sampling with optional external alpha
+            inline float4 SampleSprite(float2 uv)
             {
-                Varyings o;
+                float4 c = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
 
-                UNITY_SETUP_INSTANCE_ID(v);
-                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
-                // Apply GPU sprite deformation (SpriteSkin)
-                UNITY_SKINNED_VERTEX_COMPUTE(v);
-
-                // Handle sprite flipping (SpriteRenderer flip X/Y etc.)
-                float3 posOS = v.positionOS;
-                posOS = UnityFlipSprite(posOS, unity_SpriteProps.xy);
-
-                // Transform to world and clip space
-                o.positionWS = TransformObjectToWorld(posOS);
-                o.positionCS = TransformWorldToHClip(o.positionWS);
-
-                o.uv    = v.uv;
-                o.color = v.color;
-
-                // Sprite quad normal in object space is typically (0,0,-1).
-                // Use that and transform to world space. This lets the sprite
-                // rotate in 3D (2.5D) while still shading correctly.
-                float3 normalOS = float3(0.0, 0.0, -1.0);
-                o.normalWS = TransformObjectToWorldDir(normalOS);
-
-                return o;
-            }
-
-            // Simple helper: two-sided lambert + spec for one light
-            void AccumulateLight(
-                in Light  light,
-                in float3 N,
-                in float3 V,
-                in float3 specColor,
-                in float  smoothness,
-                inout float3 outDiffuse,
-                inout float3 outSpecular)
-            {
-                // Effective radiance for this light
-                float3 radiance = light.color * (light.distanceAttenuation * light.shadowAttenuation);
-
-                // Two-sided Lambert: use abs(dot) so backfaces are lit the same.
-                float NdotL = saturate(abs(dot(N, light.direction)));
-                outDiffuse += radiance * NdotL;
-
-                // Simple Blinn-Phong specular, also two-sided
-                float3 H      = SafeNormalize(light.direction + V);
-                float  NdotH  = saturate(abs(dot(N, H)));
-                float  power  = lerp(8.0, 128.0, saturate(smoothness)); // map [0,1] -> [8,128]
-                float  specF  = pow(NdotH, power);
-
-                outSpecular += radiance * specColor * specF;
-            }
-
-            half4 frag(Varyings i) : SV_Target
-            {
-                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-
-                // Sample sprite texture
-                float4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-
-                // Combine vertex color, material color and SpriteRenderer color
-                // unity_SpriteColor is provided by Core2D.hlsl for SpriteRenderer.
-                float4 tint   = i.color * _Color * unity_SpriteColor;
-                float4 albedo = tex * tint;
-
-                float alpha = albedo.a;
-                if (alpha <= 0.0001)
-                    discard;
-
-                // World normal – normalized, used for all lighting
-                float3 N = normalize(i.normalWS);
-
-                // View direction (from world position toward camera)
-                float3 V = GetWorldSpaceNormalizeViewDir(i.positionWS);
-
-                float3 diffuse  = 0.0;
-                float3 specular = 0.0;
-
-                // === Main directional light ===
+                if (_EnableExternalAlpha > 0.5)
                 {
-                    Light mainLight = GetMainLight();
-                    AccumulateLight(mainLight, N, V, _SpecColor.rgb, _Smoothness, diffuse, specular);
+                    float a = SAMPLE_TEXTURE2D(_AlphaTex, sampler_AlphaTex, uv).r;
+                    c.a *= a;
                 }
 
-                // === Additional lights (per-pixel) ===
-            #ifdef _ADDITIONAL_LIGHTS
-                uint lightCount = GetAdditionalLightsCount();
-                for (uint li = 0u; li < lightCount; ++li)
+                return c;
+            }
+
+            Varyings vert(Attributes IN)
+            {
+                Varyings OUT;
+                UNITY_SETUP_INSTANCE_ID(IN);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
+
+                // Apply GPU bone deformation for SpriteSkin
+                UNITY_SKINNED_VERTEX_COMPUTE(IN);
+
+                float3 posOS = IN.positionOS;
+
+                // Respect SpriteRenderer flip (X/Y)
+                posOS = UnityFlipSprite(posOS, unity_SpriteProps.xy);
+
+                float3 posWS = TransformObjectToWorld(posOS);
+
+                OUT.positionCS = TransformWorldToHClip(posWS);
+                OUT.worldPos   = posWS;
+                OUT.uv         = TRANSFORM_TEX(IN.uv, _MainTex);
+
+                // Treat the sprite as facing the camera; we'll do two-sided lighting in frag
+                OUT.normalWS   = -GetViewForwardDir();
+
+                // Vertex color * material tint * per-renderer tint * sprite color
+                OUT.color = IN.color * _Color * _RendererColor * unity_SpriteColor;
+
+                return OUT;
+            }
+
+            // Helper: accumulate diffuse + specular for a single light, using two-sided normals
+            inline void ApplyLight(
+                Light  light,
+                half3  N,
+                half3  V,
+                half   smoothness,
+                half3  specColor,
+                inout half3 diffAccum,
+                inout half3 specAccum)
+            {
+                half3 L = light.direction;
+
+                // Two-sided: use abs(dot) so back faces get lit too
+                half  NdotL = saturate(abs(dot(N, L)));
+                half3 lightCol = light.color *
+                                 (light.distanceAttenuation * light.shadowAttenuation);
+
+                half3 diff = NdotL * lightCol;
+
+                half3 H = SafeNormalize(L + V);
+                half  NdotH = saturate(abs(dot(N, H)));
+
+                // Very simple gloss mapping
+                half  specPower  = exp2(smoothness * 10.0h + 1.0h);
+                half  specFactor = pow(NdotH, specPower);
+                half3 spec       = specFactor * NdotL * lightCol * specColor;
+
+                diffAccum += diff;
+                specAccum += spec;
+            }
+
+            half4 frag(Varyings IN) : SV_Target
+            {
+                half4 tex = (half4)SampleSprite(IN.uv);
+                half4 baseColor = tex * IN.color;
+
+                // Kill fully transparent fragments
+                clip(baseColor.a - 0.001h);
+
+                half3 N = normalize(IN.normalWS);
+                half3 V = SafeNormalize(GetWorldSpaceViewDir(IN.worldPos));
+
+                // Main light (with shadows if enabled in URP)
+                float4 shadowCoord = TransformWorldToShadowCoord(IN.worldPos);
+                Light mainLight    = GetMainLight(shadowCoord);
+
+                half3 totalDiffuse = 0;
+                half3 totalSpec    = 0;
+
+                ApplyLight(mainLight, N, V, (half)_Smoothness, (half3)_SpecColor.rgb,
+                           totalDiffuse, totalSpec);
+
+            #if defined(_ADDITIONAL_LIGHTS)
+                uint count = GetAdditionalLightsCount();
+                [loop]
+                for (uint i = 0u; i < count; i++)
                 {
-                    Light addLight = GetAdditionalLight(li, i.positionWS);
-                    AccumulateLight(addLight, N, V, _SpecColor.rgb, _Smoothness, diffuse, specular);
+                    Light l = GetAdditionalLight(i, IN.worldPos);
+                    ApplyLight(l, N, V, (half)_Smoothness, (half3)_SpecColor.rgb,
+                               totalDiffuse, totalSpec);
                 }
             #endif
 
-                // Basic ambient from spherical harmonics / light probes
-                float3 ambient = SampleSH(N);
+                half3 lighting = totalDiffuse + totalSpec;
 
-                float3 lighting = ambient + diffuse;
-                float3 color    = albedo.rgb * lighting + specular;
+                // Small ambient floor so things are never totally black
+                lighting += 0.1h;
 
-                return float4(color, alpha);
+                half3 finalRGB = baseColor.rgb * lighting;
+
+                return half4(finalRGB, baseColor.a);
             }
 
             ENDHLSL
         }
     }
 
-    FallBack "Universal Render Pipeline/2D/Sprite-Unlit-Default"
+    FallBack "Hidden/Universal Render Pipeline/FallbackError"
 }

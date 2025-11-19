@@ -1,21 +1,24 @@
+using System;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityUtils;
 
 namespace _PinBoy.Scripts.Animation
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Animator))]
-    [RequireComponent(typeof(SpriteRenderer))]
     public sealed class SpriteAnimator : MonoBehaviour
     {
         [Header("Animation")]
         [SerializeField] private AnimationClip defaultClip;
         [SerializeField] private bool playOnAwake = true;
         [SerializeField, Min(0f)] private float speedMultiplier = 1f;
+        
+        [Header("Rendering")]
+        [Min(0)] public float cameraXOffsetMax = 17f;
 
         Animator animator;
-        SpriteRenderer spriteRenderer;
         PlayableGraph graph;
         AnimationMixerPlayable mixer;
         AnimationClipPlayable currentPlayable;
@@ -26,22 +29,41 @@ namespace _PinBoy.Scripts.Animation
         public AnimationClip CurrentClip => currentClip;
         public float SpeedMultiplier => speedMultiplier;
 
-        public bool flipX
+        public bool IsFlipped => animator && animator.transform.localScale.x < 0;
+        
+        public void SetFlipX(bool flipped)
         {
-            get => spriteRenderer != null && spriteRenderer.flipX;
-            set
-            {
-                if (spriteRenderer != null)
-                {
-                    spriteRenderer.flipX = value;
-                }
-            }
+            if (!animator)
+                return;
+            if (flipped && animator.transform.localScale.x > 0)
+                animator.transform.localScale = new Vector3(-animator.transform.localScale.x, animator.transform.localScale.y, animator.transform.localScale.z);
+            else if (!flipped && animator.transform.localScale.x < 0)
+                animator.transform.localScale = new Vector3(-animator.transform.localScale.x, animator.transform.localScale.y, animator.transform.localScale.z);
+        }
+
+        void OnValidate()
+        {
+            FaceCamera(Camera.main?.GetComponent<CameraManager>());
+        }
+        
+        void FaceCamera(CameraManager camera)
+        {
+            if (cameraXOffsetMax <= 0 || !camera)
+                return;
+            
+            // Calculate the distance along the camera forward vector
+            Vector3 toCamera = camera.transform.position - transform.position;
+            float distanceAlongForward = Vector3.Dot(toCamera.With(y:0), camera.transform.forward);
+            float xOffset = (1 - -distanceAlongForward / camera.xSpriteRotationOffset) * camera.xSpriteRotationMultiplier;
+            if (xOffset > 1f) xOffset = 1f;
+            if (xOffset < 0f) xOffset = 0f;
+            transform.eulerAngles = new Vector3(xOffset * cameraXOffsetMax, camera.transform.eulerAngles.y, transform.eulerAngles.z);
+            
         }
 
         void Awake()
         {
             animator = GetComponent<Animator>();
-            spriteRenderer = GetComponent<SpriteRenderer>();
             speedMultiplier = Mathf.Max(0f, speedMultiplier);
             EnsureGraph();
 
@@ -58,6 +80,12 @@ namespace _PinBoy.Scripts.Animation
             {
                 PauseGraph();
             }
+        }
+
+        public void Start()
+        {
+            if (CameraManager.Instance)
+                CameraManager.Instance.OnCameraPositionUpdated += (position, position2) => FaceCamera(CameraManager.Instance);
         }
 
         void OnEnable()
@@ -95,7 +123,7 @@ namespace _PinBoy.Scripts.Animation
             graph = PlayableGraph.Create($"SpriteAnimator_{name}");
             graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
 
-            mixer = AnimationMixerPlayable.Create(graph, 1, true);
+            mixer = AnimationMixerPlayable.Create(graph, 1);
             var output = AnimationPlayableOutput.Create(graph, "SpriteAnimation", animator);
             output.SetSourcePlayable(mixer);
             graph.Play();

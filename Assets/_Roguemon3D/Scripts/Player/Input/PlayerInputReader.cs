@@ -110,7 +110,7 @@ namespace _PinBoy.Scripts.Player.Input
 
             if (inputReader.isAiming)
             {
-                inputReader.moveInput = move;
+                inputReader.SetMoveInput(move);
                 inputReader.InvokeAim(move);
             }
             else
@@ -252,7 +252,7 @@ namespace _PinBoy.Scripts.Player.Input
             }
             else
             {
-                inputReader.moveInput = inputReader.aimDirection;
+                inputReader.SetMoveInput(inputReader.aimDirection);
                 inputReader.CancelAim();
                 inputReader.InvokeSprint(pressed);
             }
