@@ -18,6 +18,7 @@ public class WorldUI : MonoBehaviour {
     public PlayerController Player => uiCamera.playerController;
     public CameraManager uiCamera;
     public FacingTarget faceTarget = FacingTarget.Camera;
+    public Transform pivotObject;
     
     [Header("UI Fade")]
     public CanvasGroup canvasGroup;

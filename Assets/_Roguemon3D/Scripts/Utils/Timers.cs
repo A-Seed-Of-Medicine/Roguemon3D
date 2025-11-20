@@ -6,7 +6,7 @@ namespace ImprovedTimers {
     /// Timer that counts down from a specific value to zero.
     /// </summary>
     [Serializable]
-    public class MyCountTimer : Timer {
+    public class MyCountTimer : _Roguemon3D.Scripts.ThirdParty.ImprovedTimers.Timer {
         public MyCountTimer(float value) : base(value) { }
         
         public Action OnTimerFinish = delegate { };

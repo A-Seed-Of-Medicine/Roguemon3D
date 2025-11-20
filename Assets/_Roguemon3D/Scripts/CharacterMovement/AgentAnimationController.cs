@@ -122,6 +122,10 @@ namespace _PinBoy.Scripts.CharacterMovement
             {
                 case DirectionMode.Single:
                     clip = SanitizeClip(singleClip);
+                    if (directionIndex is 5 or 6 or 7 && mirrorLeftRight)
+                    {
+                        flipX = true;
+                    }
                     break;
                 case DirectionMode.FourWay:
                     clip = ResolveFourWayClip(directionIndex, out flipX);
@@ -409,9 +413,9 @@ namespace _PinBoy.Scripts.CharacterMovement
                 return;
             }
 
-            if (spriteAnimator.flipX != flipX)
+            if (spriteAnimator.IsFlipped != flipX)
             {
-                spriteAnimator.flipX = flipX;
+                spriteAnimator.SetFlipX(flipX);
             }
 
             bool forceRestart = request.crossFade > 0f || directionChanged;

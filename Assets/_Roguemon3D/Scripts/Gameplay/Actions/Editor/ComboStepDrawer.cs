@@ -10,7 +10,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
-
             Rect foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
             property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label, true);
 
@@ -67,6 +66,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 Header("Movement");
                 EditorGUI.indentLevel++;
                 DrawProperty(property.FindPropertyRelative("lockMovement"));
+                DrawProperty(property.FindPropertyRelative("lockAim"));
                 DrawProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
                 DrawProperty(property.FindPropertyRelative("missNudgeImpulse"));
                 DrawProperty(property.FindPropertyRelative("missNudgeDelay"));
@@ -75,10 +75,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
                 Header("Hit Detection");
                 EditorGUI.indentLevel++;
-                DrawProperty(property.FindPropertyRelative("hitColliders"));
-                DrawProperty(property.FindPropertyRelative("targetLayers"));
-                DrawProperty(property.FindPropertyRelative("includeTriggerColliders"));
-                DrawProperty(property.FindPropertyRelative("allegianceMask"));
+                DrawProperty(property.FindPropertyRelative("hitDetectorPrefab"));
+                DrawProperty(property.FindPropertyRelative("parentHitDetectorToPivot"));
+                DrawProperty(property.FindPropertyRelative("hitDetectorPositionOffset"));
+                DrawProperty(property.FindPropertyRelative("hitDetectorRotationOffset"));
                 DrawProperty(property.FindPropertyRelative("fallbackDirection"));
                 EditorGUI.indentLevel--;
 
@@ -175,6 +175,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             // Movement
             AddHeader();
             AddProperty(property.FindPropertyRelative("lockMovement"));
+            AddProperty(property.FindPropertyRelative("lockAim"));
             AddProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
             AddProperty(property.FindPropertyRelative("missNudgeImpulse"));
             AddProperty(property.FindPropertyRelative("missNudgeDelay"));
@@ -182,10 +183,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             // Hit Detection
             AddHeader();
-            AddProperty(property.FindPropertyRelative("hitColliders"));
-            AddProperty(property.FindPropertyRelative("targetLayers"));
-            AddProperty(property.FindPropertyRelative("includeTriggerColliders"));
-            AddProperty(property.FindPropertyRelative("allegianceMask"));
+            AddProperty(property.FindPropertyRelative("hitDetectorPrefab"));
+            AddProperty(property.FindPropertyRelative("parentHitDetectorToPivot"));
+            AddProperty(property.FindPropertyRelative("hitDetectorPositionOffset"));
+            AddProperty(property.FindPropertyRelative("hitDetectorRotationOffset"));
             AddProperty(property.FindPropertyRelative("fallbackDirection"));
 
             // Branches

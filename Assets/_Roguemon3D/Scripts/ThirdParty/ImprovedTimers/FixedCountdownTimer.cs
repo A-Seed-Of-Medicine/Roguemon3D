@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ImprovedTimers {
+namespace _Roguemon3D.Scripts.ThirdParty.ImprovedTimers {
     [Serializable]
     public class FixedCountdownTimer : MyCountdownTimer, IFixedUpdateTimer {
         public FixedCountdownTimer(float value) : base(value) { }

@@ -1,9 +1,10 @@
+using ImprovedTimers;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.LowLevel;
 using UnityEngine.PlayerLoop;
 
-namespace ImprovedTimers {
+namespace _Roguemon3D.Scripts.ThirdParty.ImprovedTimers {
     internal static class TimerBootstrapper {
         static PlayerLoopSystem updateSystem;
         static PlayerLoopSystem fixedUpdateSystem;
@@ -12,12 +13,12 @@ namespace ImprovedTimers {
         internal static void Initialize() {
             PlayerLoopSystem currentPlayerLoop = PlayerLoop.GetCurrentPlayerLoop();
 
-            if (!InsertTimerManager<Update>(ref currentPlayerLoop, ref updateSystem, typeof(TimerManager), TimerManager.UpdateTimers, 0)) {
+            if (!InsertTimerManager<Update>(ref currentPlayerLoop, ref updateSystem, typeof(_Roguemon3D.Scripts.ThirdParty.ImprovedTimers.TimerManager), _Roguemon3D.Scripts.ThirdParty.ImprovedTimers.TimerManager.UpdateTimers, 0)) {
                 Debug.LogWarning("Improved Timers not initialized, unable to register TimerManager into the Update loop.");
                 return;
             }
 
-            InsertTimerManager<FixedUpdate>(ref currentPlayerLoop, ref fixedUpdateSystem, typeof(FixedTimerManagerMarker), TimerManager.FixedUpdateTimers, 0);
+            InsertTimerManager<FixedUpdate>(ref currentPlayerLoop, ref fixedUpdateSystem, typeof(FixedTimerManagerMarker), _Roguemon3D.Scripts.ThirdParty.ImprovedTimers.TimerManager.FixedUpdateTimers, 0);
 
             PlayerLoop.SetPlayerLoop(currentPlayerLoop);
 
@@ -36,7 +37,7 @@ namespace ImprovedTimers {
             RemoveTimerManager<FixedUpdate>(ref currentPlayerLoop, in fixedUpdateSystem);
             PlayerLoop.SetPlayerLoop(currentPlayerLoop);
 
-            TimerManager.Clear();
+            _Roguemon3D.Scripts.ThirdParty.ImprovedTimers.TimerManager.Clear();
         }
     #endif
 

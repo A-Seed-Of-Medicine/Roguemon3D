@@ -1,6 +1,7 @@
 using System;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Player;
+using _Roguemon3D.Scripts.ThirdParty.ImprovedTimers;
 using UnityEngine;
 using UnityEngine.Serialization;
 using HSM;
