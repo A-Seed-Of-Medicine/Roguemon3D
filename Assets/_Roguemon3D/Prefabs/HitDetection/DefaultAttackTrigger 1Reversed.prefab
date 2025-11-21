@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2544722706627117229}
   - component: {fileID: 6643509938996099555}
   m_Layer: 2
-  m_Name: DefaultAttackTrigger 1
+  m_Name: DefaultAttackTrigger 1Reversed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -89,7 +89,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalScale.x
-      value: -2.2
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalScale.z

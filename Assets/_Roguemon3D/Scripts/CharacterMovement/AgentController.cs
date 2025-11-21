@@ -213,7 +213,6 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Awake()
         {
-            health.Init();
             statusHandler = new StatusHandler(this);
             if (statusHandler?.StunnedStatus != null)
             {
@@ -257,6 +256,7 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Start()
         {
+            health.Init();
             if (baseProfile != null)
             {
                 baseParams = new MovementParams(baseProfile);

@@ -16,6 +16,7 @@ AnimatorStateMachine:
     m_State: {fileID: -1550007555691237429}
     m_Position: {x: 235, y: 65, z: 0}
   - serializedVersion: 1
+<<<<<<< Updated upstream
     m_State: {fileID: -3781986890137083272}
     m_Position: {x: 270, y: 130, z: 0}
   - serializedVersion: 1
@@ -24,6 +25,10 @@ AnimatorStateMachine:
   - serializedVersion: 1
     m_State: {fileID: -589298269644381911}
     m_Position: {x: 340, y: 260, z: 0}
+=======
+    m_State: {fileID: -3902534944666088662}
+    m_Position: {x: 270, y: 130, z: 0}
+>>>>>>> Stashed changes
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
@@ -34,14 +39,22 @@ AnimatorStateMachine:
   m_ExitPosition: {x: 800, y: 120, z: 0}
   m_ParentStateMachinePosition: {x: 800, y: 20, z: 0}
   m_DefaultState: {fileID: 1038073306155080564}
+<<<<<<< Updated upstream
 --- !u!1102 &-3781986890137083272
+=======
+--- !u!1102 &-3902534944666088662
+>>>>>>> Stashed changes
 AnimatorState:
   serializedVersion: 6
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<< Updated upstream
   m_Name: Player_Active
+=======
+  m_Name: Player_Idle
+>>>>>>> Stashed changes
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
@@ -54,7 +67,11 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
+<<<<<<< Updated upstream
   m_Motion: {fileID: 7400000, guid: 7410a5d9f51d7424ca206ec972d9e143, type: 2}
+=======
+  m_Motion: {fileID: 7400000, guid: 04902aae99617df47a4c2856ee4e4177, type: 2}
+>>>>>>> Stashed changes
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
