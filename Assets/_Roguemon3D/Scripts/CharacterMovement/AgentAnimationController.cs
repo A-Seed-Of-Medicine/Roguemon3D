@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using _PinBoy.Scripts.Animation;
 using HSM;
 using UnityEngine;
@@ -95,7 +96,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             sanitized.southEastClip = SanitizeClip(southEastClip);
             sanitized.northWestClip = SanitizeClip(northWestClip);
             sanitized.southWestClip = SanitizeClip(southWestClip);
-            if (sanitized.overrideSpeed && sanitized.playbackSpeed <= 0f)
+            if (sanitized is { overrideSpeed: true, playbackSpeed: <= 0f })
             {
                 sanitized.playbackSpeed = 1f;
             }
@@ -110,14 +111,15 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         static bool ClipIsValid(AnimationClip clip)
         {
-            return clip != null;
+            return clip;
         }
 
-        public bool TryResolveClip(int directionIndex, out AnimationClip clip, out bool flipX)
+        public bool TryResolveClip(int directionIndex, out AnimationClip clip, SpriteAnimator spriteAnimator = null)
         {
-            flipX = false;
+            // Direction maps: 0 = South, 1 = South-East, 2 = East, 3 = North-East,
+            //                 4 = North, 5 = North-West, 6 = West, 7 = South-West
+            bool flipX = spriteAnimator && spriteAnimator.IsFlipped;
             clip = null;
-
             switch (directionMode)
             {
                 case DirectionMode.Single:
@@ -126,6 +128,11 @@ namespace _PinBoy.Scripts.CharacterMovement
                     {
                         flipX = true;
                     }
+                    else if (!mirrorLeftRight || directionIndex is 1 or 2 or 3)
+                    {
+                        flipX = false;
+                    }
+                    
                     break;
                 case DirectionMode.FourWay:
                     clip = ResolveFourWayClip(directionIndex, out flipX);
@@ -135,13 +142,15 @@ namespace _PinBoy.Scripts.CharacterMovement
                     break;
             }
 
-            if (clip == null)
+            if (!clip)
             {
                 clip = SanitizeClip(singleClip);
-                flipX = false;
             }
-
-            return clip != null;
+            
+            if (spriteAnimator?.IsFlipped != flipX)
+                spriteAnimator?.SetFlipX(flipX);
+            
+            return clip;
         }
 
         AnimationClip ResolveFourWayClip(int directionIndex, out bool flipX)
@@ -406,18 +415,13 @@ namespace _PinBoy.Scripts.CharacterMovement
                 currentDirectionIndex = ComputeDirectionIndex(cachedInput, cachedFacing);
             }
 
-            if (!request.TryResolveClip(currentDirectionIndex, out AnimationClip clip, out bool flipX))
+            if (!request.TryResolveClip(currentDirectionIndex, out AnimationClip clip, spriteAnimator))
             {
                 RestoreDefaultSpeed();
                 spriteAnimator.Stop();
                 return;
             }
-
-            if (spriteAnimator.IsFlipped != flipX)
-            {
-                spriteAnimator.SetFlipX(flipX);
-            }
-
+            
             bool forceRestart = request.crossFade > 0f || directionChanged;
             spriteAnimator.SetClip(clip, 0f, forceRestart);
             if (!spriteAnimator.IsPlaying())
@@ -431,7 +435,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             // Return animation clip based on the current direction index
             if (currentDirectionIndex < 0)
                 currentDirectionIndex = ComputeDirectionIndex(cachedInput, cachedFacing);
-            return request.TryResolveClip(currentDirectionIndex, out AnimationClip clip, out _) ? clip : null;
+            return request.TryResolveClip(currentDirectionIndex, out AnimationClip clip) ? clip : null;
         }
 
         void RestoreDefaultSpeed()

@@ -488,13 +488,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (step.lockMovement)
             {
-                float lockTime = step.windup + step.active;
+                float lockTime = step.windup + step.active + step.recovery;
                 Controller.LockMovement(lockTime, step.zeroVelocityOnStart);
             }
             
             if (step.lockAim)
             {
-                float lockTime = step.windup + step.active;
+                float lockTime = step.windup + step.active + step.recovery;
                 Controller.LockAim(lockTime);
             }
 
