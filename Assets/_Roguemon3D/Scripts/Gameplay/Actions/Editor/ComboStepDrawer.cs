@@ -98,14 +98,32 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
                 Header("Animation");
                 EditorGUI.indentLevel++;
+                SerializedProperty usePhaseAnimations = property.FindPropertyRelative("usePhaseAnimations");
                 SerializedProperty animation = property.FindPropertyRelative("animation");
+                SerializedProperty windupAnimation = property.FindPropertyRelative("windupAnimation");
+                SerializedProperty activeAnimation = property.FindPropertyRelative("activeAnimation");
+                SerializedProperty recoveryAnimation = property.FindPropertyRelative("recoveryAnimation");
                 SerializedProperty crossFade = property.FindPropertyRelative("animationCrossFade");
                 SerializedProperty speedMultiplier = property.FindPropertyRelative("animationSpeedMultiplier");
                 SerializedProperty scaleToDuration = property.FindPropertyRelative("scaleAnimationSpeedToStepDuration");
                 SerializedProperty overrideSpeed = property.FindPropertyRelative("overrideAnimationSpeed");
 
-                DrawProperty(animation);
-                bool hasAnimationClip = HasAnyAnimationClip(animation);
+                DrawProperty(usePhaseAnimations, "Use Phase Animations", includeChildren: false);
+                bool usingPhases = usePhaseAnimations.boolValue;
+                if (usingPhases)
+                {
+                    DrawProperty(windupAnimation, "Windup Animation");
+                    DrawProperty(activeAnimation, "Active Animation");
+                    DrawProperty(recoveryAnimation, "Recovery Animation");
+                }
+                else
+                {
+                    DrawProperty(animation);
+                }
+
+                bool hasAnimationClip = usingPhases
+                    ? HasAnyAnimationClip(windupAnimation) || HasAnyAnimationClip(activeAnimation) || HasAnyAnimationClip(recoveryAnimation)
+                    : HasAnyAnimationClip(animation);
                 DrawProperty(crossFade, "Cross Fade", disabled: !hasAnimationClip);
                 DrawProperty(scaleToDuration, "Scale Speed To Step Duration", includeChildren: false);
                 DrawProperty(overrideSpeed, "Force Override Speed", includeChildren: false);
@@ -211,12 +229,25 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             // Animation
             AddHeader();
             SerializedProperty animation = property.FindPropertyRelative("animation");
+            SerializedProperty windupAnimation = property.FindPropertyRelative("windupAnimation");
+            SerializedProperty activeAnimation = property.FindPropertyRelative("activeAnimation");
+            SerializedProperty recoveryAnimation = property.FindPropertyRelative("recoveryAnimation");
             SerializedProperty crossFade = property.FindPropertyRelative("animationCrossFade");
             SerializedProperty speedMultiplier = property.FindPropertyRelative("animationSpeedMultiplier");
             SerializedProperty scaleToDuration = property.FindPropertyRelative("scaleAnimationSpeedToStepDuration");
             SerializedProperty overrideSpeed = property.FindPropertyRelative("overrideAnimationSpeed");
 
-            AddProperty(animation);
+            AddProperty(property.FindPropertyRelative("usePhaseAnimations"));
+            if (property.FindPropertyRelative("usePhaseAnimations").boolValue)
+            {
+                AddProperty(windupAnimation);
+                AddProperty(activeAnimation);
+                AddProperty(recoveryAnimation);
+            }
+            else
+            {
+                AddProperty(animation);
+            }
             AddProperty(crossFade);
             AddProperty(scaleToDuration);
             AddProperty(overrideSpeed);
