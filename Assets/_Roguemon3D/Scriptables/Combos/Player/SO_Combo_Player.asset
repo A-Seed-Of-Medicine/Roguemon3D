@@ -31,6 +31,7 @@ MonoBehaviour:
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
     lockMovement: 1
+    lockMovementDuringRecovery: 1
     lockAim: 1
     zeroVelocityOnStart: 1
     missNudgeImpulse: 200
@@ -113,6 +114,9 @@ MonoBehaviour:
       overrideSpeed: 0
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
+    windupAnimationSpeedMultiplier: 1
+    activeAnimationSpeedMultiplier: 1
+    recoveryAnimationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
     overrideAnimationSpeed: 0
   - id: step2
@@ -128,6 +132,7 @@ MonoBehaviour:
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
     lockMovement: 1
+    lockMovementDuringRecovery: 1
     lockAim: 1
     zeroVelocityOnStart: 1
     missNudgeImpulse: 200
@@ -210,6 +215,9 @@ MonoBehaviour:
       overrideSpeed: 0
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
+    windupAnimationSpeedMultiplier: 1
+    activeAnimationSpeedMultiplier: 1
+    recoveryAnimationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
     overrideAnimationSpeed: 0
   - id: step3
@@ -225,6 +233,7 @@ MonoBehaviour:
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
     lockMovement: 1
+    lockMovementDuringRecovery: 1
     lockAim: 1
     zeroVelocityOnStart: 1
     missNudgeImpulse: 200
@@ -307,5 +316,8 @@ MonoBehaviour:
       overrideSpeed: 0
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
+    windupAnimationSpeedMultiplier: 1
+    activeAnimationSpeedMultiplier: 1
+    recoveryAnimationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
     overrideAnimationSpeed: 0

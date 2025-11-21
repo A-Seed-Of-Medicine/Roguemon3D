@@ -348,6 +348,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("transitionWindowOpen").floatValue = 0.35f;
             step.FindPropertyRelative("transitionWindowClose").floatValue = 0.9f;
             step.FindPropertyRelative("lockMovement").boolValue = true;
+            step.FindPropertyRelative("lockMovementDuringRecovery").boolValue = true;
             step.FindPropertyRelative("lockAim").boolValue = true;
             step.FindPropertyRelative("zeroVelocityOnStart").boolValue = true;
             step.FindPropertyRelative("missNudgeImpulse").floatValue = 0f;
@@ -371,6 +372,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("multiplyHitStopPerHit").boolValue = true;
             step.FindPropertyRelative("animationCrossFade").floatValue = 0.1f;
             step.FindPropertyRelative("animationSpeedMultiplier").floatValue = 1f;
+            step.FindPropertyRelative("windupAnimationSpeedMultiplier").floatValue = 1f;
+            step.FindPropertyRelative("activeAnimationSpeedMultiplier").floatValue = 1f;
+            step.FindPropertyRelative("recoveryAnimationSpeedMultiplier").floatValue = 1f;
             step.FindPropertyRelative("scaleAnimationSpeedToStepDuration").boolValue = false;
             step.FindPropertyRelative("overrideAnimationSpeed").boolValue = false;
         }

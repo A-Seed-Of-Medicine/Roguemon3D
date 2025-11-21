@@ -84,6 +84,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             [Header("Movement")]
             public bool lockMovement = true;
+            public bool lockMovementDuringRecovery = true;
             public bool lockAim = true;
             public bool zeroVelocityOnStart = true;
             [Tooltip("Impulse applied along the aim direction if the step doesn't connect with a target.")]
@@ -118,6 +119,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public AgentAnimationRequest recoveryAnimation;
             [Min(0f)] public float animationCrossFade = 0.1f;
             public float animationSpeedMultiplier = 1f;
+            public float windupAnimationSpeedMultiplier = 1f;
+            public float activeAnimationSpeedMultiplier = 1f;
+            public float recoveryAnimationSpeedMultiplier = 1f;
             public bool scaleAnimationSpeedToStepDuration;
             public bool overrideAnimationSpeed;
 
@@ -488,7 +492,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (step.lockMovement)
             {
-                float lockTime = step.windup + step.active + step.recovery;
+                float lockTime = step.windup + step.active;
+                if (step.lockMovementDuringRecovery)
+                {
+                    lockTime += step.recovery;
+                }
                 Controller.LockMovement(lockTime, step.zeroVelocityOnStart);
             }
             
@@ -516,21 +524,23 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void ApplyStepAnimation(ComboStep step, HitDetector.ExecutionPhase phase)
         {
-            if (!TryGetAnimationRequestForPhase(step, phase, out AgentAnimationRequest animation, out float targetDuration))
+            if (!TryGetAnimationRequestForPhase(step, phase, out AgentAnimationRequest animation, out float targetDuration,
+                    out float speedMultiplier))
             {
                 return;
             }
 
-            AgentAnimationRequest request = PrepareAnimationRequest(step, animation, targetDuration);
+            AgentAnimationRequest request = PrepareAnimationRequest(step, animation, targetDuration, speedMultiplier);
             ResetAnimationRequest();
             SetAnimationRequest(request);
         }
 
         bool TryGetAnimationRequestForPhase(ComboStep step, HitDetector.ExecutionPhase phase, out AgentAnimationRequest request,
-            out float targetDuration)
+            out float targetDuration, out float speedMultiplier)
         {
             request = AgentAnimationRequest.None;
             targetDuration = 0f;
+            speedMultiplier = 1f;
 
             if (step == null)
             {
@@ -546,6 +556,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
                 request = step.animation;
                 targetDuration = step.TotalDuration;
+                speedMultiplier = step.animationSpeedMultiplier;
                 return true;
             }
 
@@ -556,6 +567,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 HitDetector.ExecutionPhase.Active => step.activeAnimation,
                 HitDetector.ExecutionPhase.Recovery => step.recoveryAnimation,
                 _ => AgentAnimationRequest.None
+            };
+
+            speedMultiplier = phase switch
+            {
+                HitDetector.ExecutionPhase.Windup => step.windupAnimationSpeedMultiplier,
+                HitDetector.ExecutionPhase.Active => step.activeAnimationSpeedMultiplier,
+                HitDetector.ExecutionPhase.Recovery => step.recoveryAnimationSpeedMultiplier,
+                _ => 1f
             };
 
             return request.IsValid;
@@ -572,25 +591,28 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             };
         }
 
-        AgentAnimationRequest PrepareAnimationRequest(ComboStep step, AgentAnimationRequest request, float targetDuration)
+        AgentAnimationRequest PrepareAnimationRequest(ComboStep step, AgentAnimationRequest request, float targetDuration,
+            float speedMultiplier)
         {
             AgentAnimationRequest animationRequest = request;
 
+            float playbackSpeed = Mathf.Max(0.0001f, speedMultiplier > 0f ? speedMultiplier : 1f);
             if (step.scaleAnimationSpeedToStepDuration)
             {
                 AnimationClip resolvedClip = Controller.AnimationController.GetClip(animationRequest);
-                float speed = step.animationSpeedMultiplier > 0f ? step.animationSpeedMultiplier : 1f;
                 float clipLength = resolvedClip ? resolvedClip.length : 0f;
                 if (clipLength > 0f)
                 {
                     float duration = Mathf.Max(0.0001f, targetDuration);
-                    speed *= clipLength / duration;
+                    playbackSpeed *= clipLength / duration;
                 }
+            }
 
-                bool shouldOverride = step.overrideAnimationSpeed || step.scaleAnimationSpeedToStepDuration || !Mathf.Approximately(speed, 1f);
-                float playbackSpeed = shouldOverride ? Mathf.Max(0.0001f, speed) : 1f;
+            bool shouldOverride = step.overrideAnimationSpeed || step.scaleAnimationSpeedToStepDuration || !Mathf.Approximately(playbackSpeed, 1f);
+            if (shouldOverride)
+            {
                 animationRequest.playbackSpeed = playbackSpeed;
-                animationRequest.overrideSpeed = shouldOverride;
+                animationRequest.overrideSpeed = true;
             }
 
             animationRequest.crossFade = step.animationCrossFade;

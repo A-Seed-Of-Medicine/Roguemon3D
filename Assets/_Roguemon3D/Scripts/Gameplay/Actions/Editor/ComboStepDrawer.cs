@@ -66,6 +66,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 Header("Movement");
                 EditorGUI.indentLevel++;
                 DrawProperty(property.FindPropertyRelative("lockMovement"));
+                DrawProperty(property.FindPropertyRelative("lockMovementDuringRecovery"), "Lock Movement During Recovery");
                 DrawProperty(property.FindPropertyRelative("lockAim"));
                 DrawProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
                 DrawProperty(property.FindPropertyRelative("missNudgeImpulse"));
@@ -105,6 +106,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 SerializedProperty recoveryAnimation = property.FindPropertyRelative("recoveryAnimation");
                 SerializedProperty crossFade = property.FindPropertyRelative("animationCrossFade");
                 SerializedProperty speedMultiplier = property.FindPropertyRelative("animationSpeedMultiplier");
+                SerializedProperty windupSpeedMultiplier = property.FindPropertyRelative("windupAnimationSpeedMultiplier");
+                SerializedProperty activeSpeedMultiplier = property.FindPropertyRelative("activeAnimationSpeedMultiplier");
+                SerializedProperty recoverySpeedMultiplier = property.FindPropertyRelative("recoveryAnimationSpeedMultiplier");
                 SerializedProperty scaleToDuration = property.FindPropertyRelative("scaleAnimationSpeedToStepDuration");
                 SerializedProperty overrideSpeed = property.FindPropertyRelative("overrideAnimationSpeed");
 
@@ -128,7 +132,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 DrawProperty(scaleToDuration, "Scale Speed To Step Duration", includeChildren: false);
                 DrawProperty(overrideSpeed, "Force Override Speed", includeChildren: false);
                 bool enableMultiplier = scaleToDuration.boolValue || overrideSpeed.boolValue;
-                DrawProperty(speedMultiplier, "Speed Multiplier", includeChildren: false, disabled: !enableMultiplier);
+                if (usingPhases)
+                {
+                    DrawProperty(windupSpeedMultiplier, "Windup Speed Multiplier", includeChildren: false, disabled: !enableMultiplier);
+                    DrawProperty(activeSpeedMultiplier, "Active Speed Multiplier", includeChildren: false, disabled: !enableMultiplier);
+                    DrawProperty(recoverySpeedMultiplier, "Recovery Speed Multiplier", includeChildren: false, disabled: !enableMultiplier);
+                }
+                else
+                {
+                    DrawProperty(speedMultiplier, "Speed Multiplier", includeChildren: false, disabled: !enableMultiplier);
+                }
                 EditorGUI.indentLevel--;
 
                 Header("VFX");
@@ -193,6 +206,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             // Movement
             AddHeader();
             AddProperty(property.FindPropertyRelative("lockMovement"));
+            AddProperty(property.FindPropertyRelative("lockMovementDuringRecovery"));
             AddProperty(property.FindPropertyRelative("lockAim"));
             AddProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
             AddProperty(property.FindPropertyRelative("missNudgeImpulse"));
@@ -234,6 +248,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             SerializedProperty recoveryAnimation = property.FindPropertyRelative("recoveryAnimation");
             SerializedProperty crossFade = property.FindPropertyRelative("animationCrossFade");
             SerializedProperty speedMultiplier = property.FindPropertyRelative("animationSpeedMultiplier");
+            SerializedProperty windupSpeedMultiplier = property.FindPropertyRelative("windupAnimationSpeedMultiplier");
+            SerializedProperty activeSpeedMultiplier = property.FindPropertyRelative("activeAnimationSpeedMultiplier");
+            SerializedProperty recoverySpeedMultiplier = property.FindPropertyRelative("recoveryAnimationSpeedMultiplier");
             SerializedProperty scaleToDuration = property.FindPropertyRelative("scaleAnimationSpeedToStepDuration");
             SerializedProperty overrideSpeed = property.FindPropertyRelative("overrideAnimationSpeed");
 
@@ -243,15 +260,18 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 AddProperty(windupAnimation);
                 AddProperty(activeAnimation);
                 AddProperty(recoveryAnimation);
+                AddProperty(windupSpeedMultiplier);
+                AddProperty(activeSpeedMultiplier);
+                AddProperty(recoverySpeedMultiplier);
             }
             else
             {
                 AddProperty(animation);
+                AddProperty(speedMultiplier);
             }
             AddProperty(crossFade);
             AddProperty(scaleToDuration);
             AddProperty(overrideSpeed);
-            AddProperty(speedMultiplier);
 
             // VFX
             AddHeader();
