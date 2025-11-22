@@ -302,10 +302,10 @@ MonoBehaviour:
       southEastClip: {fileID: 0}
       northWestClip: {fileID: 0}
       southWestClip: {fileID: 0}
-      crossFade: 0
+      crossFade: 0.1
       playbackSpeed: 0
       overrideSpeed: 0
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 0
+    overrideAnimationSpeed: 1

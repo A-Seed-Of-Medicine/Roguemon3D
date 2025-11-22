@@ -401,7 +401,7 @@ namespace _PinBoy.Scripts.CharacterMovement
                 return;
             }
 
-            if (request.overrideSpeed && request.playbackSpeed > 0f)
+            if (request.overrideSpeed)
             {
                 spriteAnimator.SetSpeed(request.playbackSpeed);
             }
