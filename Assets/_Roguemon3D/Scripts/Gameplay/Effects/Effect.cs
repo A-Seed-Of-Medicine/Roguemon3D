@@ -14,9 +14,6 @@ namespace _PinBoy.Scripts.Gameplay.Effects
 
     public sealed class EffectContext
     {
-        readonly Dictionary<Type, object> targetCache = new();
-        readonly Dictionary<Type, object> sourceCache = new();
-
         public EffectContext(Context aiContext, IDamager source, IDamageable target, Vector3 sourcePosition,
             Vector3 targetPosition, Vector3 direction, float magnitude)
         {

@@ -31,6 +31,7 @@ MonoBehaviour:
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
     lockMovement: 1
+    lockMovementInRecovery: 1
     lockAim: 1
     zeroVelocityOnStart: 1
     missNudgeImpulse: 200
@@ -114,6 +115,9 @@ MonoBehaviour:
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
+    scaleWindupAnimationToStepDuration: 0
+    scaleActiveAnimationToStepDuration: 0
+    scaleRecoveryAnimationToStepDuration: 0
     overrideAnimationSpeed: 0
   - id: step2
     action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
@@ -128,6 +132,7 @@ MonoBehaviour:
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
     lockMovement: 1
+    lockMovementInRecovery: 1
     lockAim: 1
     zeroVelocityOnStart: 1
     missNudgeImpulse: 200
@@ -211,6 +216,9 @@ MonoBehaviour:
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
+    scaleWindupAnimationToStepDuration: 0
+    scaleActiveAnimationToStepDuration: 0
+    scaleRecoveryAnimationToStepDuration: 0
     overrideAnimationSpeed: 0
   - id: step3
     action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
@@ -225,6 +233,7 @@ MonoBehaviour:
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
     lockMovement: 1
+    lockMovementInRecovery: 1
     lockAim: 1
     zeroVelocityOnStart: 1
     missNudgeImpulse: 200
@@ -308,4 +317,7 @@ MonoBehaviour:
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
+    scaleWindupAnimationToStepDuration: 0
+    scaleActiveAnimationToStepDuration: 0
+    scaleRecoveryAnimationToStepDuration: 0
     overrideAnimationSpeed: 1
