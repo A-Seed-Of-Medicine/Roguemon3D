@@ -19,13 +19,13 @@ MonoBehaviour:
     stepId: step
   steps:
   - id: step
-    action: {fileID: 0}
+    action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
     magnitudeMultiplier: 1
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.1
-    active: 0.15
+    windup: 0
+    active: 0.2
     recovery: 0.1
     comboResetDelay: 0
     transitionWindowOpen: 0.35
@@ -50,6 +50,7 @@ MonoBehaviour:
     hitStopOnExecute: 0
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
+    usePhaseAnimations: 1
     animation:
       directionMode: 0
       mirrorLeftRight: 1
@@ -63,20 +64,65 @@ MonoBehaviour:
       northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
       southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
       crossFade: 0.1
-      playbackSpeed: 1.7857141
+      playbackSpeed: 2.0833333
       overrideSpeed: 1
+    windupAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: cd12054e44bf5cc4d9d28a016058b69e, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    activeAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: abf4231485e898f448918b782ed4ccae, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    recoveryAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: b8472d2fe5f08264e968630df1b37e97, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
     overrideAnimationSpeed: 0
   - id: step2
-    action: {fileID: 0}
+    action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
     magnitudeMultiplier: 1
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.1
-    active: 0.15
+    windup: 0
+    active: 0.2
     recovery: 0.1
     comboResetDelay: 0
     transitionWindowOpen: 0.35
@@ -101,6 +147,7 @@ MonoBehaviour:
     hitStopOnExecute: 0
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
+    usePhaseAnimations: 1
     animation:
       directionMode: 0
       mirrorLeftRight: 1
@@ -114,21 +161,66 @@ MonoBehaviour:
       northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
       southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
       crossFade: 0.1
-      playbackSpeed: 1.7857141
+      playbackSpeed: 3.125
       overrideSpeed: 1
+    windupAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: cd12054e44bf5cc4d9d28a016058b69e, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    activeAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: abf4231485e898f448918b782ed4ccae, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    recoveryAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: b8472d2fe5f08264e968630df1b37e97, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
     overrideAnimationSpeed: 0
   - id: step3
-    action: {fileID: 0}
+    action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
     magnitudeMultiplier: 1
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.1
-    active: 0.15
-    recovery: 0.1
+    windup: 0
+    active: 0.2
+    recovery: 0.2
     comboResetDelay: 0.2
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
@@ -152,6 +244,7 @@ MonoBehaviour:
     hitStopOnExecute: 0
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
+    usePhaseAnimations: 1
     animation:
       directionMode: 0
       mirrorLeftRight: 1
@@ -165,9 +258,54 @@ MonoBehaviour:
       northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
       southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
       crossFade: 0.1
-      playbackSpeed: 1.7857141
+      playbackSpeed: 1.5625
       overrideSpeed: 1
+    windupAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: cd12054e44bf5cc4d9d28a016058b69e, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    activeAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: abf4231485e898f448918b782ed4ccae, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    recoveryAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: b8472d2fe5f08264e968630df1b37e97, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0.1
+      playbackSpeed: 0
+      overrideSpeed: 0
     animationCrossFade: 0.1
     animationSpeedMultiplier: 1
     scaleAnimationSpeedToStepDuration: 1
-    overrideAnimationSpeed: 0
+    overrideAnimationSpeed: 1

@@ -28,7 +28,7 @@ public class HitDetector : MonoBehaviour
             }
 
             CacheBaseSimulationSpeed();
-            Debug.Log($"Starting particle effect for phase {phase} with step {step} and base speed {baseSimulationSpeed}");
+            //Debug.Log($"Starting particle effect for phase {phase} with step {step} and base speed {baseSimulationSpeed}");
             ApplySimulationSpeed(step);
             particleEffect.Clear(true);
             particleEffect.Play();

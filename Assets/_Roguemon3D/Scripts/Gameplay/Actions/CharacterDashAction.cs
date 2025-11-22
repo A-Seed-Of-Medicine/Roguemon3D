@@ -38,13 +38,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         private bool zeroVelocityOnEnd;
         [SerializeField, Tooltip("If true movement input is overridden with the dash direction while active.")]
         private bool lockMovementInput = true;
-        [FormerlySerializedAs("dashChainPreTriggerDuration"), SerializeField, Tooltip("Time window before the dash ends to allow buffering a chained dash.")]
+        [SerializeField, Tooltip("Time window before the dash ends to allow buffering a chained dash.")]
         private float dashChainPreInputTolerance = 0.1f;
 
-        [FormerlySerializedAs("dashChainDuration"), SerializeField, Tooltip("Time window after a dash completes to allow chaining without waiting for the cooldown.")]
+        [SerializeField, Tooltip("Time window after a dash completes to allow chaining without waiting for the cooldown.")]
         private float dashChainPostInputTolerance = 0.3f;
+        
+        [SerializeField, Tooltip("Time window after a dash completes to allow chaining without waiting for the cooldown.")]
+        private float dashQueueDuration = 0.3f;
 
         private MyCountTimer dashChainPostTimer;
+        private MyCountTimer dashQueueTimer;
         public bool isDashing => dashTimer.IsRunning;
         Vector3 dashDirection;
         Func<Vector3, Vector3> dashRedirector;
@@ -63,14 +67,22 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             dashTimer.OnTimerFinish += HandleDashTimerFinished;
 
             dashCooldownTimer = new MyCountTimer(Mathf.Max(0f, dashCooldown));
-            dashChainPostTimer = new MyCountTimer(0f);
+            dashChainPostTimer = new MyCountTimer(dashChainPostInputTolerance);
+            dashQueueTimer = new MyCountTimer(dashQueueDuration);
             dashCooldownTimer.OnTimerFinish += () => { canDashAgain = true; };
         }
 
         private void FixedUpdate()
         {
             if (!isDashing)
-                return;
+                if (dashQueueTimer.IsRunning && CanStartDash())
+                {
+                    BeginDashInternal(null);
+                    if (!isDashing)
+                        return;
+                }
+                else 
+                    return;
 
             ApplyDashVelocity(dashTimer.Progress);
         }
@@ -139,6 +151,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (!CanStartDash())
             {
+                Vector3 requestedDirection = ResolveDashDirection();
+                Vector3 normalizedDirection = requestedDirection.sqrMagnitude > 0.0001f
+                    ? requestedDirection.normalized
+                    : dashDirection.sqrMagnitude > 0.0001f ? dashDirection : Vector3.forward;
+                
+                dashQueueTimer.Start(dashQueueDuration);
                 return;
             }
 
@@ -153,6 +171,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool CanStartDash()
         {
             if (isDashing)
+            {
+                return false;
+            }
+            
+            if (Controller.IsMovementLocked || Controller.statusHandler.StunnedStatus.IsActive)
             {
                 return false;
             }
@@ -181,6 +204,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             dashChainPostTimer?.Cancel();
             dashCooldownTimer?.Cancel();
+            dashQueueTimer?.Cancel();
 
             if (zeroVelocityOnStart)
             {

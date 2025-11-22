@@ -361,7 +361,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             SerializedProperty transitions = step.FindPropertyRelative("transitions");
             ClearArray(transitions);
             step.FindPropertyRelative("vfx").objectReferenceValue = null;
+            step.FindPropertyRelative("usePhaseAnimations").boolValue = false;
             ResetAnimation(step.FindPropertyRelative("animation"));
+            ResetAnimation(step.FindPropertyRelative("windupAnimation"));
+            ResetAnimation(step.FindPropertyRelative("activeAnimation"));
+            ResetAnimation(step.FindPropertyRelative("recoveryAnimation"));
             step.FindPropertyRelative("hitStopOnExecute").floatValue = 0f;
             step.FindPropertyRelative("hitStopOnHit").floatValue = 0f;
             step.FindPropertyRelative("multiplyHitStopPerHit").boolValue = true;

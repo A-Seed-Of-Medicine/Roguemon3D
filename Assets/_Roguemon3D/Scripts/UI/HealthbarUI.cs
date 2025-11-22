@@ -7,6 +7,8 @@ public class HealthbarUI : WorldUI {
     
     public void SetHealthPercent(Health health) 
     {
+        if (!canvasRectTransform)
+            canvasRectTransform = GetComponent<RectTransform>();
         if (slider) 
             slider.value = health.Ratio;
         // Set canvas width based on health bar max and camera manager settings

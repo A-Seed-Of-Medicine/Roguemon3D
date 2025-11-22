@@ -15,7 +15,7 @@ MonoBehaviour:
   executionOrder: 0
   cumulative: 1
   moveSpeed:
-    value: 5
+    value: 3
     decayDuration: 0
     type: 2
   acceleration:
