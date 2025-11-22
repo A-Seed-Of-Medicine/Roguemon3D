@@ -66,6 +66,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 Header("Movement");
                 EditorGUI.indentLevel++;
                 DrawProperty(property.FindPropertyRelative("lockMovement"));
+                DrawProperty(property.FindPropertyRelative("lockMovementInRecovery"));
                 DrawProperty(property.FindPropertyRelative("lockAim"));
                 DrawProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
                 DrawProperty(property.FindPropertyRelative("missNudgeImpulse"));
@@ -103,6 +104,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 SerializedProperty windupAnimation = property.FindPropertyRelative("windupAnimation");
                 SerializedProperty activeAnimation = property.FindPropertyRelative("activeAnimation");
                 SerializedProperty recoveryAnimation = property.FindPropertyRelative("recoveryAnimation");
+                SerializedProperty scaleWindupToDuration = property.FindPropertyRelative("scaleWindupAnimationToStepDuration");
+                SerializedProperty scaleActiveToDuration = property.FindPropertyRelative("scaleActiveAnimationToStepDuration");
+                SerializedProperty scaleRecoveryToDuration = property.FindPropertyRelative("scaleRecoveryAnimationToStepDuration");
                 SerializedProperty crossFade = property.FindPropertyRelative("animationCrossFade");
                 SerializedProperty speedMultiplier = property.FindPropertyRelative("animationSpeedMultiplier");
                 SerializedProperty scaleToDuration = property.FindPropertyRelative("scaleAnimationSpeedToStepDuration");
@@ -113,21 +117,25 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 if (usingPhases)
                 {
                     DrawProperty(windupAnimation, "Windup Animation");
+                    DrawProperty(scaleWindupToDuration, "Scale Windup To Step Duration", includeChildren: false);
                     DrawProperty(activeAnimation, "Active Animation");
+                    DrawProperty(scaleActiveToDuration, "Scale Active To Step Duration", includeChildren: false);
                     DrawProperty(recoveryAnimation, "Recovery Animation");
+                    DrawProperty(scaleRecoveryToDuration, "Scale Recovery To Step Duration", includeChildren: false);
                 }
                 else
                 {
                     DrawProperty(animation);
+                    DrawProperty(scaleToDuration, "Scale Speed To Step Duration", includeChildren: false);
                 }
 
                 bool hasAnimationClip = usingPhases
                     ? HasAnyAnimationClip(windupAnimation) || HasAnyAnimationClip(activeAnimation) || HasAnyAnimationClip(recoveryAnimation)
                     : HasAnyAnimationClip(animation);
                 DrawProperty(crossFade, "Cross Fade", disabled: !hasAnimationClip);
-                DrawProperty(scaleToDuration, "Scale Speed To Step Duration", includeChildren: false);
                 DrawProperty(overrideSpeed, "Force Override Speed", includeChildren: false);
-                bool enableMultiplier = scaleToDuration.boolValue || overrideSpeed.boolValue;
+                bool phaseScaled = scaleWindupToDuration.boolValue || scaleActiveToDuration.boolValue || scaleRecoveryToDuration.boolValue || scaleToDuration.boolValue;
+                bool enableMultiplier = (usingPhases ? phaseScaled : scaleToDuration.boolValue) || overrideSpeed.boolValue;
                 DrawProperty(speedMultiplier, "Speed Multiplier", includeChildren: false, disabled: !enableMultiplier);
                 EditorGUI.indentLevel--;
 
@@ -193,6 +201,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             // Movement
             AddHeader();
             AddProperty(property.FindPropertyRelative("lockMovement"));
+            AddProperty(property.FindPropertyRelative("lockMovementInRecovery"));
             AddProperty(property.FindPropertyRelative("lockAim"));
             AddProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
             AddProperty(property.FindPropertyRelative("missNudgeImpulse"));
@@ -232,6 +241,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             SerializedProperty windupAnimation = property.FindPropertyRelative("windupAnimation");
             SerializedProperty activeAnimation = property.FindPropertyRelative("activeAnimation");
             SerializedProperty recoveryAnimation = property.FindPropertyRelative("recoveryAnimation");
+            SerializedProperty scaleWindupToDuration = property.FindPropertyRelative("scaleWindupAnimationToStepDuration");
+            SerializedProperty scaleActiveToDuration = property.FindPropertyRelative("scaleActiveAnimationToStepDuration");
+            SerializedProperty scaleRecoveryToDuration = property.FindPropertyRelative("scaleRecoveryAnimationToStepDuration");
             SerializedProperty crossFade = property.FindPropertyRelative("animationCrossFade");
             SerializedProperty speedMultiplier = property.FindPropertyRelative("animationSpeedMultiplier");
             SerializedProperty scaleToDuration = property.FindPropertyRelative("scaleAnimationSpeedToStepDuration");
@@ -241,15 +253,18 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             if (property.FindPropertyRelative("usePhaseAnimations").boolValue)
             {
                 AddProperty(windupAnimation);
+                AddProperty(scaleWindupToDuration);
                 AddProperty(activeAnimation);
+                AddProperty(scaleActiveToDuration);
                 AddProperty(recoveryAnimation);
+                AddProperty(scaleRecoveryToDuration);
             }
             else
             {
                 AddProperty(animation);
+                AddProperty(scaleToDuration);
             }
             AddProperty(crossFade);
-            AddProperty(scaleToDuration);
             AddProperty(overrideSpeed);
             AddProperty(speedMultiplier);
 
