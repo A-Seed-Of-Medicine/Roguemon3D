@@ -1,5 +1,6 @@
-using System;
 using _PinBoy.Scripts.CharacterMovement;
+using _PinBoy.Scripts.Gameplay.Actions;
+using _PinBoy.Scripts.Gameplay.Creatures;
 using _PinBoy.Scripts.Player.Input;
 using AdvancedController;
 using UnityEngine;
@@ -10,14 +11,28 @@ namespace _PinBoy.Scripts.Player
     public sealed class PlayerController : AgentController
     {
         public PlayerInputReader PlayerInput;
-        
+
+        [Header("Creature Host")]
+        [SerializeField] CreatureHostData startingHost;
+        [SerializeField] CharacterComboAction comboAction;
 
         public override InputReader inputReader => PlayerInput.inputReader;
+
+        public CreatureHostData CurrentHost { get; private set; }
+
+        public CharacterComboAction ComboAction => comboAction;
 
         protected override void Awake()
         {
             PlayerInput.mainCamera = Camera.main;
+            comboAction ??= GetComponent<CharacterComboAction>();
             base.Awake();
+        }
+
+        protected override void Start()
+        {
+            base.Start();
+            ApplyHostData(startingHost);
         }
 
         protected override void Update()
@@ -30,6 +45,15 @@ namespace _PinBoy.Scripts.Player
                 inputReader.InvokeAim(planarAim);
             }
             base.Update();
+        }
+
+        public void ApplyHostData(CreatureHostData hostData)
+        {
+            CurrentHost = hostData;
+            if (comboAction != null)
+            {
+                comboAction.SetComboDefinition(hostData ? hostData.ComboDefinition : null);
+            }
         }
     }
 }
