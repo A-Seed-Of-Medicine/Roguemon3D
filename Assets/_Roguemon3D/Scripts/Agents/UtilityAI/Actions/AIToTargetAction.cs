@@ -18,6 +18,24 @@ namespace UtilityAI
         [Header("Repath Overrides (optional)")]
         [SerializeField] bool overrideDiagonalForThisAgent = true; // Maintained for backwards compatibility
 
+        [Header("Pathfinding Filters")]
+        [SerializeField, Tooltip("Radius used to push destinations and paths away from nearby agents.")]
+        float agentAvoidanceRadius = 0.5f;
+        [SerializeField, Tooltip("Ignore allied agents when applying dynamic avoidance.")]
+        bool ignoreAlliesForAvoidance = true;
+        [SerializeField, Tooltip("Require a clear, raycasted line of sight between the agent and the target.")]
+        bool requireLineOfSight;
+        [SerializeField]
+        float lineOfSightRadius = 0.1f;
+        [SerializeField]
+        Vector3 lineOfSightOriginOffset = new(0f, 0.2f, 0f);
+        [SerializeField]
+        Vector3 lineOfSightTargetOffset = new(0f, 0.2f, 0f);
+        [SerializeField]
+        LayerMask lineOfSightMask = Physics.DefaultRaycastLayers;
+        [SerializeField]
+        QueryTriggerInteraction lineOfSightTriggers = QueryTriggerInteraction.Ignore;
+
         AgentController controller;
         InputReader inputReader;
         Transform target;
@@ -37,6 +55,14 @@ namespace UtilityAI
         {
             if (!PathfindingManager.Instance || !controller) return;
 
+            PathfindingManager.AgentAvoidanceSettings avoidance = agentAvoidanceRadius > 0f
+                ? new PathfindingManager.AgentAvoidanceSettings(agentAvoidanceRadius, ShouldAvoidAgent)
+                : PathfindingManager.AgentAvoidanceSettings.Disabled;
+
+            PathfindingManager.LineOfSightSettings losSettings = requireLineOfSight
+                ? new PathfindingManager.LineOfSightSettings(true, lineOfSightRadius, lineOfSightMask, lineOfSightTriggers, lineOfSightOriginOffset, lineOfSightTargetOffset)
+                : PathfindingManager.LineOfSightSettings.Disabled;
+
             ticket = PathfindingManager.Instance.RegisterAgent(
                 controller,
                 () => controller.transform.position,
@@ -44,8 +70,25 @@ namespace UtilityAI
                 stoppingDistance,
                 waypointTolerance,
                 useEightDirectionalMovement,
-                ctx?.brain ? $"{ctx.brain.name}:ToTarget" : "ToTarget"
+                ctx?.brain ? $"{ctx.brain.name}:ToTarget" : "ToTarget",
+                avoidance,
+                losSettings
             );
+        }
+
+        bool ShouldAvoidAgent(AgentController other)
+        {
+            if (!other || other == controller)
+            {
+                return false;
+            }
+
+            if (ignoreAlliesForAvoidance && other.allegiance == controller.allegiance)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public override void Execute(Context context)
