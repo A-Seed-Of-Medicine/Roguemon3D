@@ -171,8 +171,7 @@ namespace HSM {
 
 
             controller.MovingAnimation.TryResolveClip(controller.AnimationController.currentDirectionIndex,
-                out AnimationClip clip, out bool flipX);
-            controller.spriteAnimator.SetFlipX(flipX);
+                out AnimationClip clip, controller.spriteAnimator);
         }
 
         protected override State GetTransition() {

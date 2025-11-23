@@ -75,6 +75,10 @@ MonoBehaviour:
   includeTriggerColliders: 0
   allegianceMask: 00000000
   activeAnimation: {fileID: 0}
+  phaseParticleEffects:
+  - particleEffect: {fileID: 8755687311842327937}
+    startPhase: 1
+    endPhase: 1
 --- !u!1001 &2638343471001939951
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -85,7 +89,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalScale.x
-      value: 2.2
+      value: -2.2
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalScale.z
@@ -156,6 +160,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+--- !u!198 &8755687311842327937 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+  m_PrefabInstance: {fileID: 2638343471001939951}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8755687311842327942 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}

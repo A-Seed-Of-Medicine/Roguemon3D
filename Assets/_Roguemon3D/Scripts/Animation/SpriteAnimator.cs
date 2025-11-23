@@ -35,6 +35,7 @@ namespace _PinBoy.Scripts.Animation
         {
             if (!animator)
                 return;
+
             if (flipped && animator.transform.localScale.x > 0)
                 animator.transform.localScale = new Vector3(-animator.transform.localScale.x, animator.transform.localScale.y, animator.transform.localScale.z);
             else if (!flipped && animator.transform.localScale.x < 0)

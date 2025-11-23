@@ -570,7 +570,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
         }
 
-        protected void DefaultActionTrigger(bool pressed)
+        protected virtual void DefaultActionTrigger(bool pressed)
         {
             if (pressed)
             {

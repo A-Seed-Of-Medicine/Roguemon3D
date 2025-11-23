@@ -4,6 +4,7 @@ using System.Threading;
 using _PinBoy.Scripts.Gameplay.Actions;
 using _PinBoy.Scripts.Gameplay.Effects;
 using _PinBoy.Scripts.Animation;
+using _PinBoy.Scripts.Gameplay.Creatures;
 using AdvancedController;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -74,7 +75,9 @@ namespace _PinBoy.Scripts.CharacterMovement
         private float terminalVelocity = -60f;
         
         [field: SerializeField]
-        public AllegianceType allegiance { get; set; }
+        public virtual AllegianceType allegiance { get; set; }
+
+        public CreatureSummon CreatureHost { get; private set; }
 
         [field: SerializeField] public Health health { get; set; } = new (100);
         public StatusHandler statusHandler { get; private set; }
@@ -96,6 +99,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         [SerializeField] protected Vector3 aimPivot;
         [SerializeField] protected float aimOffset;
         public GameObject aimPivotObject;
+        
         
         
         public bool IsMoving => new Vector3(currentVelocity.x, 0f, currentVelocity.z).sqrMagnitude > 0.0001f;
@@ -213,7 +217,6 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Awake()
         {
-            health.Init();
             statusHandler = new StatusHandler(this);
             if (statusHandler?.StunnedStatus != null)
             {
@@ -257,6 +260,8 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         protected virtual void Start()
         {
+            
+            health.Init();
             if (baseProfile != null)
             {
                 baseParams = new MovementParams(baseProfile);
@@ -381,6 +386,11 @@ namespace _PinBoy.Scripts.CharacterMovement
             verticalSpeed = vertical;
             currentVelocity = new Vector3(planarVelocity.x, vertical, planarVelocity.z);
             rb.linearVelocity = currentVelocity;
+        }
+        
+        public void ApplyCreatureHost(CreatureSummon creatureSummon)
+        {
+            CreatureHost = creatureSummon;
         }
 
         public Vector3 AimOrigin => transform.position + aimPivot;

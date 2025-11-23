@@ -53,6 +53,6 @@ MonoBehaviour:
       data:
         statusType: 0
         recipient: 0
-        duration: 0.5
+        duration: 1
         minimumDuration: 0
         scaleByMagnitude: 0
