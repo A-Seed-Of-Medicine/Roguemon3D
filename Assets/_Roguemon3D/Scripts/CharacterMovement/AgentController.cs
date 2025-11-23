@@ -77,7 +77,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         [field: SerializeField]
         public virtual AllegianceType allegiance { get; set; }
 
-        public CreatureSummon CreatureHost { get; private set; }
+        public CreatureSummonRuntime SummonData;
 
         [field: SerializeField] public Health health { get; set; } = new (100);
         public StatusHandler statusHandler { get; private set; }
@@ -390,7 +390,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         
         public void ApplyCreatureHost(CreatureSummon creatureSummon)
         {
-            CreatureHost = creatureSummon;
+            SummonData.ApplyHost(creatureSummon);
         }
 
         public Vector3 AimOrigin => transform.position + aimPivot;

@@ -9,7 +9,7 @@ using UnityEngine;
 namespace _PinBoy.Scripts.Player
 {
     [RequireComponent(typeof(Rigidbody))]
-    public sealed class PlayerController : AgentController
+    public sealed class AgentController : CharacterMovement.AgentController
     {
         public PlayerInputReader PlayerInput;
         
