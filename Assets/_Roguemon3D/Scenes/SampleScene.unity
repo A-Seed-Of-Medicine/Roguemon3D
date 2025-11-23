@@ -5407,7 +5407,7 @@ MonoBehaviour:
   actionMagnitude: 1
   skipIfActionInProgress: 1
   defaultAnimationRequest:
-    directionMode: 2
+    directionMode: 0
     mirrorLeftRight: 0
     singleClip: {fileID: 0}
     northClip: {fileID: 7400000, guid: c1a07ba7f2ae3224faae6b566da2fe88, type: 2}
