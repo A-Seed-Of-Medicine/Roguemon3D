@@ -83,7 +83,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (playerController)
                 playerController.ApplyCreatureHost(_hostInstance);
             if (comboAction)
-                comboAction.SetComboDefinition(_hostInstance.hostData ? _hostInstance.hostData.ComboDefinition : null);
+                comboAction.SetComboDefinition(_hostInstance.hostData ? _hostInstance.hostData.comboDefinition : null);
             
             hostSummon.SetOwner(playerController ?? Controller as PlayerController);
             hostSummon.gameObject.SetActive(false);
