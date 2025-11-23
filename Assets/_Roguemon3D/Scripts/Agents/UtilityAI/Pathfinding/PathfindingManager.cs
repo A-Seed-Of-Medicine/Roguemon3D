@@ -20,57 +20,91 @@ namespace UtilityAI.Pathfinding
         public int areaMask = NavMesh.AllAreas;
         [Tooltip("Allow partial paths returned by the NavMesh when a full path is not available.")]
         public bool allowPartialPaths = true;
-        [Tooltip("World-space quantization step used when caching NavMesh paths.")]
-        [Min(0.01f)] public float cacheQuantization = 0.5f;
 
-        [Header("Polling & Caching")]
+        [Header("Polling")]
         [Tooltip("Global poll frequency for all agents.")]
         [Min(0.05f)] public float pollInterval = 0.15f;
         [Tooltip("Repath if agent moved this far from the path segment.")]
         [Min(0f)] public float repathFromDrift = 0.75f;
         [Tooltip("Repath if target moved this far since last solve.")]
         [Min(0f)] public float repathFromTargetDelta = 0.75f;
-        [Tooltip("Cache lifetime for identical path queries.")]
-        [Min(0f)] public float cacheTTL = 0.75f;
         [Tooltip("Hard cap solves per frame to spread cost.")]
         [Min(1)] public int maxSolvesPerFrame = 16;
+
+        [Header("Goal Sampling")]
+        [Tooltip("Radius used to sample alternate targets around the requested destination when looking for valid paths.")]
+        [Min(0f)] public float alternateGoalRadius = 1.25f;
+        [Tooltip("Number of radial samples to try around the goal when a direct path fails validation.")]
+        [Range(0, 16)] public int alternateGoalRays = 8;
 
         [Header("Debug")]
         public bool drawFinalPaths = true;
         public Color pathColor = new(0.2f, 1f, 0.2f, 0.9f);
-        public Color cachedPathColor = new(0.2f, 0.6f, 1f, 0.5f);
 
-        struct CacheKey : IEquatable<CacheKey>
+        public sealed class LineOfSightSettings
         {
-            public readonly Vector3Int start;
-            public readonly Vector3Int goal;
-            public readonly int areaMask;
+            public bool required;
+            public LayerMask mask = Physics.DefaultRaycastLayers;
+            [Tooltip("Height offset from the corners used when casting for line of sight.")]
+            public float verticalOffset = 0.4f;
+            [Tooltip("Optional sphere radius for the cast. Leave at 0 for a thin raycast.")]
+            public float radius;
+            public QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Ignore;
 
-            public CacheKey(Vector3Int start, Vector3Int goal, int areaMask)
-            {
-                this.start = start;
-                this.goal = goal;
-                this.areaMask = areaMask;
-            }
+            public static LineOfSightSettings Disabled => new() { required = false };
 
-            public bool Equals(CacheKey other) => start.Equals(other.start) && goal.Equals(other.goal) && areaMask == other.areaMask;
-            public override bool Equals(object obj) => obj is CacheKey other && Equals(other);
-            public override int GetHashCode()
+            public LineOfSightSettings Clone()
             {
-                unchecked
+                return new LineOfSightSettings
                 {
-                    int hash = start.GetHashCode();
-                    hash = (hash * 397) ^ goal.GetHashCode();
-                    hash = (hash * 397) ^ areaMask;
-                    return hash;
-                }
+                    required = required,
+                    mask = mask,
+                    verticalOffset = verticalOffset,
+                    radius = Mathf.Max(0f, radius),
+                    triggerInteraction = triggerInteraction
+                };
             }
         }
 
-        sealed class CacheEntry
+        public sealed class AgentAvoidanceSettings
         {
-            public Vector3[] corners = Array.Empty<Vector3>();
-            public float time;
+            [Tooltip("Minimum planar distance to maintain from other agents included by the filter.")]
+            public float radius = 0.5f;
+            [Tooltip("Optional filter used to select which agents should be considered for avoidance.")]
+            public Func<AgentController, bool> filter;
+
+            public float Radius => Mathf.Max(0f, radius);
+            public float RadiusSqr => Radius * Radius;
+            public bool Enabled => RadiusSqr > 0f;
+
+            public AgentAvoidanceSettings Clone()
+            {
+                return new AgentAvoidanceSettings
+                {
+                    radius = Radius,
+                    filter = filter
+                };
+            }
+        }
+
+        public sealed class PathRequestOptions
+        {
+            public AgentAvoidanceSettings avoidance = new();
+            public LineOfSightSettings lineOfSight = LineOfSightSettings.Disabled;
+            [Tooltip("Radius used when sampling alternative goals to steer around obstructions.")]
+            public float goalSampleRadius = 1.25f;
+
+            public static PathRequestOptions Defaults => new();
+
+            public PathRequestOptions Clone()
+            {
+                return new PathRequestOptions
+                {
+                    avoidance = avoidance?.Clone() ?? new AgentAvoidanceSettings(),
+                    lineOfSight = lineOfSight?.Clone() ?? LineOfSightSettings.Disabled,
+                    goalSampleRadius = Mathf.Max(0f, goalSampleRadius)
+                };
+            }
         }
 
         public sealed class AgentTicket
@@ -81,6 +115,7 @@ namespace UtilityAI.Pathfinding
             public readonly float stoppingDistance;
             public readonly float waypointTolerance;
             public readonly bool snapTo8;
+            public readonly PathRequestOptions options;
 
             internal readonly List<Vector3> path = new();
             internal readonly NavMeshPath navPath = new();
@@ -97,7 +132,8 @@ namespace UtilityAI.Pathfinding
                                float stopDist,
                                float waypointTol,
                                bool snap8,
-                               string label)
+                               string label,
+                               PathRequestOptions opts)
             {
                 this.agent = agent;
                 GetAgentPos = getAgentPos;
@@ -108,18 +144,27 @@ namespace UtilityAI.Pathfinding
                 this.label = label;
                 lastAgentPos = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
                 lastTargetPos = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+                options = opts ?? PathRequestOptions.Defaults;
             }
         }
 
         readonly List<AgentTicket> _agents = new(128);
-        readonly Dictionary<CacheKey, CacheEntry> _cache = new(256);
+        readonly List<AgentSample> _agentSamples = new(128);
+        readonly RaycastHit[] _raycastHits = new RaycastHit[8];
         int _solvesThisFrame;
+
+        struct AgentSample
+        {
+            public AgentController controller;
+            public Vector3 position;
+        }
 
         void Awake()
         {
             if (Instance && Instance != this)
             {
-                DestroyImmediate(gameObject);
+                Debug.LogWarning($"Multiple {nameof(PathfindingManager)} instances detected. Destroying duplicate on {name}.", this);
+                Destroy(this);
                 return;
             }
 
@@ -134,7 +179,7 @@ namespace UtilityAI.Pathfinding
             }
         }
 
-        void LateUpdate()
+        void Update()
         {
             if (_agents.Count == 0)
             {
@@ -175,7 +220,7 @@ namespace UtilityAI.Pathfinding
                     continue;
                 }
 
-                TryResolvePath(agentPos, targetPos, ticket, now);
+                TryResolvePath(agentPos, targetPos, ticket);
                 ticket.lastAgentPos = agentPos;
                 ticket.lastTargetPos = targetPos;
                 ticket.nextPollAt = now + pollInterval;
@@ -189,9 +234,10 @@ namespace UtilityAI.Pathfinding
                                          float stoppingDistance,
                                          float waypointTolerance,
                                          bool snapTo8,
-                                         string label)
+                                         string label,
+                                         PathRequestOptions requestOptions = null)
         {
-            var ticket = new AgentTicket(agent, getAgentPos, getTargetPos, stoppingDistance, waypointTolerance, snapTo8, label);
+            var ticket = new AgentTicket(agent, getAgentPos, getTargetPos, stoppingDistance, waypointTolerance, snapTo8, label, requestOptions?.Clone());
             _agents.Add(ticket);
             return ticket;
         }
@@ -229,7 +275,7 @@ namespace UtilityAI.Pathfinding
             return ticket.snapTo8 ? SnapTo8(direction) : direction;
         }
 
-        bool TryResolvePath(Vector3 agentPos, Vector3 targetPos, AgentTicket ticket, float now)
+        bool TryResolvePath(Vector3 agentPos, Vector3 targetPos, AgentTicket ticket)
         {
             if (!TrySamplePosition(agentPos, out Vector3 sampledStart) ||
                 !TrySamplePosition(targetPos, out Vector3 sampledGoal))
@@ -238,79 +284,220 @@ namespace UtilityAI.Pathfinding
                 return false;
             }
 
-            CacheKey key = new CacheKey(Quantize(sampledStart), Quantize(sampledGoal), areaMask);
-            if (_cache.TryGetValue(key, out CacheEntry entry))
-            {
-                if (cacheTTL <= 0f || (now - entry.time) <= cacheTTL)
-                {
-                    ApplyEntryToAgent(entry, ticket, agentPos);
-                    return true;
-                }
+            CollectAgentSamples(ticket);
 
-                _cache.Remove(key);
+            if (TryCalculatePath(sampledStart, sampledGoal, ticket, agentPos))
+            {
+                return true;
             }
 
-            if (!CalculatePath(sampledStart, sampledGoal, ticket, out entry))
-            {
-                ClearAgentPath(ticket);
-                return false;
-            }
-
-            entry.time = now;
-            if (cacheTTL > 0f)
-            {
-                _cache[key] = entry;
-            }
-            ApplyEntryToAgent(entry, ticket, agentPos);
-            return true;
+            ClearAgentPath(ticket);
+            return false;
         }
 
-        bool CalculatePath(Vector3 start, Vector3 goal, AgentTicket ticket, out CacheEntry entry)
+        bool TryCalculatePath(Vector3 start, Vector3 goal, AgentTicket ticket, Vector3 agentPos)
         {
-            entry = null;
             NavMeshPath path = ticket.navPath;
             path.ClearCorners();
+            float goalRadius = Mathf.Max(alternateGoalRadius, ticket.options.goalSampleRadius);
 
-            if (!NavMesh.CalculatePath(start, goal, areaMask, path))
+            foreach (Vector3 candidateGoal in EnumerateGoalSamples(goal, goalRadius))
             {
-                return false;
+                if (!NavMesh.CalculatePath(start, candidateGoal, areaMask, path))
+                {
+                    continue;
+                }
+
+                if (path.status == NavMeshPathStatus.PathInvalid)
+                {
+                    continue;
+                }
+
+                if (path.status == NavMeshPathStatus.PathPartial && !allowPartialPaths)
+                {
+                    continue;
+                }
+
+                Vector3[] corners = path.corners;
+                if (corners == null || corners.Length == 0)
+                {
+                    continue;
+                }
+
+                if (!ValidateAgentAvoidance(corners, ticket))
+                {
+                    continue;
+                }
+
+                if (!ValidateLineOfSight(corners, ticket))
+                {
+                    continue;
+                }
+
+                ApplyPathToAgent(corners, ticket, agentPos);
+                return true;
             }
 
-            if (path.status == NavMeshPathStatus.PathInvalid)
+            return false;
+        }
+
+        IEnumerable<Vector3> EnumerateGoalSamples(Vector3 goal, float radius)
+        {
+            yield return goal;
+
+            if (radius <= 0f || alternateGoalRays <= 0)
             {
-                return false;
+                yield break;
             }
 
-            if (path.status == NavMeshPathStatus.PathPartial && !allowPartialPaths)
+            float angleStep = 360f / Mathf.Max(1, alternateGoalRays);
+            for (int i = 0; i < alternateGoalRays; i++)
             {
-                return false;
+                float angle = angleStep * i * Mathf.Deg2Rad;
+                Vector3 offset = new(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+                if (TrySamplePosition(goal + offset, out Vector3 sampled))
+                {
+                    yield return sampled;
+                }
+            }
+        }
+
+        bool ValidateAgentAvoidance(IReadOnlyList<Vector3> corners, AgentTicket ticket)
+        {
+            AgentAvoidanceSettings avoidance = ticket.options.avoidance;
+            if (!avoidance.Enabled || _agentSamples.Count == 0 || corners.Count < 2)
+            {
+                return true;
             }
 
-            Vector3[] corners = path.corners;
-            if (corners == null || corners.Length == 0)
+            float minDistSqr = avoidance.RadiusSqr;
+            for (int segment = 1; segment < corners.Count; segment++)
             {
-                return false;
-            }
+                Vector3 a = corners[segment - 1];
+                Vector3 b = corners[segment];
+                for (int i = 0; i < _agentSamples.Count; i++)
+                {
+                    AgentSample sample = _agentSamples[i];
+                    if (!AvoidanceAllows(ticket, sample.controller))
+                    {
+                        continue;
+                    }
 
-            entry = new CacheEntry
-            {
-                corners = (Vector3[])corners.Clone()
-            };
+                    float distSqr = DistancePointToSegmentPlanar(sample.position, a, b);
+                    if (distSqr < minDistSqr)
+                    {
+                        return false;
+                    }
+                }
+            }
 
             return true;
         }
 
-        void ApplyEntryToAgent(CacheEntry entry, AgentTicket ticket, Vector3 agentPos)
+        bool ValidateLineOfSight(IReadOnlyList<Vector3> corners, AgentTicket ticket)
+        {
+            LineOfSightSettings lineOfSight = ticket.options.lineOfSight;
+            if (!lineOfSight.required || corners.Count < 2)
+            {
+                return true;
+            }
+
+            Vector3 offset = Vector3.up * lineOfSight.verticalOffset;
+            int mask = lineOfSight.mask;
+            QueryTriggerInteraction triggers = lineOfSight.triggerInteraction;
+            float radius = Mathf.Max(0f, lineOfSight.radius);
+
+            for (int i = 1; i < corners.Count; i++)
+            {
+                Vector3 start = corners[i - 1] + offset;
+                Vector3 end = corners[i] + offset;
+                Vector3 direction = end - start;
+                float distance = direction.magnitude;
+                if (distance <= 0.001f)
+                {
+                    continue;
+                }
+
+                direction /= distance;
+                int hits = radius > 0f
+                    ? Physics.SphereCastNonAlloc(start, radius, direction, _raycastHits, distance, mask, triggers)
+                    : Physics.RaycastNonAlloc(start, direction, _raycastHits, distance, mask, triggers);
+
+                for (int h = 0; h < hits; h++)
+                {
+                    Collider collider = _raycastHits[h].collider;
+                    if (collider == null)
+                    {
+                        continue;
+                    }
+
+                    if (ticket.agent && collider.transform.IsChildOf(ticket.agent.transform))
+                    {
+                        continue;
+                    }
+
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        void ApplyPathToAgent(IReadOnlyList<Vector3> corners, AgentTicket ticket, Vector3 agentPos)
         {
             ticket.path.Clear();
-            if (entry.corners != null)
+            for (int i = 0; i < corners.Count; i++)
             {
-                ticket.path.AddRange(entry.corners);
+                ticket.path.Add(corners[i]);
             }
 
             ticket.hasPath = ticket.path.Count > 0;
             ticket.waypointIndex = ticket.path.Count > 1 ? 1 : 0;
             AdvanceWaypoint(ticket, agentPos);
+        }
+
+        void CollectAgentSamples(AgentTicket requester)
+        {
+            _agentSamples.Clear();
+            AgentAvoidanceSettings avoidance = requester.options.avoidance;
+            if (!avoidance.Enabled)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _agents.Count; i++)
+            {
+                AgentTicket ticket = _agents[i];
+                AgentController controller = ticket?.agent;
+                if (controller == null || controller == requester.agent)
+                {
+                    continue;
+                }
+
+                if (!AvoidanceAllows(requester, controller))
+                {
+                    continue;
+                }
+
+                Vector3 pos = ticket.GetAgentPos();
+                _agentSamples.Add(new AgentSample { controller = controller, position = pos });
+            }
+        }
+
+        static bool AvoidanceAllows(AgentTicket requester, AgentController candidate)
+        {
+            AgentAvoidanceSettings settings = requester.options.avoidance;
+            if (!settings.Enabled)
+            {
+                return false;
+            }
+
+            if (candidate == requester.agent)
+            {
+                return false;
+            }
+
+            return settings.filter == null || settings.filter(candidate);
         }
 
         void ClearAgentPath(AgentTicket ticket)
@@ -353,15 +540,6 @@ namespace UtilityAI.Pathfinding
             return false;
         }
 
-        Vector3Int Quantize(Vector3 position)
-        {
-            float inv = 1f / Mathf.Max(0.01f, cacheQuantization);
-            return new Vector3Int(
-                Mathf.RoundToInt(position.x * inv),
-                Mathf.RoundToInt(position.y * inv),
-                Mathf.RoundToInt(position.z * inv));
-        }
-
         static Vector3 Planar(Vector3 v)
         {
             v.y = 0f;
@@ -373,6 +551,21 @@ namespace UtilityAI.Pathfinding
             Vector3 delta = a - b;
             delta.y = 0f;
             return delta.sqrMagnitude;
+        }
+
+        static float DistancePointToSegmentPlanar(Vector3 point, Vector3 a, Vector3 b)
+        {
+            Vector3 ap = Planar(point - a);
+            Vector3 ab = Planar(b - a);
+            float magnitudeSqr = ab.sqrMagnitude;
+            if (magnitudeSqr < 0.0001f)
+            {
+                return ap.sqrMagnitude;
+            }
+
+            float t = Mathf.Clamp01(Vector3.Dot(ap, ab) / magnitudeSqr);
+            Vector3 projection = a + ab * t;
+            return PlanarDistanceSqr(point, projection);
         }
 
         static bool IsFinite(Vector3 v) => !(float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));
@@ -417,26 +610,6 @@ namespace UtilityAI.Pathfinding
                     Gizmos.DrawLine(ticket.path[i - 1], ticket.path[i]);
                 }
             }
-
-#if UNITY_EDITOR
-            if (_cache.Count > 0)
-            {
-                Gizmos.color = cachedPathColor;
-                foreach (CacheEntry entry in _cache.Values)
-                {
-                    Vector3[] corners = entry.corners;
-                    if (corners == null || corners.Length < 2)
-                    {
-                        continue;
-                    }
-
-                    for (int i = 1; i < corners.Length; i++)
-                    {
-                        Gizmos.DrawLine(corners[i - 1], corners[i]);
-                    }
-                }
-            }
-#endif
         }
     }
 }
