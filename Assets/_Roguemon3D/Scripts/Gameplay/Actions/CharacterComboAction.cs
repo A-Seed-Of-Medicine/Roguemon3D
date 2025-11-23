@@ -150,6 +150,18 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         public CharacterComboDefinition ComboDefinition => comboDefinition;
 
+        public void SetComboDefinition(CharacterComboDefinition definition)
+        {
+            if (comboDefinition == definition)
+            {
+                return;
+            }
+
+            comboDefinition = definition;
+            ResetComboState();
+            BuildLookups();
+        }
+
         ComboStep currentStep;
         ComboStep pendingStep;
         float pendingStepDelay;
