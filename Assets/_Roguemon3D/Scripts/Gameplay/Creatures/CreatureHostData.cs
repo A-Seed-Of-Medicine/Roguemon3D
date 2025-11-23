@@ -12,10 +12,10 @@ namespace _PinBoy.Scripts.Gameplay.Creatures
 
         [Header("Gameplay")]
         [SerializeField] CharacterComboDefinition comboDefinition;
-        [SerializeField] SummonedCreature summonPrefab;
+        [SerializeField] CreatureSummon summonPrefab;
 
         public string DisplayName => displayName;
         public CharacterComboDefinition ComboDefinition => comboDefinition;
-        public SummonedCreature SummonPrefab => summonPrefab;
+        public CreatureSummon SummonPrefab => summonPrefab;
     }
 }
