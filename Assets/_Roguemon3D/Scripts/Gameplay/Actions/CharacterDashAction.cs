@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using HSM;
 using ImprovedTimers;
+using AgentController = _PinBoy.Scripts.CharacterMovement.AgentController;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
 {
