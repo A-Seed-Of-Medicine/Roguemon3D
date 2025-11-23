@@ -373,6 +373,8 @@ namespace UtilityAI.Pathfinding
             float minDistSqr = avoidance.RadiusSqr;
             for (int segment = 1; segment < corners.Count; segment++)
             {
+                if (corners.Count > 1 && segment == 1)
+                    continue;
                 Vector3 a = corners[segment - 1];
                 Vector3 b = corners[segment];
                 for (int i = 0; i < _agentSamples.Count; i++)
@@ -386,6 +388,7 @@ namespace UtilityAI.Pathfinding
                     float distSqr = DistancePointToSegmentPlanar(sample.position, a, b);
                     if (distSqr < minDistSqr)
                     {
+                        Debug.Log($"Path blocked by agent '{sample.controller.name}' for ticket '{ticket.label}'.", ticket.agent);
                         return false;
                     }
                 }

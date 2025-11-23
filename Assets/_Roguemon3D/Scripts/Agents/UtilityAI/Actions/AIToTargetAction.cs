@@ -71,7 +71,7 @@ namespace UtilityAI
                 stoppingDistance,
                 waypointTolerance,
                 useEightDirectionalMovement,
-                ctx?.brain ? $"{ctx.brain.name}:ToTarget" : "ToTarget",
+                ctx?.Controller ? $"{ctx.Controller.name}:ToTarget" : "ToTarget",
                 requestOptions
             );
         }
