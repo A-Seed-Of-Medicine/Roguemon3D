@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using _PinBoy.Scripts.Player;
+using _PinBoy.Scripts.CharacterMovement;
 using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;

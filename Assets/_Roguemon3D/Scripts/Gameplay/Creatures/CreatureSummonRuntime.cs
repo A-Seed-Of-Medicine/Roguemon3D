@@ -3,7 +3,6 @@ using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Actions;
 using _PinBoy.Scripts.Player;
 using UnityEngine;
-using AgentController = _PinBoy.Scripts.Player.AgentController;
 
 namespace _PinBoy.Scripts.Gameplay.Creatures
 {

@@ -331,7 +331,6 @@ namespace _PinBoy.Scripts.CharacterMovement
             float vertical = bodyVelocity.y;
 
             UpdateGroundedState(ref vertical);
-
             Vector3 desiredInput = IsMovementLocked ? Vector3.zero : new Vector3(moveInput.x, 0f, moveInput.y);
             if (InputRedirector != null)
             {
@@ -380,9 +379,8 @@ namespace _PinBoy.Scripts.CharacterMovement
             
             TryResolveStep(ref planarVelocity, ref vertical, desiredDirection, Time.fixedDeltaTime);
 
-            bool jumpPerformed = TryHandleJump(ref vertical);
-            ApplyGravity(ref vertical, Time.fixedDeltaTime, jumpPerformed);
-
+            //bool jumpPerformed = TryHandleJump(ref vertical);
+            ApplyGravity(ref vertical, Time.fixedDeltaTime, false);
             verticalSpeed = vertical;
             currentVelocity = new Vector3(planarVelocity.x, vertical, planarVelocity.z);
             rb.linearVelocity = currentVelocity;
@@ -831,13 +829,12 @@ namespace _PinBoy.Scripts.CharacterMovement
                 verticalVelocity = Mathf.Max(verticalVelocity, groundedGravity);
                 return;
             }
-
+            
             bool isHoldingJump = jumpButtonHeld || jumpJustPerformed;
 
-            float multiplier = verticalVelocity > 0f
+            float multiplier = verticalVelocity > 0.001f
                 ? (isHoldingJump ? 1f : Mathf.Max(1f, jumpReleaseGravityMultiplier))
                 : Mathf.Max(1f, fallGravityMultiplier);
-
             verticalVelocity += gravity * multiplier * deltaTime;
 
             if (terminalVelocity < 0f)

@@ -6,7 +6,6 @@ using _Roguemon3D.Scripts.Utils;
 using ImprovedTimers;
 using Unity.Cinemachine;
 using UnityEngine;
-using AgentController = _PinBoy.Scripts.Player.AgentController;
 
 [ExecuteAlways]
 public class CameraManager : MonoBehaviour
@@ -65,6 +64,8 @@ public class CameraManager : MonoBehaviour
         {
             cinemachineCamera.Lens.FieldOfView = cameraFOV;
         }
+        if (!agentController)
+            agentController = FindAnyObjectByType<PlayerController>();
         OnPreCull();
     }
     
