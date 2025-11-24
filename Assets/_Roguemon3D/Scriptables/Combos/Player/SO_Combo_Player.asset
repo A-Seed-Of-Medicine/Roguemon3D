@@ -39,7 +39,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
+    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 2a2154c2086bcaf4ea14cbf1795233d6, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -142,12 +142,12 @@ MonoBehaviour:
     applyNudgeWhenHit: 0
     hitDetectorPrefab: {fileID: 6643509938996099555, guid: d54c4ae9fa297d9498601193c5146b24, type: 3}
     parentHitDetectorToPivot: 1
-    hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
+    hitDetectorPositionOffset: {x: 0, y: 0, z: -4}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
     transitions:
     - input: 0
-      nextStepId: step3
+      nextStepId: 
       queueUntilWindow: 0
       transitionDelay: 0
     vfx: {fileID: 0}
@@ -241,7 +241,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: d54c4ae9fa297d9498601193c5146b24, type: 3}
+    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 341b319a45ca30c468ec77b7bfc990fe, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -342,7 +342,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
+    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 2a2154c2086bcaf4ea14cbf1795233d6, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}

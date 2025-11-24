@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SC_Action_Player_Summon
   m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Actions.AgentActionDefinition
   actionName: 
-  duration: 0.5
+  duration: 0
   effectDelay: 0
   lockMovement: 1
   movementLockDuration: -1
@@ -25,7 +25,7 @@ MonoBehaviour:
   - rid: 8319330821021368425
   - rid: 8319331024382722139
   baseMagnitude: 1
-  vfxPrefab: {fileID: 2336955926572963415, guid: 30042e234964e5642a864a048db3e407, type: 3}
+  vfxPrefab: {fileID: 0}
   vfxAnchor: 1
   vfxTiming: 0
   parentVfxToAnchor: 0
@@ -50,6 +50,4 @@ MonoBehaviour:
         scaleWithMagnitude: 1
     - rid: 8319331024382722139
       type: {class: SummonEffect, ns: _PinBoy.Scripts.Gameplay.Effects, asm: Assembly-CSharp}
-      data:
-        hostData: {fileID: 11400000, guid: 929c29d236152ca4ab3d31b6b75f4478, type: 2}
-        swapWithCurrentHost: 1
+      data: 

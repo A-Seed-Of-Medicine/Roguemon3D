@@ -126,10 +126,7 @@ namespace _PinBoy.Scripts.Gameplay.Creatures
             if (!summonInstance)
                 return;
             
-            
-            Vector3 position = summonSpawnPoint ? summonSpawnPoint.position : transform.position;
-            Quaternion rotation = summonSpawnPoint ? summonSpawnPoint.rotation : transform.rotation;
-            creatureSummon.transform.SetPositionAndRotation(position, rotation);
+            creatureSummon.transform.position = summonSpawnPoint ? summonSpawnPoint.position : transform.position;
             creatureSummon.gameObject.SetActive(true);
         }
 

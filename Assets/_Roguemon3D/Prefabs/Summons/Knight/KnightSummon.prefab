@@ -196,8 +196,8 @@ MonoBehaviour:
   <allegiance>k__BackingField: 1
   SummonData: {fileID: 0}
   <health>k__BackingField:
-    max: 30
-    current: 30
+    max: 50
+    current: 50
     isDead: 0
     OnHealthChanged:
       m_PersistentCalls:
@@ -301,7 +301,7 @@ GameObject:
   - component: {fileID: 7834966771597171}
   m_Layer: 2
   m_Name: Brain
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -353,6 +353,16 @@ MonoBehaviour:
         stoppingDistance: 0.1
         waypointTolerance: 0.15
         useEightDirectionalMovement: 0
+        avoidOtherAgents: 1
+        agentAvoidanceRadius: 0.6
+        agentAvoidanceScope: 0
+        requireLineOfSight: 0
+        lineOfSightMask:
+          serializedVersion: 2
+          m_Bits: 4294967291
+        lineOfSightHeightOffset: 0.4
+        lineOfSightRadius: 0.05
+        lineOfSightTriggers: 1
         overrideDiagonalForThisAgent: 1
     - rid: 8319330709940469854
       type: {class: AICharacterAction, ns: UtilityAI, asm: Assembly-CSharp}

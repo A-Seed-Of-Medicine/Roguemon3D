@@ -24,7 +24,7 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.5
+    windup: 0.1
     active: 0.2
     recovery: 0.25
     comboResetDelay: 1.2
@@ -34,7 +34,7 @@ MonoBehaviour:
     lockMovementInRecovery: 1
     lockAim: 1
     zeroVelocityOnStart: 1
-    missNudgeImpulse: 0
+    missNudgeImpulse: 50
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
     hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
@@ -135,7 +135,7 @@ MonoBehaviour:
     lockMovementInRecovery: 1
     lockAim: 1
     zeroVelocityOnStart: 1
-    missNudgeImpulse: 0
+    missNudgeImpulse: 50
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
     hitDetectorPrefab: {fileID: 6643509938996099555, guid: 4eb1935c3ee07e04b9086415ab9e5b12, type: 3}
@@ -236,7 +236,7 @@ MonoBehaviour:
     lockMovementInRecovery: 1
     lockAim: 1
     zeroVelocityOnStart: 1
-    missNudgeImpulse: 0
+    missNudgeImpulse: 50
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
     hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}

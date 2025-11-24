@@ -388,7 +388,7 @@ namespace UtilityAI.Pathfinding
                     float distSqr = DistancePointToSegmentPlanar(sample.position, a, b);
                     if (distSqr < minDistSqr)
                     {
-                        Debug.Log($"Path blocked by agent '{sample.controller.name}' for ticket '{ticket.label}'.", ticket.agent);
+                        //Debug.Log($"Path blocked by agent '{sample.controller.name}' for ticket '{ticket.label}'.", ticket.agent);
                         return false;
                     }
                 }
