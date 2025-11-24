@@ -6,13 +6,14 @@ using _Roguemon3D.Scripts.Utils;
 using ImprovedTimers;
 using Unity.Cinemachine;
 using UnityEngine;
+using AgentController = _PinBoy.Scripts.Player.AgentController;
 
 [ExecuteAlways]
 public class CameraManager : MonoBehaviour
 {
     public static CameraManager Instance { get; private set; }
     
-    public PlayerController playerController;
+    public AgentController agentController;
 
     [SerializeField]
     public Camera mainCamera;
@@ -91,15 +92,15 @@ public class CameraManager : MonoBehaviour
         timeAccumulated = 0f;
     }
 
-    public bool TryAddHitStopForAgent(AgentController agent, float amount)
+    public bool TryAddHitStopForAgent(_PinBoy.Scripts.CharacterMovement.AgentController agent, float amount)
     {
         if (!agent || amount <= 0f)
         {
             return false;
         }
 
-        PlayerController target = playerController;
-        if (!playerController || !target || agent != target)
+        AgentController target = agentController;
+        if (!agentController || !target || agent != target)
             return false;
 
         AddDamageDealtHitStop(amount);
@@ -140,7 +141,7 @@ public class CameraManager : MonoBehaviour
         if (mainCamera.transform.position != cachedCameraPosition)
         {
             cachedCameraPosition = mainCamera.transform.position;
-            OnCameraPositionUpdated?.Invoke(cachedCameraPosition, playerController.transform.position);
+            OnCameraPositionUpdated?.Invoke(cachedCameraPosition, agentController.transform.position);
         }
         OnPreCull();
     }
