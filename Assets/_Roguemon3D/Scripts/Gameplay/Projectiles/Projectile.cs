@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using _PinBoy.Scripts.Gameplay.Effects;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -20,6 +21,9 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             public float SpeedMultiplier;
             public Transform Owner;
             public Collider[] IgnoredColliders;
+            public IDamager Damager;
+            public IDamageable Target;
+            public float Magnitude;
         }
 
         [Header("Motion")]
@@ -49,8 +53,11 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
         float currentSpeed;
         float lifetime;
         Vector3 launchPosition;
-        bool launched;
-        Transform owner;
+        protected bool launched;
+        protected Transform owner;
+        protected IDamager damager;
+        protected IDamageable target;
+        protected float launchMagnitude = 1f;
 
         void Awake()
         {
@@ -82,6 +89,9 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             currentSpeed = Mathf.Max(0f, baseSpeed * (data.SpeedMultiplier <= 0f ? 1f : data.SpeedMultiplier));
             launchPosition = data.Origin;
             owner = data.Owner;
+            damager = data.Damager;
+            target = data.Target;
+            launchMagnitude = data.Magnitude <= 0f ? 1f : data.Magnitude;
 
             transform.position = data.Origin;
             lifetime = 0f;
@@ -204,7 +214,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             ignoredColliders.Clear();
         }
 
-        void HandleHit(Collider other, Vector3? hitPoint = null)
+        protected virtual void HandleHit(Collider other, Vector3? hitPoint = null)
         {
             if (!launched)
             {
@@ -234,7 +244,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             }
         }
 
-        bool IsValidTarget(Collider other)
+        protected virtual bool IsValidTarget(Collider other)
         {
             if (!other || ignoredColliders.Contains(other))
             {
@@ -268,6 +278,12 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             Vector3 point = other.bounds.ClosestPoint(transform.position);
             HandleHit(other, point);
         }
+
+        protected Vector3 LaunchDirection => launchDirection;
+        protected Vector3 LaunchOrigin => launchPosition;
+        protected float LaunchMagnitude => launchMagnitude;
+        protected IDamager LaunchDamager => damager;
+        protected IDamageable LaunchTarget => target;
     }
 }
 

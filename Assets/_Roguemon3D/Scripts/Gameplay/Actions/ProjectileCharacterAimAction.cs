@@ -191,7 +191,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     SpeedMultiplier = projectileSpeedMultiplier * (actionMagnitude <= 0f ? 1f : actionMagnitude),
                     Owner = Controller ? Controller.transform : transform,
                     IgnoredColliders = colliders,
-                    InitialVelocity = inheritedVelocity
+                    InitialVelocity = inheritedVelocity,
+                    Damager = Controller,
+                    Magnitude = actionMagnitude <= 0f ? 1f : actionMagnitude
                 };
             }
 
@@ -202,7 +204,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 SpeedMultiplier = projectileSpeedMultiplier * (actionMagnitude <= 0f ? 1f : actionMagnitude),
                 Owner = Controller ? Controller.transform : transform,
                 IgnoredColliders = null,
-                InitialVelocity = inheritedVelocity
+                InitialVelocity = inheritedVelocity,
+                Damager = Controller,
+                Magnitude = actionMagnitude <= 0f ? 1f : actionMagnitude
             };
         }
 
