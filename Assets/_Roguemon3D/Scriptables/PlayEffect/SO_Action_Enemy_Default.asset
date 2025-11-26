@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ffb5d2a414f307f448ed87be717b0caa, type: 3}
-  m_Name: SC_Action_Player_Default
+  m_Name: SO_Action_Enemy_Default
   m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Actions.AgentActionDefinition
   actionName: 
   duration: 0.5
@@ -23,7 +23,6 @@ MonoBehaviour:
   effects:
   - rid: 234841993414705229
   - rid: 8319330821021368425
-  - rid: 8319330842412318799
   baseMagnitude: 1
   vfxPrefab: {fileID: 2336955926572963415, guid: 30042e234964e5642a864a048db3e407, type: 3}
   vfxAnchor: 1
@@ -48,11 +47,3 @@ MonoBehaviour:
       data:
         amount: 5
         scaleWithMagnitude: 1
-    - rid: 8319330842412318799
-      type: {class: ApplyStatusEffect, ns: _PinBoy.Scripts.Gameplay.Effects, asm: Assembly-CSharp}
-      data:
-        statusType: 0
-        recipient: 0
-        duration: 1
-        minimumDuration: 0
-        scaleByMagnitude: 0

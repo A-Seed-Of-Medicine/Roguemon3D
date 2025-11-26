@@ -12,6 +12,7 @@ namespace _PinBoy.Scripts.Gameplay.Effects
 
         public override void Apply(EffectContext context)
         {
+            Debug.Log("Applying projectile spawn effect.");
             if (context == null || context.Source == null)
             {
                 return;
