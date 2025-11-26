@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using _PinBoy.Scripts.Gameplay.Effects;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -20,6 +21,8 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             public float SpeedMultiplier;
             public Transform Owner;
             public Collider[] IgnoredColliders;
+            public IDamager Damager;
+            public float EffectMagnitude;
         }
 
         [Header("Motion")]
@@ -36,6 +39,9 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
         [SerializeField] private GameObject impactPrefab;
         [SerializeField, Min(0f)] private float impactPrefabLifetime = 2f;
 
+        [Header("Effects")]
+        [SerializeReference] private List<Effect> onHitEffects = new();
+
         [Header("Events")]
         [SerializeField] private UnityEvent<Collider> onHit;
         [SerializeField] private UnityEvent onExpired;
@@ -51,6 +57,8 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
         Vector3 launchPosition;
         bool launched;
         Transform owner;
+        IDamager damager;
+        float launchMagnitude = 1f;
 
         void Awake()
         {
@@ -82,6 +90,8 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             currentSpeed = Mathf.Max(0f, baseSpeed * (data.SpeedMultiplier <= 0f ? 1f : data.SpeedMultiplier));
             launchPosition = data.Origin;
             owner = data.Owner;
+            damager = data.Damager;
+            launchMagnitude = Mathf.Max(0f, data.EffectMagnitude <= 0f ? 1f : data.EffectMagnitude);
 
             transform.position = data.Origin;
             lifetime = 0f;
@@ -218,6 +228,8 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
             onHit?.Invoke(other);
 
+            ApplyHitEffects(other);
+
             if (impactPrefab)
             {
                 Vector3 spawnPosition = hitPoint ?? transform.position;
@@ -231,6 +243,40 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             if (destroyOnImpact)
             {
                 Destroy(gameObject);
+            }
+        }
+
+        void ApplyHitEffects(Collider other)
+        {
+            if (onHitEffects == null || onHitEffects.Count == 0)
+            {
+                return;
+            }
+
+            IDamageable damageable = other.GetComponentInParent<IDamageable>();
+            if (damageable == null)
+            {
+                return;
+            }
+
+            IDamager source = damager;
+            if (source == null && owner)
+            {
+                source = owner.GetComponentInParent<IDamager>();
+            }
+
+            if (source == null)
+            {
+                return;
+            }
+
+            Vector3 targetPosition = damageable.transform ? damageable.transform.position : other.transform.position;
+            EffectContext context = new EffectContext(null, source, damageable, transform.position, targetPosition,
+                body != null ? body.linearVelocity : launchDirection, launchMagnitude);
+
+            foreach (Effect effect in onHitEffects)
+            {
+                effect?.Apply(context);
             }
         }
 
