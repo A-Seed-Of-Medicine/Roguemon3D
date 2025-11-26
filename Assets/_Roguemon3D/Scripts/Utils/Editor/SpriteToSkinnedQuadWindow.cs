@@ -858,9 +858,7 @@ namespace SpriteTo3DTools
 
             // Remove SpriteRenderer & SpriteSkin components (bones / transforms remain).
             foreach (var sr in spriteRenderers)
-                Object.DestroyImmediate(sr, true);
-            foreach (var skin in spriteSkins)
-                Object.DestroyImmediate(skin, true);
+                Object.DestroyImmediate(sr.gameObject, true);
 
 #if UNITY_EDITOR
             GameObjectUtility.RemoveMonoBehavioursWithMissingScript(instance);
