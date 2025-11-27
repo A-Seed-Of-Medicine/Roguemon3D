@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using _PinBoy.Scripts.Player;
+using _PinBoy.Scripts.CharacterMovement;
 using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
@@ -15,7 +15,7 @@ public class WorldUI : MonoBehaviour {
     public RectTransform canvasRectTransform;
     
     [Header("Behavior")]
-    public PlayerController Player => uiCamera.playerController;
+    public AgentController Agent => uiCamera.agentController;
     public CameraManager uiCamera;
     public FacingTarget faceTarget = FacingTarget.Camera;
     public Transform pivotObject;
@@ -103,8 +103,8 @@ public class WorldUI : MonoBehaviour {
     }
 
     void FacePlayer() {
-        if (!canvas || !Player) return;
-        var toPlayer = canvas.transform.position - Player.transform.position;
+        if (!canvas || !Agent) return;
+        var toPlayer = canvas.transform.position - Agent.transform.position;
         var flat = Vector3.ProjectOnPlane(toPlayer, Vector3.up); // pitch=0, roll=0
         if (flat.sqrMagnitude <= Vector3.kEpsilon) return;
         canvas.transform.rotation = Quaternion.LookRotation(flat, Vector3.up);

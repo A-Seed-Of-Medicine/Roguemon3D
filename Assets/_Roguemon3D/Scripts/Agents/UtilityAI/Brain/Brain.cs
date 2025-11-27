@@ -138,7 +138,7 @@ namespace UtilityAI {
         }
 
         bool IsValidTarget(Collider other) {
-            if (!other || other.CompareTag("Untagged")) {
+            if (!other || other.CompareTag("Untagged") || other.gameObject.layer == 2) {
                 return false;
             }
 

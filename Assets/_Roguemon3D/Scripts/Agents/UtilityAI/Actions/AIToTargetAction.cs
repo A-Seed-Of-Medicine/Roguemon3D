@@ -15,6 +15,24 @@ namespace UtilityAI
         [SerializeField] float waypointTolerance = 0.15f;
         [SerializeField] bool useEightDirectionalMovement = true;
 
+        [Header("Pathing Constraints")]
+        [SerializeField, Tooltip("Enable avoidance tests against other agents while planning.")]
+        bool avoidOtherAgents = true;
+        [SerializeField, Tooltip("Minimum planar distance to keep from avoided agents.")]
+        float agentAvoidanceRadius = 0.6f;
+        [SerializeField, Tooltip("Determines which agents are considered when avoiding.")]
+        AgentAvoidanceScope agentAvoidanceScope = AgentAvoidanceScope.AllOthers;
+
+        [Header("Line of Sight")]
+        [SerializeField, Tooltip("Require a clear line of sight across the path when planning.")]
+        bool requireLineOfSight;
+        [SerializeField] LayerMask lineOfSightMask = Physics.DefaultRaycastLayers;
+        [SerializeField, Tooltip("Offset from ground used when casting for line of sight.")]
+        float lineOfSightHeightOffset = 0.4f;
+        [SerializeField, Tooltip("Sphere radius for the line-of-sight test. Use 0 for a thin ray.")]
+        float lineOfSightRadius = 0.05f;
+        [SerializeField] QueryTriggerInteraction lineOfSightTriggers = QueryTriggerInteraction.Ignore;
+
         [Header("Repath Overrides (optional)")]
         [SerializeField] bool overrideDiagonalForThisAgent = true; // Maintained for backwards compatibility
 
@@ -22,7 +40,15 @@ namespace UtilityAI
         InputReader inputReader;
         Transform target;
 
+        PathfindingManager.PathRequestOptions requestOptions;
         PathfindingManager.AgentTicket ticket;
+
+        enum AgentAvoidanceScope
+        {
+            AllOthers,
+            SameAllegiance,
+            DifferentAllegiance
+        }
 
         public override void Initialize(Context context)
         {
@@ -37,6 +63,7 @@ namespace UtilityAI
         {
             if (!PathfindingManager.Instance || !controller) return;
 
+            requestOptions = BuildRequestOptions();
             ticket = PathfindingManager.Instance.RegisterAgent(
                 controller,
                 () => controller.transform.position,
@@ -44,8 +71,62 @@ namespace UtilityAI
                 stoppingDistance,
                 waypointTolerance,
                 useEightDirectionalMovement,
-                ctx?.brain ? $"{ctx.brain.name}:ToTarget" : "ToTarget"
+                ctx?.Controller ? $"{ctx.Controller.name}:ToTarget" : "ToTarget",
+                requestOptions
             );
+        }
+
+        PathfindingManager.PathRequestOptions BuildRequestOptions()
+        {
+            var options = PathfindingManager.PathRequestOptions.Defaults.Clone();
+
+            if (avoidOtherAgents)
+            {
+                options.avoidance.radius = Mathf.Max(0f, agentAvoidanceRadius);
+                options.avoidance.filter = BuildAgentFilter();
+                options.goalSampleRadius = Mathf.Max(options.goalSampleRadius, agentAvoidanceRadius);
+            }
+            else
+            {
+                options.avoidance.radius = 0f;
+                options.avoidance.filter = null;
+            }
+
+            options.lineOfSight = requireLineOfSight
+                ? new PathfindingManager.LineOfSightSettings
+                {
+                    required = true,
+                    mask = lineOfSightMask,
+                    verticalOffset = lineOfSightHeightOffset,
+                    radius = Mathf.Max(0f, lineOfSightRadius),
+                    triggerInteraction = lineOfSightTriggers
+                }
+                : PathfindingManager.LineOfSightSettings.Disabled;
+
+            return options;
+        }
+
+        Func<AgentController, bool> BuildAgentFilter()
+        {
+            if (!avoidOtherAgents)
+            {
+                return null;
+            }
+
+            return other =>
+            {
+                if (!other || other == controller)
+                {
+                    return false;
+                }
+
+                return agentAvoidanceScope switch
+                {
+                    AgentAvoidanceScope.SameAllegiance => controller && other.allegiance == controller.allegiance,
+                    AgentAvoidanceScope.DifferentAllegiance => !controller || other.allegiance != controller.allegiance,
+                    _ => true
+                };
+            };
         }
 
         public override void Execute(Context context)

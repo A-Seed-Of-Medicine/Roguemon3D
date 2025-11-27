@@ -17,6 +17,8 @@ MonoBehaviour:
   entrySteps:
   - input: 0
     stepId: step
+  - input: 3
+    stepId: Summon
   steps:
   - id: step
     action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
@@ -37,7 +39,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
+    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 2a2154c2086bcaf4ea14cbf1795233d6, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -119,6 +121,107 @@ MonoBehaviour:
     scaleActiveAnimationToStepDuration: 0
     scaleRecoveryAnimationToStepDuration: 0
     overrideAnimationSpeed: 0
+  - id: Summon
+    action: {fileID: 11400000, guid: 204775f27efa72f4bac8280e3a7c8459, type: 2}
+    magnitudeMultiplier: 1
+    triggerWhenNoTarget: 1
+    allowRepeatedHits: 0
+    stunImmune: 0
+    windup: 0
+    active: 0.2
+    recovery: 0.1
+    comboResetDelay: 0
+    transitionWindowOpen: 0.35
+    transitionWindowClose: 0.9
+    lockMovement: 1
+    lockMovementInRecovery: 1
+    lockAim: 1
+    zeroVelocityOnStart: 1
+    missNudgeImpulse: 200
+    missNudgeDelay: 0
+    applyNudgeWhenHit: 0
+    hitDetectorPrefab: {fileID: 6643509938996099555, guid: d54c4ae9fa297d9498601193c5146b24, type: 3}
+    parentHitDetectorToPivot: 1
+    hitDetectorPositionOffset: {x: 0, y: 0, z: -4}
+    hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
+    fallbackDirection: {x: 0, y: 0, z: 1}
+    transitions:
+    - input: 0
+      nextStepId: 
+      queueUntilWindow: 0
+      transitionDelay: 0
+    vfx: {fileID: 0}
+    hitStopOnExecute: 0
+    hitStopOnHit: 0
+    multiplyHitStopPerHit: 1
+    usePhaseAnimations: 1
+    animation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: b732c89fe6f06f049b0c269840bec2e9, type: 2}
+      northClip: {fileID: 7400000, guid: 72d607bf84d30e84f8b0a6e9299e7f80, type: 2}
+      southClip: {fileID: 7400000, guid: ce63ef3ffc1391341ab28740628bb66f, type: 2}
+      eastClip: {fileID: 7400000, guid: 0c80156271144ba45b91745042c7579b, type: 2}
+      westClip: {fileID: 7400000, guid: 7ce345db03f5d9148b1e1583d31985cd, type: 2}
+      northEastClip: {fileID: 7400000, guid: 4fade7068c9e8d24099b97383adb71fc, type: 2}
+      southEastClip: {fileID: 7400000, guid: 101e943b71ae9874f9d74a4aba38a50e, type: 2}
+      northWestClip: {fileID: 7400000, guid: c62993a49c75cae49928ca538a9650e5, type: 2}
+      southWestClip: {fileID: 7400000, guid: 00828ff2a7338cf4eb125fb9ec4ee3b0, type: 2}
+      crossFade: 0.1
+      playbackSpeed: 3.125
+      overrideSpeed: 1
+    windupAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: cd12054e44bf5cc4d9d28a016058b69e, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    activeAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: abf4231485e898f448918b782ed4ccae, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    recoveryAnimation:
+      directionMode: 0
+      mirrorLeftRight: 1
+      singleClip: {fileID: 7400000, guid: b8472d2fe5f08264e968630df1b37e97, type: 2}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    animationCrossFade: 0.1
+    animationSpeedMultiplier: 1
+    scaleAnimationSpeedToStepDuration: 1
+    scaleWindupAnimationToStepDuration: 0
+    scaleActiveAnimationToStepDuration: 0
+    scaleRecoveryAnimationToStepDuration: 0
+    overrideAnimationSpeed: 0
   - id: step2
     action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
     magnitudeMultiplier: 1
@@ -138,7 +241,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: d54c4ae9fa297d9498601193c5146b24, type: 3}
+    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 341b319a45ca30c468ec77b7bfc990fe, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -239,7 +342,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
+    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 2a2154c2086bcaf4ea14cbf1795233d6, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
