@@ -15,7 +15,7 @@ namespace UtilityAI {
 
         public virtual void Initialize(Context context) { }
 
-        public float CalculateUtility(Context context, IReadOnlyList<Transform> targets) {
+        public virtual float CalculateUtility(Context context, IReadOnlyList<Transform> targets) {
             if (context == null || consideration == null) {
                 if (context != null && consideration == null && !hasWarnedForNullConsideration) {
                     hasWarnedForNullConsideration = true;

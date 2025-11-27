@@ -86,7 +86,7 @@ namespace _PinBoy.Scripts.CharacterMovement
         public UnityEvent<DamageInfo> DamageDealt;
 
         [Header("Animation (optional)")]
-        [field: SerializeField] public SpriteAnimator spriteAnimator { get; private set; }
+        public SpriteAnimator spriteAnimator;
         [Header("State Animations")]
         [SerializeField] private AgentAnimationRequest idleAnimation;
         [SerializeField] private AgentAnimationRequest movingAnimation;
@@ -176,6 +176,12 @@ namespace _PinBoy.Scripts.CharacterMovement
                     spriteAnimator.SetSpeed(Mathf.Max(0f, value));
                 }
             }
+        }
+
+        public virtual void OnValidate()
+        {
+            if (spriteAnimator && spriteAnimator.agentController == null)
+                spriteAnimator.agentController = this;
         }
 
         internal void RequestActionState(ActionState state)
@@ -601,7 +607,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             movementOverrideTokens.Remove(profile);
         }
 
-        public void LockMovement(float duration, bool zeroVelocity)
+        public void LockMovement(float duration, bool zeroVelocity = false)
         {
             movementLockTimer.Start(duration);
             if (zeroVelocity)

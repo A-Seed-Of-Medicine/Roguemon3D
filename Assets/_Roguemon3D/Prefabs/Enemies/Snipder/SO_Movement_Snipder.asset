@@ -15,7 +15,7 @@ MonoBehaviour:
   executionOrder: 0
   cumulative: 1
   moveSpeed:
-    value: 4
+    value: 7
     decayDuration: 0
     type: 2
   acceleration:
@@ -23,15 +23,15 @@ MonoBehaviour:
     decayDuration: 0
     type: 2
   turnAcceleration:
-    value: 9
+    value: 50
     decayDuration: 0
     type: 2
   deceleration:
-    value: 30
+    value: 3
     decayDuration: 0
     type: 2
   inputDeceleration:
-    value: 40
+    value: 3
     decayDuration: 0
     type: 2
   maxSpeedMultiplier:

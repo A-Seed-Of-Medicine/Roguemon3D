@@ -1,4 +1,5 @@
 using System;
+using _PinBoy.Scripts.CharacterMovement;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -14,6 +15,7 @@ namespace _PinBoy.Scripts.Animation
         [SerializeField] private AnimationClip defaultClip;
         [SerializeField] private bool playOnAwake = true;
         [SerializeField, Min(0f)] private float speedMultiplier = 1f;
+        public AgentController agentController;
         
         [Header("Rendering")]
         [Min(0)] public float cameraXOffsetMax = 17f;
@@ -44,7 +46,14 @@ namespace _PinBoy.Scripts.Animation
 
         void OnValidate()
         {
+            if (agentController && !agentController.spriteAnimator)
+                agentController.spriteAnimator = this;
             FaceCamera(Camera.main?.GetComponent<CameraManager>());
+        }
+
+        public void LockMovement(float duration = 0.1f)
+        {
+            agentController.LockMovement(duration);
         }
         
         void FaceCamera(CameraManager camera)
