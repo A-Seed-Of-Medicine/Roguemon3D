@@ -36,6 +36,7 @@ Transform:
   m_Children:
   - {fileID: 8473122598500534308}
   - {fileID: 3652905941589161861}
+  - {fileID: 3742597416534541917}
   - {fileID: 1071764783781698178}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -136,7 +137,7 @@ MonoBehaviour:
     OnHealthChanged:
       m_PersistentCalls:
         m_Calls:
-        - m_Target: {fileID: 0}
+        - m_Target: {fileID: 2738658545121651791}
           m_TargetAssemblyTypeName: HealthbarUI, Assembly-CSharp
           m_MethodName: SetHealthPercent
           m_Mode: 0
@@ -154,7 +155,7 @@ MonoBehaviour:
   DamageDealt:
     m_PersistentCalls:
       m_Calls: []
-  spriteAnimator: {fileID: 0}
+  spriteAnimator: {fileID: 7058355208463427446}
   idleAnimation:
     directionMode: 0
     mirrorLeftRight: 0
@@ -572,6 +573,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6238593608364133764}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7376562250072773547
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3742597416534541917}
+  m_Layer: 7
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3742597416534541917
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7376562250072773547}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4036148981127556093}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7849329601161243386
 GameObject:
@@ -5329,7 +5361,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: -0.0000000040322248
       objectReference: {fileID: 0}
     - target: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
       propertyPath: m_LocalRotation.y
@@ -5337,11 +5369,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0.0000000097346495
       objectReference: {fileID: 0}
     - target: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
+      value: 45
       objectReference: {fileID: 0}
     - target: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
@@ -5474,7 +5506,7 @@ MonoBehaviour:
   defaultClip: {fileID: 0}
   playOnAwake: 1
   speedMultiplier: 1
-  agentController: {fileID: 0}
+  agentController: {fileID: 941551738761022137}
   cameraXOffsetMax: 20
 --- !u!1001 &8841030043467510285
 PrefabInstance:
@@ -5546,7 +5578,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.000000014901161
+      value: -0.00000002463581
       objectReference: {fileID: 0}
     - target: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -5593,6 +5625,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
+--- !u!114 &2738658545121651791 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6678854277726707266, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
+  m_PrefabInstance: {fileID: 8841030043467510285}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d09ba4bd3ac6410b9e33cadfd28a4ed0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthbarUI
 --- !u!224 &5857103941041522573 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
