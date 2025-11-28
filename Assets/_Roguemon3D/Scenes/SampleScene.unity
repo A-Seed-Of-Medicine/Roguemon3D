@@ -2211,17 +2211,6 @@ Transform:
   - {fileID: 66233585}
   m_Father: {fileID: 318406897}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &535669721 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5281150600340613872, guid: c6b9f8f95f57eb74e82b169a0c05cc80, type: 3}
-  m_PrefabInstance: {fileID: 462279757063120413}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ac222396d4b41e5936f462f9d2e94df, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Player.PlayerController
 --- !u!4 &535669726 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9211809507394601753, guid: c6b9f8f95f57eb74e82b169a0c05cc80, type: 3}
@@ -10403,18 +10392,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1396113173853255623, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 1396113173853255623, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 5.6000004
-      objectReference: {fileID: 0}
-    - target: {fileID: 1396113173853255623, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -4
-      objectReference: {fileID: 0}
     - target: {fileID: 2649168965961619733, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 6.21428
@@ -10455,62 +10432,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2693267168628170990, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: FollowOffset.x
-      value: 9
-      objectReference: {fileID: 0}
-    - target: {fileID: 2693267168628170990, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: FollowOffset.y
-      value: 12.6
-      objectReference: {fileID: 0}
-    - target: {fileID: 2693267168628170990, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: FollowOffset.z
-      value: -9
-      objectReference: {fileID: 0}
     - target: {fileID: 5575658162690296192, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
       propertyPath: m_Name
       value: CameraManager
-      objectReference: {fileID: 0}
-    - target: {fileID: 6325016629020404633, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 6325016629020404633, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 5.6000004
-      objectReference: {fileID: 0}
-    - target: {fileID: 6325016629020404633, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -4
-      objectReference: {fileID: 0}
-    - target: {fileID: 6838576602853273380, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: cameraFOV
-      value: 50
-      objectReference: {fileID: 0}
-    - target: {fileID: 6838576602853273380, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: agentController
-      value: 
-      objectReference: {fileID: 535669721}
-    - target: {fileID: 8515645115070314396, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: Lens.FieldOfView
-      value: 55
       objectReference: {fileID: 0}
     - target: {fileID: 8515645115070314396, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
       propertyPath: Target.TrackingTarget
       value: 
       objectReference: {fileID: 535669726}
-    - target: {fileID: 8901293378620660034, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: orthographic
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8901293378620660034, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: field of view
-      value: 50
-      objectReference: {fileID: 0}
-    - target: {fileID: 8901293378620660034, guid: cb2773f84040e6944bbaba32846acc1c, type: 3}
-      propertyPath: m_projectionMatrixMode
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -1,4 +1,3 @@
-#if ENABLE_MONO && (DEVELOPMENT_BUILD || UNITY_EDITOR)
 using UnityEngine;
 
 namespace SingularityGroup.HotReload {
@@ -8,7 +7,7 @@ namespace SingularityGroup.HotReload {
         public static bool IsAssetStoreBuild => true;
 
         
-        public const string Version = "1.13.11";
+        public const string Version = "1.13.12";
         // Never higher than Version
         // Used for the download
         public const string ServerVersion = "1.13.11";
@@ -17,4 +16,3 @@ namespace SingularityGroup.HotReload {
         public const string ConfigFileName = "hot-reload-config.json";
     }
 }
-#endif
