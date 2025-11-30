@@ -392,6 +392,7 @@ MonoBehaviour:
   defaultClip: {fileID: 7400000, guid: 04902aae99617df47a4c2856ee4e4177, type: 2}
   playOnAwake: 1
   speedMultiplier: 1
+  agentController: {fileID: 0}
   cameraXOffsetMax: 17
 --- !u!1 &1911421737706779227
 GameObject:

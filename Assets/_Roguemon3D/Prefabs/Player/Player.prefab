@@ -178,7 +178,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  <spriteAnimator>k__BackingField: {fileID: 2738012409019221049}
+  spriteAnimator: {fileID: 0}
   idleAnimation:
     directionMode: 0
     mirrorLeftRight: 1
@@ -433,10 +433,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9211809507394601753}
     m_Modifications:
-    - target: {fileID: 722093685692686077, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
-      propertyPath: m_Camera
-      value: 
-      objectReference: {fileID: 0}
     - target: {fileID: 1238320139362148339, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_Name
       value: PlayerSprite_SkinnedQuad
@@ -510,17 +506,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
---- !u!114 &2738012409019221049 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3688771424787563786, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
-  m_PrefabInstance: {fileID: 1643384876853936435}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 11f01263cd3a4e8cbd16fc16bcc13b2f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Animation.SpriteAnimator
 --- !u!114 &4081961078265279931 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3344046073153336456, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}

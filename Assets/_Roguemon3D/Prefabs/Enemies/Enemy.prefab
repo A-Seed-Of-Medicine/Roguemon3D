@@ -277,7 +277,7 @@ MonoBehaviour:
   DamageDealt:
     m_PersistentCalls:
       m_Calls: []
-  <spriteAnimator>k__BackingField: {fileID: 6234998586809963735}
+  spriteAnimator: {fileID: 0}
   idleAnimation:
     directionMode: 2
     mirrorLeftRight: 0
@@ -403,7 +403,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4839880524471253835}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.0000000015171007, y: 0.3826835, z: 0.0000000036626044, w: -0.9238795}
+  m_LocalRotation: {x: -0.0000000015170991, y: 0.3826835, z: 0.0000000036626007, w: -0.9238795}
   m_LocalPosition: {x: 0, y: -0.52, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -507,6 +507,7 @@ MonoBehaviour:
   defaultClip: {fileID: 0}
   playOnAwake: 1
   speedMultiplier: 1
+  agentController: {fileID: 0}
   cameraXOffsetMax: 20
 --- !u!1 &6834850306816824104
 GameObject:
@@ -840,7 +841,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.000000018563766
+      value: 0.000000018563762
       objectReference: {fileID: 0}
     - target: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: m_AnchoredPosition.x

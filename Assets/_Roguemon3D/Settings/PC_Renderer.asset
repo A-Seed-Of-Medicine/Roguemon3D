@@ -16,7 +16,7 @@ MonoBehaviour:
   m_Settings:
     technique: 0
     maxDrawDistance: 1000
-    decalLayers: 0
+    decalLayers: 1
     dBufferSettings:
       surfaceData: 2
     screenSpaceSettings:
@@ -31,11 +31,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6b3d386ba5cd94485973aee1479b272e, type: 3}
-  m_Name: RenderObjects
+  m_Name: FloorStencil
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.RenderObjects
   m_Active: 1
   settings:
-    passTag: RenderObjects
+    passTag: FloorStencil
     Event: 300
     filterSettings:
       RenderQueueType: 0
@@ -63,6 +63,26 @@ MonoBehaviour:
       restoreCamera: 0
       offset: {x: 0, y: 0, z: 0, w: 0}
       cameraFieldOfView: 69.8
+--- !u!114 &-306317984067489436
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b00045f12942b46c698459096c89274e, type: 3}
+  m_Name: FullScreenPassRendererFeature
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.FullScreenPassRendererFeature
+  m_Active: 1
+  injectionPoint: 550
+  fetchColorBuffer: 1
+  requirements: 0
+  passMaterial: {fileID: 2100000, guid: 01956c51a0b2b8d4d87e098399d76d02, type: 2}
+  passIndex: 0
+  bindDepthStencilAttachment: 0
+  m_Version: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -92,8 +112,9 @@ MonoBehaviour:
   - {fileID: -5132190511051551413}
   - {fileID: 2900937846673688665}
   - {fileID: -6276858940213281904}
+  - {fileID: -306317984067489436}
   - {fileID: 8805671135321439851}
-  m_RendererFeatureMap: ad6b866f10d7b46c4b4d24f5ebcbc6b859c8780a9a334228903b5ad30c1ee4a86bbebe3d3e07347a
+  m_RendererFeatureMap: ad6b866f10d7b46c4b4d24f5ebcbc6b859c8780a9a334228903b5ad30c1ee4a864f1579b6abdbffb6bbebe3d3e07347a
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -153,11 +174,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6b3d386ba5cd94485973aee1479b272e, type: 3}
-  m_Name: RenderObjects
+  m_Name: 25D Stencil
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.RenderObjects
   m_Active: 1
   settings:
-    passTag: RenderObjects
+    passTag: 25D Stencil
     Event: 500
     filterSettings:
       RenderQueueType: 1
@@ -226,7 +247,7 @@ MonoBehaviour:
   m_Active: 1
   injectionPoint: 450
   fetchColorBuffer: 1
-  requirements: 0
+  requirements: 3
   passMaterial: {fileID: 2100000, guid: b68410903c194d14c8f7aa1ee1bc3ddb, type: 2}
   passIndex: 0
   bindDepthStencilAttachment: 0

@@ -163,6 +163,13 @@ public class HitDetector : MonoBehaviour
     [SerializeField] LayerMask targetLayers = Physics.DefaultRaycastLayers;
     [SerializeField] bool includeTriggerColliders = true;
     [SerializeField] List<AllegianceType> allegianceMask = new();
+    
+    public SpriteRenderer windupIndicator;
+    public bool scaleWindupDuration = true;
+    public ExecutionPhase windupDeactivePhase = ExecutionPhase.Recovery;
+    private static readonly int TimerStart = Shader.PropertyToID("_TimerStart");
+    private static readonly int TimerDuration = Shader.PropertyToID("_TimerDuration");
+    private MaterialPropertyBlock propertyBlock;
 
     [Header("Animation")]
     [SerializeField] AnimationClip activeAnimation;
@@ -194,6 +201,11 @@ public class HitDetector : MonoBehaviour
 
     public void HandlePhaseStart(ExecutionPhase phase, CharacterComboAction.ComboStep step)
     {
+        if (phase == ExecutionPhase.Windup)
+            HandleWindupIndicator(step);
+        if (phase == windupDeactivePhase && windupIndicator)
+            windupIndicator.gameObject.SetActive(false);
+        
         if (phaseParticleEffects == null || phaseParticleEffects.Length == 0)
         {
             return;
@@ -216,6 +228,22 @@ public class HitDetector : MonoBehaviour
         {
             effect?.HandlePhaseEnd(phase);
         }
+    }
+    
+    public void HandleWindupIndicator(CharacterComboAction.ComboStep step)
+    {
+        if (!windupIndicator)
+            return;
+        windupIndicator.gameObject.SetActive(true);
+        propertyBlock ??= new MaterialPropertyBlock();
+        propertyBlock.SetFloat(TimerStart, Time.timeSinceLevelLoad);
+        if (scaleWindupDuration)
+        {
+            float duration = scaleWindupDuration ? Mathf.Max(0.0001f, step.windup) : 1f;
+            propertyBlock.SetFloat(TimerDuration, duration);
+        }
+
+        windupIndicator.SetPropertyBlock(propertyBlock);
     }
 
     public void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits, System.Action<IDamageable> onHit)
