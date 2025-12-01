@@ -235,8 +235,8 @@ namespace _PinBoy.Scripts.CharacterMovement.Editor
         {
             SerializedObject serializedObject;
             string propertyPath;
-            string folderAssetPath;
             Vector2 scrollPosition;
+            private DefaultAsset _outputFolder;
 
             const string DialogTitle = "Assign Agent Animations";
 
@@ -276,62 +276,47 @@ namespace _PinBoy.Scripts.CharacterMovement.Editor
                 EditorGUILayout.LabelField(DialogTitle, EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox("Select a folder to scan for animation clips that include direction suffixes like _North, _NE, _South, etc.", MessageType.Info);
 
-                DrawFolderSelector();
+                _outputFolder = (DefaultAsset)EditorGUILayout.ObjectField(
+                    new GUIContent(
+                        "Output Folder",
+                        "Optional project folder where Mesh/Material/Prefab assets will be saved.\n" +
+                        "If empty, the source asset's folder is used."),
+                    _outputFolder,
+                    typeof(DefaultAsset),
+                    false);
 
-                using (new EditorGUI.DisabledScope(string.IsNullOrEmpty(folderAssetPath)))
+                using (new EditorGUI.DisabledScope(!_outputFolder))
                 {
                     if (GUILayout.Button("Assign From Folder"))
                     {
-                        AssignFromFolder(folderAssetPath, property);
+                        AssignFromFolder(_outputFolder, property);
                     }
                 }
             }
-
-            void DrawFolderSelector()
+            
+            private string GetOutputDirectory()
             {
-                using (var scroll = new EditorGUILayout.ScrollViewScope(scrollPosition))
+                if (_outputFolder != null)
                 {
-                    scrollPosition = scroll.scrollPosition;
-                    EditorGUILayout.LabelField("Selected Folder", string.IsNullOrEmpty(folderAssetPath) ? "None" : folderAssetPath, EditorStyles.wordWrappedLabel);
-                    if (GUILayout.Button("Choose Folder"))
-                    {
-                        string selected = EditorUtility.OpenFolderPanel("Select Animation Folder", Application.dataPath, string.Empty);
-                        if (!string.IsNullOrEmpty(selected))
-                        {
-                            folderAssetPath = ConvertToAssetPath(selected);
-                            if (string.IsNullOrEmpty(folderAssetPath))
-                            {
-                                EditorUtility.DisplayDialog(DialogTitle, "Please select a folder inside the project Assets directory.", "OK");
-                            }
-                        }
-                    }
+                    string folderPath = AssetDatabase.GetAssetPath(_outputFolder);
+                    if (AssetDatabase.IsValidFolder(folderPath))
+                        return folderPath;
                 }
+                
+                return "Assets";
             }
 
-            static string ConvertToAssetPath(string absolutePath)
-            {
-                string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
-                string fullPath = Path.GetFullPath(absolutePath);
-                if (!fullPath.StartsWith(projectRoot, StringComparison.OrdinalIgnoreCase))
-                {
-                    return null;
-                }
-
-                string relative = fullPath.Substring(projectRoot.Length + 1).Replace('\\', '/');
-                return relative;
-            }
-
-            void AssignFromFolder(string assetFolderPath, SerializedProperty property)
+            void AssignFromFolder(DefaultAsset outputFolder, SerializedProperty property)
             {
                 Undo.RecordObjects(serializedObject.targetObjects, "Assign Agent Animations");
 
-                var clips = LoadClips(assetFolderPath);
+                var clips = LoadClips(GetOutputDirectory());
                 var result = MapClipsToRequest(clips, property);
 
                 serializedObject.ApplyModifiedProperties();
 
                 string summary = result.foundAny
-                    ? $"Assigned {result.assignedCount} clip(s) from '{assetFolderPath}'."
+                    ? $"Assigned {result.assignedCount} clip(s) from '{outputFolder}'."
                     : "No matching clips were found to assign.";
                 EditorUtility.DisplayDialog(DialogTitle, summary, "OK");
             }
