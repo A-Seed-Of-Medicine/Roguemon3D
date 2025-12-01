@@ -40,6 +40,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public ComboInput input = ComboInput.SameAsBinding;
             [Tooltip("Identifier of the combo step that should be triggered by this input when no combo is active.")]
             public string stepId;
+            [HideInInspector]
+            public Vector2 graphPosition;
         }
 
         [Serializable]
@@ -99,6 +101,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public Vector3 hitDetectorRotationOffset;
             [Tooltip("Fallback direction if aim input is not available.")]
             public Vector3 fallbackDirection = Vector3.forward;
+
+            [HideInInspector]
+            public Vector2 graphPosition;
 
             [Header("Branches")]
             public ComboTransition[] transitions = Array.Empty<ComboTransition>();
