@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using _PinBoy.Scripts.CharacterMovement;
+using _PinBoy.Scripts.Gameplay.Actions;
 using HSM;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
@@ -146,7 +147,7 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
                 showFoldoutHeader = false,
                 fixedItemHeight = 18f,
                 selectionType = SelectionType.Single,
-                virtualizationMethod = CollectionVirtualizationMethod.Dynamic
+                virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight
             };
             agentList.makeItem = () => new Label();
             agentList.bindItem = (element, i) =>
