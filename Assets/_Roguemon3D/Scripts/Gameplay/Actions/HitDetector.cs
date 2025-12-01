@@ -164,12 +164,11 @@ public class HitDetector : MonoBehaviour
     [SerializeField] bool includeTriggerColliders = true;
     [SerializeField] List<AllegianceType> allegianceMask = new();
     
-    public SpriteRenderer windupIndicator;
+    public ProceduralMeshGenerator windupIndicator;
     public bool scaleWindupDuration = true;
     public ExecutionPhase windupDeactivePhase = ExecutionPhase.Recovery;
     private static readonly int TimerStart = Shader.PropertyToID("_TimerStart");
     private static readonly int TimerDuration = Shader.PropertyToID("_TimerDuration");
-    private MaterialPropertyBlock propertyBlock;
 
     [Header("Animation")]
     [SerializeField] AnimationClip activeAnimation;
@@ -234,16 +233,14 @@ public class HitDetector : MonoBehaviour
     {
         if (!windupIndicator)
             return;
-        windupIndicator.gameObject.SetActive(true);
-        propertyBlock ??= new MaterialPropertyBlock();
-        propertyBlock.SetFloat(TimerStart, Time.timeSinceLevelLoad);
         if (scaleWindupDuration)
         {
             float duration = scaleWindupDuration ? Mathf.Max(0.0001f, step.windup) : 1f;
-            propertyBlock.SetFloat(TimerDuration, duration);
+            ParticleSystem.MainModule main = windupIndicator.particlesystem.main;
+            main.simulationSpeed = duration /main.duration;
         }
-
-        windupIndicator.SetPropertyBlock(propertyBlock);
+        windupIndicator.particlesystem.time = 0f;
+        windupIndicator.particlesystem.Play();
     }
 
     public void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits, System.Action<IDamageable> onHit)
@@ -251,6 +248,14 @@ public class HitDetector : MonoBehaviour
         if (activeStep == null || triggerColliders == null || triggerColliders.Length == 0)
         {
             return;
+        }
+        
+        Collider[] colliders = triggerColliders;
+        if (windupIndicator && windupIndicator.colliders != null)
+        {
+            colliders = new Collider[triggerColliders.Length + windupIndicator.colliders.Count];
+            triggerColliders.CopyTo(colliders, 0);
+            windupIndicator.colliders.CopyTo(colliders, triggerColliders.Length);
         }
 
         StepOverlapSettings settings = GetOverlapSettings();

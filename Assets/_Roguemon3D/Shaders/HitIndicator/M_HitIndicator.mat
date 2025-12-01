@@ -34,7 +34,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 4ebcfa58dcba92843882cff8de10ce85, type: 3}
+        m_Texture: {fileID: 10307, guid: 0000000000000000f000000000000000, type: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -91,13 +91,13 @@ Material:
     - _USE_COLOR: 0
     m_Colors:
     - White: {r: 1, g: 1, b: 1, a: 1}
-    - _BaseColor: {r: 1, g: 0, b: 0, a: 0.10980392}
+    - _BaseColor: {r: 1, g: 0, b: 0, a: 0.09803922}
     - _Center: {r: 0, g: 1, b: 0, a: 0}
     - _ClipRect: {r: 0, g: 0, b: 0, a: 0}
     - _ColorTint: {r: 6.883184, g: 0, b: 0, a: 1}
     - _EmissiveStrobe: {r: 3.031433, g: 2.6663916, b: 0, a: 0.6666667}
     - _EmissiveTint: {r: 0, g: 0, b: 0, a: 1}
-    - _FadeCoilor: {r: 4.541205, g: 0, b: 0, a: 0.9137255}
+    - _FadeCoilor: {r: 4.541205, g: 0, b: 0, a: 0.68235296}
     - _Tint: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

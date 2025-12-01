@@ -3811,6 +3811,7 @@ MonoBehaviour:
   allegianceMask: 
   windupIndicator: {fileID: 0}
   scaleWindupDuration: 1
+  windupDeactivePhase: 2
   activeAnimation: {fileID: 0}
   phaseParticleEffects: []
 --- !u!4 &774633816
