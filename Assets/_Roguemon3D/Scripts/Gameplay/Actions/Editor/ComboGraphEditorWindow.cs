@@ -1,341 +1,255 @@
-using System.Collections.Generic;
+using System;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Actions;
 
 namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 {
+    /// <summary>
+    /// GraphToolkit based editor window for visualizing and editing CharacterComboDefinition graphs.
+    /// </summary>
     public class ComboGraphEditorWindow : EditorWindow
     {
-        const float ToolbarHeight = 24f;
-        const float SectionSpacing = 6f;
+        const string WindowTitle = "Combo Graph Editor";
 
         CharacterComboAction targetAction;
         CharacterComboDefinition targetDefinition;
         SerializedObject serializedDefinition;
-        SerializedProperty requiresAimProperty;
-        SerializedProperty queuedInputLifetimeProperty;
-        SerializedProperty entryStepsProperty;
-        SerializedProperty stepsProperty;
 
-        int selectedStepIndex;
-        Vector2 entryScroll;
-        Vector2 stepScroll;
-        bool entryFoldout = true;
+        CharacterComboGraphView graphView;
+        VisualElement inspectorPanel;
+        ObjectField actionField;
+        ObjectField definitionField;
+        Label emptySelectionLabel;
 
-        [MenuItem("Window/Gameplay/Combo Graph Editor")] 
-        static void ShowWindow()
+        [MenuItem("Window/Gameplay/Combo Graph Editor")]
+        public static void ShowWindow()
         {
-            GetWindow<ComboGraphEditorWindow>("Combo Graph Editor").Show();
+            ComboGraphEditorWindow window = GetWindow<ComboGraphEditorWindow>();
+            window.titleContent = new GUIContent(WindowTitle);
+            window.Show();
         }
 
         public static void Open(CharacterComboAction action)
         {
-            ComboGraphEditorWindow window = GetWindow<ComboGraphEditorWindow>("Combo Graph Editor");
+            ComboGraphEditorWindow window = GetWindow<ComboGraphEditorWindow>();
             window.SetTargetAction(action);
             window.Focus();
         }
 
         public static void Open(CharacterComboDefinition definition)
         {
-            ComboGraphEditorWindow window = GetWindow<ComboGraphEditorWindow>("Combo Graph Editor");
+            ComboGraphEditorWindow window = GetWindow<ComboGraphEditorWindow>();
             window.SetTargetDefinition(definition);
             window.Focus();
         }
 
         void OnEnable()
         {
-            if (targetDefinition != null)
-            {
-                CreateSerializedObject();
-            }
+            ConstructUI();
+            Undo.undoRedoPerformed += HandleUndoRedo;
         }
 
         void OnDisable()
         {
-            serializedDefinition = null;
-            requiresAimProperty = null;
-            queuedInputLifetimeProperty = null;
-            entryStepsProperty = null;
-            stepsProperty = null;
+            Undo.undoRedoPerformed -= HandleUndoRedo;
         }
 
-        void OnGUI()
+        void ConstructUI()
         {
-            DrawTargetSelector();
+            rootVisualElement.Clear();
 
-            if (targetDefinition == null)
+            Toolbar toolbar = BuildToolbar();
+            rootVisualElement.Add(toolbar);
+
+            TwoPaneSplitView split = new TwoPaneSplitView(0, 480, TwoPaneSplitViewOrientation.Horizontal);
+            graphView = new CharacterComboGraphView();
+            split.Add(graphView);
+
+            inspectorPanel = new ScrollView();
+            inspectorPanel.style.minWidth = 380;
+            split.Add(inspectorPanel);
+
+            rootVisualElement.Add(split);
+
+            emptySelectionLabel = new Label("Select a combo step, entry, or edit the definition settings.")
             {
-                EditorGUILayout.HelpBox("Assign a CharacterComboDefinition asset or a CharacterComboAction with a definition to begin editing its combo graph.", MessageType.Info);
-                return;
-            }
+                style = { unityTextAlign = TextAnchor.MiddleCenter, marginTop = 12, marginBottom = 12 }
+            };
 
-            if (serializedDefinition == null)
-            {
-                CreateSerializedObject();
-            }
+            graphView.StepSelected += ShowStepInspector;
+            graphView.EntrySelected += ShowEntryInspector;
+            graphView.NothingSelected += ShowDefinitionInspector;
 
-            serializedDefinition.UpdateIfRequiredOrScript();
-
-            GUILayout.Space(SectionSpacing);
-            EditorGUILayout.PropertyField(requiresAimProperty);
-            EditorGUILayout.PropertyField(queuedInputLifetimeProperty);
-
-            GUILayout.Space(SectionSpacing);
-            DrawEntrySteps();
-
-            GUILayout.Space(SectionSpacing);
-            DrawStepTabs();
-
-            serializedDefinition.ApplyModifiedProperties();
+            ShowDefinitionInspector();
         }
 
-        void DrawTargetSelector()
+        Toolbar BuildToolbar()
         {
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            Toolbar toolbar = new Toolbar();
+
+            actionField = new ObjectField("Action")
             {
-                EditorGUILayout.LabelField("Combo Sources", EditorStyles.boldLabel);
+                objectType = typeof(CharacterComboAction),
+                allowSceneObjects = true,
+                style = { width = 250 }
+            };
+            actionField.RegisterValueChangedCallback(evt => SetTargetAction(evt.newValue as CharacterComboAction));
+            toolbar.Add(actionField);
 
-                CharacterComboAction selectedAction = (CharacterComboAction)EditorGUILayout.ObjectField("Action", targetAction, typeof(CharacterComboAction), true);
-                if (selectedAction != targetAction)
-                {
-                    SetTargetAction(selectedAction);
-                }
+            definitionField = new ObjectField("Combo Definition")
+            {
+                objectType = typeof(CharacterComboDefinition),
+                allowSceneObjects = false,
+                style = { width = 250 }
+            };
+            definitionField.RegisterValueChangedCallback(evt => SetTargetDefinition(evt.newValue as CharacterComboDefinition));
+            toolbar.Add(definitionField);
 
-                CharacterComboDefinition selectedDefinition = (CharacterComboDefinition)EditorGUILayout.ObjectField("Combo Definition", targetDefinition, typeof(CharacterComboDefinition), false);
-                if (selectedDefinition != targetDefinition)
-                {
-                    SetTargetDefinition(selectedDefinition);
-                }
+            toolbar.Add(new ToolbarSpacer() { style = { flexGrow = 1f } });
 
-                if (targetAction != null && targetAction.ComboDefinition != targetDefinition)
-                {
-                    EditorGUILayout.HelpBox("The selected action references a different combo definition. Editing will apply to the definition shown above.", MessageType.Warning);
-                }
-            }
+            Button addEntryButton = new(() => AddEntry()) { text = "Add Entry" };
+            toolbar.Add(addEntryButton);
+
+            Button addStepButton = new(() => AddStep()) { text = "Add Step" };
+            toolbar.Add(addStepButton);
+
+            Button rebuildButton = new(() => graphView.RefreshGraph()) { text = "Refresh" };
+            toolbar.Add(rebuildButton);
+
+            return toolbar;
         }
 
         void SetTargetAction(CharacterComboAction action)
         {
             targetAction = action;
-            if (targetAction != null)
+            actionField.SetValueWithoutNotify(action);
+            if (action != null)
             {
-                SetTargetDefinition(targetAction.ComboDefinition);
+                SetTargetDefinition(action.ComboDefinition);
             }
         }
 
         void SetTargetDefinition(CharacterComboDefinition definition)
         {
             targetDefinition = definition;
-            if (targetDefinition == null)
-            {
-                ClearSerializedState();
-            }
-            else
-            {
-                CreateSerializedObject();
-            }
+            definitionField.SetValueWithoutNotify(definition);
+            serializedDefinition = definition != null ? new SerializedObject(definition) : null;
+            graphView?.SetDefinition(serializedDefinition);
+            ShowDefinitionInspector();
         }
 
-        void ClearSerializedState()
+        void HandleUndoRedo()
         {
-            serializedDefinition = null;
-            requiresAimProperty = null;
-            queuedInputLifetimeProperty = null;
-            entryStepsProperty = null;
-            stepsProperty = null;
-            selectedStepIndex = 0;
+            serializedDefinition?.UpdateIfRequiredOrScript();
+            graphView?.RefreshGraph();
+            ShowDefinitionInspector();
         }
 
-        void CreateSerializedObject()
+        void ShowDefinitionInspector()
         {
-            if (targetDefinition == null)
+            inspectorPanel.Clear();
+            if (serializedDefinition == null)
             {
-                ClearSerializedState();
-                return;
-            }
-            serializedDefinition = new SerializedObject(targetDefinition);
-            requiresAimProperty = serializedDefinition.FindProperty("requiresAimInput");
-            queuedInputLifetimeProperty = serializedDefinition.FindProperty("queuedInputLifetime");
-            entryStepsProperty = serializedDefinition.FindProperty("entrySteps");
-            stepsProperty = serializedDefinition.FindProperty("steps");
-            selectedStepIndex = Mathf.Clamp(selectedStepIndex, 0, Mathf.Max(0, stepsProperty.arraySize - 1));
-        }
-
-        void DrawEntrySteps()
-        {
-            entryFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(entryFoldout, $"Entry Steps ({entryStepsProperty.arraySize})");
-            if (entryFoldout)
-            {
-                using (var scroll = new EditorGUILayout.ScrollViewScope(entryScroll, GUILayout.MaxHeight(200f)))
-                {
-                    entryScroll = scroll.scrollPosition;
-                    for (int i = 0; i < entryStepsProperty.arraySize; i++)
-                    {
-                        SerializedProperty entry = entryStepsProperty.GetArrayElementAtIndex(i);
-                        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                        {
-                            EditorGUILayout.PropertyField(entry.FindPropertyRelative("input"));
-                            EditorGUILayout.PropertyField(entry.FindPropertyRelative("stepId"));
-                            using (new EditorGUILayout.HorizontalScope())
-                            {
-                                GUILayout.FlexibleSpace();
-                                if (GUILayout.Button("Remove", GUILayout.Width(80f)))
-                                {
-                                    entryStepsProperty.DeleteArrayElementAtIndex(i);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    GUILayout.FlexibleSpace();
-                    if (GUILayout.Button("Add Entry", GUILayout.Width(120f)))
-                    {
-                        entryStepsProperty.InsertArrayElementAtIndex(entryStepsProperty.arraySize);
-                        SerializedProperty newEntry = entryStepsProperty.GetArrayElementAtIndex(entryStepsProperty.arraySize - 1);
-                        newEntry.FindPropertyRelative("input").enumValueIndex = 0;
-                        newEntry.FindPropertyRelative("stepId").stringValue = stepsProperty.arraySize > 0 ?
-                            stepsProperty.GetArrayElementAtIndex(0).FindPropertyRelative("id").stringValue : string.Empty;
-                    }
-                    GUILayout.FlexibleSpace();
-                }
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-        }
-
-        void DrawStepTabs()
-        {
-            EditorGUILayout.LabelField("Combo Steps", EditorStyles.boldLabel);
-
-            if (stepsProperty.arraySize == 0)
-            {
-                EditorGUILayout.HelpBox("No combo steps defined. Create a step to start building the combo.", MessageType.Info);
-                if (GUILayout.Button("Create Step", GUILayout.Height(24f)))
-                {
-                    AddStep();
-                }
+                inspectorPanel.Add(new HelpBox("Assign a CharacterComboDefinition or CharacterComboAction to begin.", HelpBoxMessageType.Info));
                 return;
             }
 
-            string[] tabLabels = BuildStepTabLabels();
+            serializedDefinition.UpdateIfRequiredOrScript();
 
-            int currentIndex = Mathf.Clamp(selectedStepIndex, 0, stepsProperty.arraySize - 1);
-            int pressed = GUILayout.Toolbar(currentIndex, tabLabels, GUILayout.Height(ToolbarHeight));
-            if (pressed == tabLabels.Length - 1)
-            {
-                AddStep();
-            }
-            else
-            {
-                selectedStepIndex = pressed;
-            }
+            inspectorPanel.Add(new Label("Definition Settings") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
+            PropertyField requiresAim = new(serializedDefinition.FindProperty("requiresAimInput"), "Requires Aim Input");
+            requiresAim.Bind(serializedDefinition);
+            inspectorPanel.Add(requiresAim);
 
-            selectedStepIndex = Mathf.Clamp(selectedStepIndex, 0, stepsProperty.arraySize - 1);
-            SerializedProperty step = stepsProperty.GetArrayElementAtIndex(selectedStepIndex);
+            PropertyField queuedLifetime = new(serializedDefinition.FindProperty("queuedInputLifetime"), "Queued Input Lifetime");
+            queuedLifetime.Bind(serializedDefinition);
+            inspectorPanel.Add(queuedLifetime);
 
-            using (var scroll = new EditorGUILayout.ScrollViewScope(stepScroll))
-            {
-                stepScroll = scroll.scrollPosition;
-                EditorGUILayout.PropertyField(step, new GUIContent($"Step {selectedStepIndex + 1}"), true);
-            }
+            PropertyField entries = new(serializedDefinition.FindProperty("entrySteps"), "Entry Steps");
+            entries.Bind(serializedDefinition);
+            inspectorPanel.Add(entries);
 
-            GUILayout.Space(SectionSpacing);
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                if (GUILayout.Button("Duplicate Step"))
-                {
-                    DuplicateStep(selectedStepIndex);
-                }
+            PropertyField steps = new(serializedDefinition.FindProperty("steps"), "Steps");
+            steps.Bind(serializedDefinition);
+            inspectorPanel.Add(steps);
 
-                EditorGUI.BeginDisabledGroup(stepsProperty.arraySize <= 1);
-                if (GUILayout.Button("Delete Step"))
-                {
-                    RemoveStep(selectedStepIndex);
-                }
-                EditorGUI.EndDisabledGroup();
-            }
+            inspectorPanel.Add(emptySelectionLabel);
         }
 
-        string[] BuildStepTabLabels()
+        void ShowStepInspector(SerializedProperty stepProperty)
         {
-            string[] labels = new string[stepsProperty.arraySize + 1];
-            for (int i = 0; i < stepsProperty.arraySize; i++)
+            inspectorPanel.Clear();
+            if (stepProperty == null)
             {
-                SerializedProperty step = stepsProperty.GetArrayElementAtIndex(i);
-                string id = step.FindPropertyRelative("id").stringValue;
-                labels[i] = string.IsNullOrWhiteSpace(id) ? $"Step {i + 1}" : id;
+                ShowDefinitionInspector();
+                return;
             }
 
-            labels[labels.Length - 1] = "+";
-            return labels;
+            inspectorPanel.Add(new Label($"Step: {stepProperty.FindPropertyRelative("id").stringValue}")
+            {
+                style = { unityFontStyleAndWeight = FontStyle.Bold }
+            });
+            PropertyField field = new(stepProperty);
+            inspectorPanel.Add(field);
+            field.Bind(serializedDefinition);
+        }
+
+        void ShowEntryInspector(SerializedProperty entryProperty)
+        {
+            inspectorPanel.Clear();
+            if (entryProperty == null)
+            {
+                ShowDefinitionInspector();
+                return;
+            }
+
+            inspectorPanel.Add(new Label("Entry") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
+            PropertyField field = new(entryProperty);
+            inspectorPanel.Add(field);
+            field.Bind(serializedDefinition);
         }
 
         void AddStep()
         {
-            stepsProperty.InsertArrayElementAtIndex(stepsProperty.arraySize);
-            SerializedProperty step = stepsProperty.GetArrayElementAtIndex(stepsProperty.arraySize - 1);
-            ResetStep(step);
-            selectedStepIndex = stepsProperty.arraySize - 1;
-        }
-
-        void DuplicateStep(int index)
-        {
-            if (index < 0 || index >= stepsProperty.arraySize)
+            if (serializedDefinition == null)
             {
                 return;
             }
 
-            stepsProperty.InsertArrayElementAtIndex(index + 1);
-            SerializedProperty newStep = stepsProperty.GetArrayElementAtIndex(index + 1);
-            SerializedProperty id = newStep.FindPropertyRelative("id");
-            id.stringValue = GenerateUniqueStepId(id.stringValue);
-            selectedStepIndex = index + 1;
+            serializedDefinition.UpdateIfRequiredOrScript();
+            SerializedProperty steps = serializedDefinition.FindProperty("steps");
+            steps.InsertArrayElementAtIndex(steps.arraySize);
+            SerializedProperty newStep = steps.GetArrayElementAtIndex(steps.arraySize - 1);
+            ResetStep(newStep, steps.arraySize - 1);
+            serializedDefinition.ApplyModifiedProperties();
+            graphView.RefreshGraph();
         }
 
-        void RemoveStep(int index)
+        void AddEntry()
         {
-            if (stepsProperty.arraySize == 0)
+            if (serializedDefinition == null)
             {
                 return;
             }
 
-            stepsProperty.DeleteArrayElementAtIndex(index);
-            selectedStepIndex = Mathf.Clamp(selectedStepIndex, 0, stepsProperty.arraySize - 1);
+            serializedDefinition.UpdateIfRequiredOrScript();
+            SerializedProperty entries = serializedDefinition.FindProperty("entrySteps");
+            entries.InsertArrayElementAtIndex(entries.arraySize);
+            SerializedProperty entry = entries.GetArrayElementAtIndex(entries.arraySize - 1);
+            entry.FindPropertyRelative("input").enumValueIndex = 0;
+            entry.FindPropertyRelative("stepId").stringValue = string.Empty;
+            entry.FindPropertyRelative("graphPosition").vector2Value = new Vector2(60f, entries.arraySize * 120f);
+            serializedDefinition.ApplyModifiedProperties();
+            graphView.RefreshGraph();
         }
 
-        string GenerateUniqueStepId(string baseId = "step")
+        void ResetStep(SerializedProperty step, int index)
         {
-            string sanitized = string.IsNullOrWhiteSpace(baseId) ? "step" : baseId.Trim();
-            sanitized = sanitized.Replace(' ', '_');
-            HashSet<string> existing = new();
-            for (int i = 0; i < stepsProperty.arraySize; i++)
-            {
-                SerializedProperty step = stepsProperty.GetArrayElementAtIndex(i);
-                string id = step.FindPropertyRelative("id").stringValue;
-                if (!string.IsNullOrEmpty(id))
-                {
-                    existing.Add(id);
-                }
-            }
-
-            string candidate = sanitized;
-            int suffix = 1;
-            while (existing.Contains(candidate))
-            {
-                candidate = $"{sanitized}_{suffix++}";
-            }
-
-            return candidate;
-        }
-
-        void ResetStep(SerializedProperty step)
-        {
-            step.FindPropertyRelative("id").stringValue = GenerateUniqueStepId();
+            step.FindPropertyRelative("id").stringValue = $"step_{index + 1}";
             step.FindPropertyRelative("action").objectReferenceValue = null;
             step.FindPropertyRelative("magnitudeMultiplier").floatValue = 1f;
             step.FindPropertyRelative("triggerWhenNoTarget").boolValue = false;
@@ -348,6 +262,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("transitionWindowOpen").floatValue = 0.35f;
             step.FindPropertyRelative("transitionWindowClose").floatValue = 0.9f;
             step.FindPropertyRelative("lockMovement").boolValue = true;
+            step.FindPropertyRelative("lockMovementInRecovery").boolValue = true;
             step.FindPropertyRelative("lockAim").boolValue = true;
             step.FindPropertyRelative("zeroVelocityOnStart").boolValue = true;
             step.FindPropertyRelative("missNudgeImpulse").floatValue = 0f;
@@ -359,7 +274,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("hitDetectorRotationOffset").vector3Value = Vector3.zero;
             step.FindPropertyRelative("fallbackDirection").vector3Value = Vector3.forward;
             SerializedProperty transitions = step.FindPropertyRelative("transitions");
-            ClearArray(transitions);
+            while (transitions.arraySize > 0)
+            {
+                transitions.DeleteArrayElementAtIndex(transitions.arraySize - 1);
+            }
             step.FindPropertyRelative("vfx").objectReferenceValue = null;
             step.FindPropertyRelative("usePhaseAnimations").boolValue = false;
             ResetAnimation(step.FindPropertyRelative("animation"));
@@ -372,20 +290,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("animationCrossFade").floatValue = 0.1f;
             step.FindPropertyRelative("animationSpeedMultiplier").floatValue = 1f;
             step.FindPropertyRelative("scaleAnimationSpeedToStepDuration").boolValue = false;
+            step.FindPropertyRelative("scaleWindupAnimationToStepDuration").boolValue = false;
+            step.FindPropertyRelative("scaleActiveAnimationToStepDuration").boolValue = false;
+            step.FindPropertyRelative("scaleRecoveryAnimationToStepDuration").boolValue = false;
             step.FindPropertyRelative("overrideAnimationSpeed").boolValue = false;
-        }
-
-        static void ClearArray(SerializedProperty property)
-        {
-            if (property == null || !property.isArray)
-            {
-                return;
-            }
-
-            while (property.arraySize > 0)
-            {
-                property.DeleteArrayElementAtIndex(property.arraySize - 1);
-            }
+            step.FindPropertyRelative("graphPosition").vector2Value = new Vector2(420f + (index % 4) * 240f, 100f + (index / 4) * 180f);
         }
 
         static void ResetAnimation(SerializedProperty animation)
@@ -395,7 +304,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 return;
             }
 
-            animation.FindPropertyRelative("directionMode").enumValueIndex = (int)AgentAnimationRequest.DirectionMode.Single;
+            animation.FindPropertyRelative("directionMode").enumValueIndex = (int)CharacterMovement.AgentAnimationRequest.DirectionMode.Single;
             animation.FindPropertyRelative("mirrorLeftRight").boolValue = false;
             animation.FindPropertyRelative("singleClip").objectReferenceValue = null;
             animation.FindPropertyRelative("northClip").objectReferenceValue = null;
