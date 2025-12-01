@@ -431,7 +431,7 @@ namespace _PinBoy.Scripts.CharacterMovement
                 Vector3 planarDirection = new Vector3(aimDir.x, 0f, aimDir.z);
                 if (planarDirection.sqrMagnitude > 0.0001f)
                 {
-                    aimPivotObject.transform.rotation = Quaternion.LookRotation(-planarDirection, Vector3.up);
+                    aimPivotObject.transform.rotation = Quaternion.LookRotation(planarDirection, Vector3.up);
                 }
             }
         }
@@ -500,10 +500,6 @@ namespace _PinBoy.Scripts.CharacterMovement
                 QueueJump();
             }
         }
-
-        public virtual void OnLocomotionStateEntered() { }
-        public virtual void OnMovementLockedStateEntered() { }
-        public virtual void OnMovementLockedStateExited() { }
 
         private void AddMovementOverride(MovementProfile profile)
         {

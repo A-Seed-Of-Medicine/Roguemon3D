@@ -5361,7 +5361,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.0000000040322248
+      value: -0.0000000045512976
       objectReference: {fileID: 0}
     - target: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
       propertyPath: m_LocalRotation.y
@@ -5369,7 +5369,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.0000000097346495
+      value: -0.000000010987803
       objectReference: {fileID: 0}
     - target: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5578,7 +5578,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.00000002463581
+      value: -0.000000025888964
       objectReference: {fileID: 0}
     - target: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -5614,6 +5614,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6678854277726707266, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: uiCamera
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 8709146779534521399, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
+      propertyPath: m_Camera
       value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []

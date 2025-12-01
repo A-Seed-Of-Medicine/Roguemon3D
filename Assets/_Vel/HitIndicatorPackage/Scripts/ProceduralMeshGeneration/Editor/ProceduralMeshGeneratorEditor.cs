@@ -16,6 +16,7 @@ public class ProceduralMeshGeneratorEditor : Editor
     SerializedProperty radialTriggerSegmentsOverrideProp, cylinderTriggerSlicesOverrideProp;
     SerializedProperty alignTriggerVolumeToParticleRotationProp, triggerVolumeIsTriggerProp;
     SerializedProperty triggerVolumeRootProp, triggerLayerMaskProp, triggerCollidersProp;
+    SerializedProperty particleSystemProp, subEmittersProp;
 
     static bool triggerFoldout = true;
 
@@ -55,6 +56,8 @@ public class ProceduralMeshGeneratorEditor : Editor
         triggerVolumeRootProp = serializedObject.FindProperty("triggerVolumeRoot");
         triggerLayerMaskProp = serializedObject.FindProperty("triggerLayerMask");
         triggerCollidersProp = serializedObject.FindProperty("colliders");
+        particleSystemProp = serializedObject.FindProperty("particleSystem");
+        subEmittersProp = serializedObject.FindProperty("subEmitterSystems");
     }
 
     public override void OnInspectorGUI()
@@ -151,6 +154,9 @@ public class ProceduralMeshGeneratorEditor : Editor
             if (GUILayout.Button("Rebuild Trigger Volume"))
                 ((ProceduralMeshGenerator)target).UpdateTriggerVolume(true);
         }
+        
+        EditorGUILayout.PropertyField(particleSystemProp);
+        EditorGUILayout.PropertyField(subEmittersProp, true);
 
         EditorGUILayout.Space(10);
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);

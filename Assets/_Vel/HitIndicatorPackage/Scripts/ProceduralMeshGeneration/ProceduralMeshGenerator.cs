@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 [ExecuteAlways]
 [DisallowMultipleComponent]
@@ -73,7 +75,8 @@ public class ProceduralMeshGenerator : MonoBehaviour
     public string triggerVolumeName => gameObject.name + "_TriggerVolume";
     
     public List<Collider> colliders;
-    public ParticleSystem particlesystem;
+    public ParticleSystem particleSystem;
+    public ParticleSystem[] subEmitterSystems = Array.Empty<ParticleSystem>();
 
     private Mesh mesh;
 
@@ -449,10 +452,20 @@ public class ProceduralMeshGenerator : MonoBehaviour
 
     private void UpdateParticleMesh()
     {
-        particlesystem = GetComponent<ParticleSystem>();
-        ParticleSystemRenderer psr = particlesystem.GetComponent<ParticleSystemRenderer>();
-        if (psr != null && mesh != null)
+        particleSystem = GetComponent<ParticleSystem>();
+        ParticleSystemRenderer psr = particleSystem.GetComponent<ParticleSystemRenderer>();
+        if (psr && mesh)
             psr.mesh = mesh;
+        
+        foreach (var subPs in subEmitterSystems)
+        {
+            if (!subPs || subPs == particleSystem)
+                continue;
+
+            var subPsr = subPs.GetComponent<ParticleSystemRenderer>();
+            if (subPsr)
+                subPsr.mesh = mesh;
+        }
     }
 
     private Vector2 RotateUV(Vector2 uv, float angleDegrees)
@@ -666,7 +679,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
     private Quaternion GetParticleMeshLocalRotation()
     {
         var ps = GetComponent<ParticleSystem>();
-        if (ps == null)
+        if (!ps)
             return Quaternion.identity;
 
         var main = ps.main;

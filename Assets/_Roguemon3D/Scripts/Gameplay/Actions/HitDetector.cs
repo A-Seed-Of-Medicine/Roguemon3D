@@ -202,8 +202,6 @@ public class HitDetector : MonoBehaviour
     {
         if (phase == ExecutionPhase.Windup)
             HandleWindupIndicator(step);
-        if (phase == windupDeactivePhase && windupIndicator)
-            windupIndicator.gameObject.SetActive(false);
         
         if (phaseParticleEffects == null || phaseParticleEffects.Length == 0)
         {
@@ -236,11 +234,11 @@ public class HitDetector : MonoBehaviour
         if (scaleWindupDuration)
         {
             float duration = scaleWindupDuration ? Mathf.Max(0.0001f, step.windup) : 1f;
-            ParticleSystem.MainModule main = windupIndicator.particlesystem.main;
-            main.simulationSpeed = duration /main.duration;
+            ParticleSystem.MainModule main = windupIndicator.particleSystem.main;
+            main.startLifetime = duration;
         }
-        windupIndicator.particlesystem.time = 0f;
-        windupIndicator.particlesystem.Play();
+        windupIndicator.particleSystem.time = 0f;
+        windupIndicator.particleSystem.Play();
     }
 
     public void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits, System.Action<IDamageable> onHit)

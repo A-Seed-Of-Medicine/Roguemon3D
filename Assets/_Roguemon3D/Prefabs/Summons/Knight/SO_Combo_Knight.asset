@@ -24,7 +24,7 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.1
+    windup: 0.5
     active: 0.2
     recovery: 0.25
     comboResetDelay: 1.2
@@ -39,7 +39,7 @@ MonoBehaviour:
     applyNudgeWhenHit: 0
     hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
     parentHitDetectorToPivot: 1
-    hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
+    hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
     transitions:
@@ -125,7 +125,7 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.05
+    windup: 0.25
     active: 0.2
     recovery: 0.25
     comboResetDelay: 1.2
@@ -140,7 +140,7 @@ MonoBehaviour:
     applyNudgeWhenHit: 0
     hitDetectorPrefab: {fileID: 6643509938996099555, guid: 4eb1935c3ee07e04b9086415ab9e5b12, type: 3}
     parentHitDetectorToPivot: 1
-    hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
+    hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
     transitions:
@@ -226,7 +226,7 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.2
+    windup: 1.5
     active: 0.2
     recovery: 0.25
     comboResetDelay: 1.2
@@ -241,7 +241,7 @@ MonoBehaviour:
     applyNudgeWhenHit: 0
     hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
     parentHitDetectorToPivot: 1
-    hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
+    hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
     transitions:

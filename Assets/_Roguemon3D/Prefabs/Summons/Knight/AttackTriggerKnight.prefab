@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1962379263526211740}
-  - component: {fileID: -3910527903051178497}
-  - component: {fileID: 4935581184527447989}
-  - component: {fileID: 6655894246549930080}
+  - component: {fileID: -818834531620834722}
+  - component: {fileID: 7002478616926641622}
+  - component: {fileID: -2212772008825042474}
   m_Layer: 2
   m_Name: Indicator_Cone_Simple_Red_TriggerVolume
   m_TagString: Untagged
@@ -34,7 +34,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5016021830088788754}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!64 &-3910527903051178497
+--- !u!64 &-818834531620834722
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -56,7 +56,7 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
---- !u!64 &4935581184527447989
+--- !u!64 &7002478616926641622
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -78,7 +78,7 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
---- !u!64 &6655894246549930080
+--- !u!64 &-2212772008825042474
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -239,7 +239,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  particlesystem: {fileID: 5016021829552386292}
+  particleSystem: {fileID: 5016021829552386292}
+  subEmitterSystems: []
   triggerVolumeRoot: {fileID: 0}
 --- !u!199 &5016021829552386283
 ParticleSystemRenderer:
@@ -511,7 +512,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 1, g: 0, b: 0, a: 0.09803922}
+      maxColor: {r: 1, g: 0, b: 0, a: 0.44705883}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -5249,7 +5250,10 @@ MonoBehaviour:
   alignTriggerVolumeToParticleRotation: 1
   triggerVolumeIsTrigger: 1
   colliders: []
-  particlesystem: {fileID: 5016021830088788753}
+  particleSystem: {fileID: 5016021830088788753}
+  subEmitterSystems:
+  - {fileID: 5016021829552386292}
+  - {fileID: 5016021830704671645}
   triggerVolumeRoot: {fileID: 1962379263526211740}
 --- !u!199 &5016021830088788752
 ParticleSystemRenderer:
@@ -5277,7 +5281,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 257
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 084a5dca45488b14898bb53ab9e69e8e, type: 2}
+  - {fileID: 2100000, guid: a728b91b6a7beaa41a28470fa396ee0c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5320,7 +5324,7 @@ ParticleSystemRenderer:
   m_FreeformStretching: 0
   m_RotateWithStretchDirection: 1
   m_UseCustomVertexStreams: 1
-  m_VertexStreams: 0001030422
+  m_VertexStreams: 000103042215
   m_UseCustomTrailVertexStreams: 0
   m_TrailVertexStreams: 00010304
   m_Mesh: {fileID: 0}
@@ -9176,11 +9180,21 @@ ParticleSystem:
     primitives: []
   SubModule:
     serializedVersion: 2
-    enabled: 0
+    enabled: 1
     subEmitters:
     - serializedVersion: 3
-      emitter: {fileID: 0}
+      emitter: {fileID: 5016021829552386292}
       type: 0
+      properties: 24
+      emitProbability: 1
+    - serializedVersion: 3
+      emitter: {fileID: 5016021830704671645}
+      type: 0
+      properties: 24
+      emitProbability: 1
+    - serializedVersion: 3
+      emitter: {fileID: 5016021830481472937}
+      type: 2
       properties: 0
       emitProbability: 1
   LightsModule:
@@ -15181,7 +15195,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  particlesystem: {fileID: 5016021830704671645}
+  particleSystem: {fileID: 5016021830704671645}
+  subEmitterSystems: []
   triggerVolumeRoot: {fileID: 0}
 --- !u!199 &5016021830704671644
 ParticleSystemRenderer:
@@ -15453,7 +15468,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 1, g: 0, b: 0, a: 0.09803922}
+      maxColor: {r: 1, g: 0, b: 0, a: 0.44705883}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
