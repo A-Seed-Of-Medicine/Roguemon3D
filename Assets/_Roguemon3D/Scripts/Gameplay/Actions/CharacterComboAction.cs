@@ -324,8 +324,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 EvaluateReleaseTransitions();
                 return;
             }
-
-            Debug.Log(input);
+            
             if (!comboActive)
             {
                 comboActive = TryBeginCombo(input);

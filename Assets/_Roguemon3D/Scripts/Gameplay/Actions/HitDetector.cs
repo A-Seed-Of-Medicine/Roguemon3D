@@ -243,7 +243,7 @@ public class HitDetector : MonoBehaviour
 
     public void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits, System.Action<IDamageable> onHit)
     {
-        if (activeStep == null || triggerColliders == null || triggerColliders.Length == 0)
+        if (activeStep == null)
         {
             return;
         }
@@ -254,16 +254,23 @@ public class HitDetector : MonoBehaviour
             colliders = new Collider[triggerColliders.Length + windupIndicator.colliders.Count];
             triggerColliders.CopyTo(colliders, 0);
             windupIndicator.colliders.CopyTo(colliders, triggerColliders.Length);
+            Debug.Log(windupIndicator.colliders.Count);
+        }
+        
+        if (colliders == null || colliders.Length == 0)
+        {
+            return;
         }
 
         StepOverlapSettings settings = GetOverlapSettings();
 
-        foreach (Collider source in triggerColliders)
+        foreach (Collider source in colliders)
         {
             if (!source)
             {
                 continue;
             }
+            Debug.Log(source.gameObject.name);
 
             int hitCount = OverlapColliderNonAlloc(source, colliderCache, settings);
             for (int i = 0; i < hitCount; i++)
