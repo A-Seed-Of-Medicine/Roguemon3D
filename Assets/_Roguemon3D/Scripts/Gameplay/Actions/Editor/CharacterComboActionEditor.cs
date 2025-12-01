@@ -14,7 +14,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Open Combo Graph Editor", GUILayout.Height(24f)))
+                if (GUILayout.Button("Open GraphToolkit Editor", GUILayout.Height(24f)))
+                {
+                    GraphToolkit.CharacterComboGraphWindow.Open((CharacterComboAction)target);
+                }
+
+                if (GUILayout.Button("Legacy Inspector", GUILayout.Height(24f)))
                 {
                     ComboGraphEditorWindow.Open((CharacterComboAction)target);
                 }
