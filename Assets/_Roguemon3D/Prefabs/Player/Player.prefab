@@ -178,7 +178,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  <spriteAnimator>k__BackingField: {fileID: 2738012409019221049}
+  spriteAnimator: {fileID: 0}
   idleAnimation:
     directionMode: 0
     mirrorLeftRight: 1
@@ -455,15 +455,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6422491787983216458, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9238795
+      value: 0.9702957
       objectReference: {fileID: 0}
     - target: {fileID: 6422491787983216458, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.3826835
+      value: 0.24192196
       objectReference: {fileID: 0}
     - target: {fileID: 6422491787983216458, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.000000014901161
+      value: 0.000000011175871
       objectReference: {fileID: 0}
     - target: {fileID: 7932703289394508644, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalPosition.x
@@ -479,19 +479,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7932703289394508644, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.9238795
+      value: -0.9137315
       objectReference: {fileID: 0}
     - target: {fileID: 7932703289394508644, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: -0.13655807
       objectReference: {fileID: 0}
     - target: {fileID: 7932703289394508644, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.3826835
+      value: 0.37848005
       objectReference: {fileID: 0}
     - target: {fileID: 7932703289394508644, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: -0.056564216
       objectReference: {fileID: 0}
     - target: {fileID: 7932703289394508644, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -510,17 +510,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
---- !u!114 &2738012409019221049 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3688771424787563786, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
-  m_PrefabInstance: {fileID: 1643384876853936435}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 11f01263cd3a4e8cbd16fc16bcc13b2f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Animation.SpriteAnimator
 --- !u!114 &4081961078265279931 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3344046073153336456, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
