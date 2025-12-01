@@ -17,8 +17,10 @@ MonoBehaviour:
   entrySteps:
   - input: 0
     stepId: step
+    graphPosition: {x: 0, y: 0}
   - input: 3
     stepId: Summon
+    graphPosition: {x: 0, y: 0}
   steps:
   - id: step
     action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
@@ -44,9 +46,14 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
+    graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
       nextStepId: step2
+      queueUntilWindow: 0
+      transitionDelay: 0
+    - input: 0
+      nextStepId: step_5
       queueUntilWindow: 0
       transitionDelay: 0
     vfx: {fileID: 0}
@@ -145,6 +152,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: -4}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
+    graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
       nextStepId: 
@@ -246,6 +254,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
+    graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
       nextStepId: step3
@@ -347,6 +356,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
+    graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
       nextStepId: 
@@ -424,3 +434,101 @@ MonoBehaviour:
     scaleActiveAnimationToStepDuration: 0
     scaleRecoveryAnimationToStepDuration: 0
     overrideAnimationSpeed: 1
+  - id: step_5
+    action: {fileID: 0}
+    magnitudeMultiplier: 1
+    triggerWhenNoTarget: 0
+    allowRepeatedHits: 0
+    stunImmune: 0
+    windup: 0.05
+    active: 0.15
+    recovery: 0.25
+    comboResetDelay: 1.2
+    transitionWindowOpen: 0.35
+    transitionWindowClose: 0.9
+    lockMovement: 1
+    lockMovementInRecovery: 1
+    lockAim: 1
+    zeroVelocityOnStart: 1
+    missNudgeImpulse: 0
+    missNudgeDelay: 0
+    applyNudgeWhenHit: 0
+    hitDetectorPrefab: {fileID: 0}
+    parentHitDetectorToPivot: 1
+    hitDetectorPositionOffset: {x: 0, y: 0, z: 0}
+    hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
+    fallbackDirection: {x: 0, y: 0, z: 1}
+    graphPosition: {x: 0, y: 0}
+    transitions: []
+    vfx: {fileID: 0}
+    hitStopOnExecute: 0
+    hitStopOnHit: 0
+    multiplyHitStopPerHit: 1
+    usePhaseAnimations: 0
+    animation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 1
+      overrideSpeed: 0
+    windupAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 1
+      overrideSpeed: 0
+    activeAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 1
+      overrideSpeed: 0
+    recoveryAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 1
+      overrideSpeed: 0
+    animationCrossFade: 0.1
+    animationSpeedMultiplier: 1
+    scaleAnimationSpeedToStepDuration: 0
+    scaleWindupAnimationToStepDuration: 0
+    scaleActiveAnimationToStepDuration: 0
+    scaleRecoveryAnimationToStepDuration: 0
+    overrideAnimationSpeed: 0

@@ -67,10 +67,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         {
             foreach (GraphElement element in graphElements.ToList())
             {
-                if (element != grid)
-                {
-                    RemoveElement(element);
-                }
+                //if (element != grid)
+                RemoveElement(element);
             }
             stepNodes.Clear();
             entryNodes.Clear();
