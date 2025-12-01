@@ -9,6 +9,8 @@ namespace _PinBoy.Scripts.CharacterMovement.Editor
     [CustomPropertyDrawer(typeof(AgentAnimationRequest))]
     public class AgentAnimationRequestDrawer : PropertyDrawer
     {
+        private DefaultAsset _outputFolder;
+        
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
@@ -96,11 +98,21 @@ namespace _PinBoy.Scripts.CharacterMovement.Editor
                 DrawWithChildren(overrideSp, "Override Speed");
                 if (overrideSp.boolValue) DrawWithChildren(speed, "Playback Speed");
 
-                // Bulk assignment helper
-                var buttonRect = next(EditorGUIUtility.singleLineHeight);
-                if (GUI.Button(buttonRect, "Assign Animations"))
+                _outputFolder = (DefaultAsset)EditorGUILayout.ObjectField(
+                    new GUIContent(
+                        "Output Folder",
+                        "Optional project folder where Mesh/Material/Prefab assets will be saved.\n" +
+                        "If empty, the source asset's folder is used."),
+                    _outputFolder,
+                    typeof(DefaultAsset),
+                    false);
+
+                using (new EditorGUI.DisabledScope(!_outputFolder))
                 {
-                    AgentAnimationAssignmentWindow.Open(property);
+                    if (GUILayout.Button("Assign From Folder"))
+                    {
+                        AssignFromFolder(_outputFolder, property);
+                    }
                 }
 
                 EditorGUI.indentLevel--;
@@ -230,214 +242,148 @@ namespace _PinBoy.Scripts.CharacterMovement.Editor
                 ? property.objectReferenceValue.name
                 : "None";
         }
-
-        sealed class AgentAnimationAssignmentWindow : EditorWindow
+        
+        string propertyPath;
+        Vector2 scrollPosition;
+        
+        private string GetOutputDirectory()
         {
-            SerializedObject serializedObject;
-            string propertyPath;
-            Vector2 scrollPosition;
-            private DefaultAsset _outputFolder;
-
-            const string DialogTitle = "Assign Agent Animations";
-
-            public static void Open(SerializedProperty property)
+            if (_outputFolder != null)
             {
-                if (property == null || property.serializedObject == null)
-                {
-                    Debug.LogWarning("No property available to assign animations.");
-                    return;
-                }
-
-                var window = CreateInstance<AgentAnimationAssignmentWindow>();
-                window.serializedObject = property.serializedObject;
-                window.propertyPath = property.propertyPath;
-                window.titleContent = new GUIContent(DialogTitle);
-                window.minSize = new Vector2(350f, 200f);
-                window.ShowUtility();
-            }
-
-            void OnGUI()
-            {
-                using var scope = new EditorGUI.DisabledScope(serializedObject == null);
-                if (serializedObject == null)
-                {
-                    EditorGUILayout.HelpBox("No serialized object to modify.", MessageType.Error);
-                    return;
-                }
-
-                serializedObject.Update();
-                SerializedProperty property = serializedObject.FindProperty(propertyPath);
-                if (property == null)
-                {
-                    EditorGUILayout.HelpBox("The animation request could not be found.", MessageType.Error);
-                    return;
-                }
-
-                EditorGUILayout.LabelField(DialogTitle, EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox("Select a folder to scan for animation clips that include direction suffixes like _North, _NE, _South, etc.", MessageType.Info);
-
-                _outputFolder = (DefaultAsset)EditorGUILayout.ObjectField(
-                    new GUIContent(
-                        "Output Folder",
-                        "Optional project folder where Mesh/Material/Prefab assets will be saved.\n" +
-                        "If empty, the source asset's folder is used."),
-                    _outputFolder,
-                    typeof(DefaultAsset),
-                    false);
-
-                using (new EditorGUI.DisabledScope(!_outputFolder))
-                {
-                    if (GUILayout.Button("Assign From Folder"))
-                    {
-                        AssignFromFolder(_outputFolder, property);
-                    }
-                }
+                string folderPath = AssetDatabase.GetAssetPath(_outputFolder);
+                if (AssetDatabase.IsValidFolder(folderPath))
+                    return folderPath;
             }
             
-            private string GetOutputDirectory()
+            return "Assets";
+        }
+
+        void AssignFromFolder(DefaultAsset outputFolder, SerializedProperty property)
+        {
+            Undo.RecordObjects(property.serializedObject.targetObjects, "Assign Agent Animations");
+
+            var clips = LoadClips(GetOutputDirectory());
+            var result = MapClipsToRequest(clips, property);
+
+            property.serializedObject.ApplyModifiedProperties();
+        }
+
+        static IReadOnlyList<AnimationClip> LoadClips(string assetFolderPath)
+        {
+            List<AnimationClip> clips = new();
+            string[] guids = AssetDatabase.FindAssets("t:AnimationClip", new[] { assetFolderPath });
+            foreach (string guid in guids)
             {
-                if (_outputFolder != null)
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                if (clip)
                 {
-                    string folderPath = AssetDatabase.GetAssetPath(_outputFolder);
-                    if (AssetDatabase.IsValidFolder(folderPath))
-                        return folderPath;
+                    clips.Add(clip);
                 }
-                
-                return "Assets";
             }
 
-            void AssignFromFolder(DefaultAsset outputFolder, SerializedProperty property)
+            return clips;
+        }
+
+        static (int assignedCount, bool foundAny) MapClipsToRequest(IReadOnlyList<AnimationClip> clips, SerializedProperty property)
+        {
+            if (clips.Count == 0)
             {
-                Undo.RecordObjects(serializedObject.targetObjects, "Assign Agent Animations");
-
-                var clips = LoadClips(GetOutputDirectory());
-                var result = MapClipsToRequest(clips, property);
-
-                serializedObject.ApplyModifiedProperties();
-
-                string summary = result.foundAny
-                    ? $"Assigned {result.assignedCount} clip(s) from '{outputFolder}'."
-                    : "No matching clips were found to assign.";
-                EditorUtility.DisplayDialog(DialogTitle, summary, "OK");
+                return (0, false);
             }
 
-            static IReadOnlyList<AnimationClip> LoadClips(string assetFolderPath)
+            var bindings = new List<DirectionBinding>
             {
-                List<AnimationClip> clips = new();
-                string[] guids = AssetDatabase.FindAssets("t:AnimationClip", new[] { assetFolderPath });
-                foreach (string guid in guids)
+                new("northEastClip", "NORTHEAST", "NE"),
+                new("southEastClip", "SOUTHEAST", "SE"),
+                new("southWestClip", "SOUTHWEST", "SW"),
+                new("northWestClip", "NORTHWEST", "NW"),
+                new("northClip", "NORTH", "N"),
+                new("southClip", "SOUTH", "S"),
+                new("eastClip", "EAST", "E"),
+                new("westClip", "WEST", "W"),
+            };
+
+            var modeProp = property.FindPropertyRelative("directionMode");
+            int assigned = 0;
+            bool found = false;
+
+            foreach (AnimationClip clip in clips)
+            {
+                string upperName = clip.name.ToUpperInvariant();
+                foreach (DirectionBinding binding in bindings)
                 {
-                    string path = AssetDatabase.GUIDToAssetPath(guid);
-                    AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
-                    if (clip)
+                    if (!binding.Matches(upperName))
                     {
-                        clips.Add(clip);
+                        continue;
+                    }
+
+                    SerializedProperty targetProp = property.FindPropertyRelative(binding.PropertyName);
+                    if (targetProp != null)
+                    {
+                        targetProp.objectReferenceValue = clip;
+                        assigned++;
+                    }
+
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                bool hasDiagonal = HasClip(property, "northEastClip") || HasClip(property, "southEastClip") || HasClip(property, "southWestClip") || HasClip(property, "northWestClip");
+                bool hasCardinal = HasClip(property, "northClip") || HasClip(property, "southClip") || HasClip(property, "eastClip") || HasClip(property, "westClip");
+
+                if (hasDiagonal)
+                {
+                    modeProp.enumValueIndex = (int)AgentAnimationRequest.DirectionMode.EightWay;
+                }
+                else if (hasCardinal)
+                {
+                    modeProp.enumValueIndex = (int)AgentAnimationRequest.DirectionMode.FourWay;
+                }
+            }
+
+            return (assigned, found);
+        }
+
+        static bool HasClip(SerializedProperty property, string relativeName)
+        {
+            SerializedProperty prop = property.FindPropertyRelative(relativeName);
+            return prop != null && prop.objectReferenceValue != null;
+        }
+
+        readonly struct DirectionBinding
+        {
+            public string PropertyName { get; }
+            readonly string[] tokens;
+
+            public DirectionBinding(string propertyName, params string[] tokens)
+            {
+                PropertyName = propertyName;
+                this.tokens = tokens;
+            }
+
+            public bool Matches(string upperName)
+            {
+                foreach (string token in tokens)
+                {
+                    if (NameHasToken(upperName, token))
+                    {
+                        return true;
                     }
                 }
 
-                return clips;
+                return false;
             }
 
-            static (int assignedCount, bool foundAny) MapClipsToRequest(IReadOnlyList<AnimationClip> clips, SerializedProperty property)
+            static bool NameHasToken(string upperName, string token)
             {
-                if (clips.Count == 0)
-                {
-                    return (0, false);
-                }
-
-                var bindings = new List<DirectionBinding>
-                {
-                    new("northEastClip", "NORTHEAST", "NE"),
-                    new("southEastClip", "SOUTHEAST", "SE"),
-                    new("southWestClip", "SOUTHWEST", "SW"),
-                    new("northWestClip", "NORTHWEST", "NW"),
-                    new("northClip", "NORTH", "N"),
-                    new("southClip", "SOUTH", "S"),
-                    new("eastClip", "EAST", "E"),
-                    new("westClip", "WEST", "W"),
-                };
-
-                var modeProp = property.FindPropertyRelative("directionMode");
-                int assigned = 0;
-                bool found = false;
-
-                foreach (AnimationClip clip in clips)
-                {
-                    string upperName = clip.name.ToUpperInvariant();
-                    foreach (DirectionBinding binding in bindings)
-                    {
-                        if (!binding.Matches(upperName))
-                        {
-                            continue;
-                        }
-
-                        SerializedProperty targetProp = property.FindPropertyRelative(binding.PropertyName);
-                        if (targetProp != null)
-                        {
-                            targetProp.objectReferenceValue = clip;
-                            assigned++;
-                        }
-
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (found)
-                {
-                    bool hasDiagonal = HasClip(property, "northEastClip") || HasClip(property, "southEastClip") || HasClip(property, "southWestClip") || HasClip(property, "northWestClip");
-                    bool hasCardinal = HasClip(property, "northClip") || HasClip(property, "southClip") || HasClip(property, "eastClip") || HasClip(property, "westClip");
-
-                    if (hasDiagonal)
-                    {
-                        modeProp.enumValueIndex = (int)AgentAnimationRequest.DirectionMode.EightWay;
-                    }
-                    else if (hasCardinal)
-                    {
-                        modeProp.enumValueIndex = (int)AgentAnimationRequest.DirectionMode.FourWay;
-                    }
-                }
-
-                return (assigned, found);
-            }
-
-            static bool HasClip(SerializedProperty property, string relativeName)
-            {
-                SerializedProperty prop = property.FindPropertyRelative(relativeName);
-                return prop != null && prop.objectReferenceValue != null;
-            }
-
-            readonly struct DirectionBinding
-            {
-                public string PropertyName { get; }
-                readonly string[] tokens;
-
-                public DirectionBinding(string propertyName, params string[] tokens)
-                {
-                    PropertyName = propertyName;
-                    this.tokens = tokens;
-                }
-
-                public bool Matches(string upperName)
-                {
-                    foreach (string token in tokens)
-                    {
-                        if (NameHasToken(upperName, token))
-                        {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
-
-                static bool NameHasToken(string upperName, string token)
-                {
-                    string withUnderscore = "_" + token;
-                    return upperName.EndsWith(token, StringComparison.Ordinal)
-                           || upperName.Contains(withUnderscore, StringComparison.Ordinal)
-                           || upperName.StartsWith(token + "_", StringComparison.Ordinal);
-                }
+                string withUnderscore = "_" + token;
+                return upperName.EndsWith(token, StringComparison.Ordinal)
+                       || upperName.Contains(withUnderscore, StringComparison.Ordinal)
+                       || upperName.StartsWith(token + "_", StringComparison.Ordinal);
             }
         }
     }
