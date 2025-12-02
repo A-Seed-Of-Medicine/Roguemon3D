@@ -31,7 +31,6 @@ Material:
   - TransparentBackface
   - RayTracingPrepass
   - MOTIONVECTORS
-  - DepthOnly
   - SHADOWCASTER
   m_LockedProperties: 
   m_SavedProperties:
@@ -290,8 +289,8 @@ Material:
     - _ZTestDepthEqualForOpaque: 4
     - _ZTestGBuffer: 4
     - _ZTestTransparent: 4
-    - _ZWrite: 0
-    - _ZWriteControl: 0
+    - _ZWrite: 1
+    - _ZWriteControl: 1
     m_Colors:
     - _AlphaOverrideChannel: {r: 0, g: 0, b: 0, a: 1}
     - _AlphaOverridePanning: {r: 0, g: 0, b: 0, a: 0}

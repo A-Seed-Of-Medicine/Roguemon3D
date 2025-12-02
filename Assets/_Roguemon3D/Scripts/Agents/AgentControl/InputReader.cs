@@ -59,9 +59,7 @@ namespace AdvancedController
         public void InvokePrimary(bool pressed)
         {
             if (!ControlsEnabled)
-            {
                 return;
-            }
 
             PrimaryAction.Invoke(pressed);
         }
@@ -69,9 +67,7 @@ namespace AdvancedController
         public void InvokeSecondary(bool pressed)
         {
             if (!ControlsEnabled)
-            {
                 return;
-            }
 
             SecondaryAction.Invoke(pressed);
         }
@@ -79,9 +75,7 @@ namespace AdvancedController
         public void InvokeAim()
         {
             if (!ControlsEnabled)
-            {
                 return;
-            }
 
             isAiming = true;
             Aim.Invoke(true, aimInput);
@@ -90,9 +84,7 @@ namespace AdvancedController
         public void InvokeAim(Vector2 direction)
         {
             if (!ControlsEnabled)
-            {
                 return;
-            }
 
             isAiming = true;
             aimInput = direction;

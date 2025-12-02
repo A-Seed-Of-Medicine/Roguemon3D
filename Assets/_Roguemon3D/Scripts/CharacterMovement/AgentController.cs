@@ -126,12 +126,13 @@ namespace _PinBoy.Scripts.CharacterMovement
         public AgentRoot AgentRoot => agentRoot;
         public State ActiveLeafState => machine?.Root?.Leaf();
         public string ActiveStatePath => machine?.StatePath();
+        private Vector2 lockedMoveInput;
 
         protected Vector2 moveInput  {
             get
             {
                 if (IsMovementLocked)
-                    return Vector2.zero;
+                    return lockedMoveInput;
 
                 if (inputReader?.moveInput.sqrMagnitude > 0.0001f && snapFacingTo8)
                     return SnapTo8(inputReader?.moveInput ?? Vector2.zero);
@@ -143,7 +144,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             get
             {
                 if (aimLockTimer.IsRunning)
-                    return false;
+                    return true;
                 
                 return inputReader?.isAiming ?? false;
             }
@@ -418,12 +419,14 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         public void SetAimIndicator(Vector3 direction)
         {
+            if (aimLockTimer.IsRunning)
+                return;
             Vector3 aimDir = direction;
             if (aimDir.sqrMagnitude <= 0.0001f)
             {
                 aimDir = facingDirection.sqrMagnitude > 0.0001f ? facingDirection : Vector3.forward;
             }
-
+            
             Vector3 position = AimOrigin + aimDir.normalized * aimOffset;
             if (aimPivotObject != null)
             {
@@ -603,9 +606,8 @@ namespace _PinBoy.Scripts.CharacterMovement
             movementOverrideTokens.Remove(profile);
         }
 
-        public void LockMovement(float duration, bool zeroVelocity = false)
+        public void LockMovement(float duration, bool zeroVelocity = false, bool zeroMovement = true)
         {
-            movementLockTimer.Start(duration);
             if (zeroVelocity)
             {
                 currentVelocity = Vector3.zero;
@@ -615,10 +617,14 @@ namespace _PinBoy.Scripts.CharacterMovement
                 }
                 verticalSpeed = 0f;
             }
+
+            lockedMoveInput = zeroMovement ? Vector2.zero : moveInput;
+            movementLockTimer.Start(duration);
         }
         
         public void LockAim(float duration)
         {
+            lockedAimDirection = AimDirection;
             aimLockTimer.Start(duration);
         }
         
@@ -633,11 +639,16 @@ namespace _PinBoy.Scripts.CharacterMovement
             if (IsMovementLocked)
                 movementLockTimer.Stop();
         }
+        
+        private Vector3 lockedAimDirection;
 
         public virtual Vector3 AimDirection
         {
             get
             {
+                if (aimLockTimer.IsRunning)
+                    return lockedAimDirection;
+                
                 if (isAiming)
                 {
                     Vector2 aim = inputReader.aimDirection;

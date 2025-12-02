@@ -73,9 +73,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b00045f12942b46c698459096c89274e, type: 3}
-  m_Name: FullScreenPassRendererFeature
+  m_Name: FullScreenPassDefault
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.FullScreenPassRendererFeature
-  m_Active: 1
+  m_Active: 0
   injectionPoint: 550
   fetchColorBuffer: 1
   requirements: 0
@@ -179,12 +179,12 @@ MonoBehaviour:
   m_Active: 1
   settings:
     passTag: 25D Stencil
-    Event: 500
+    Event: 300
     filterSettings:
       RenderQueueType: 1
       LayerMask:
         serializedVersion: 2
-        m_Bits: 247
+        m_Bits: 215
       PassNames: []
     overrideMaterial: {fileID: 2100000, guid: 9fe94e1797d35544cbb48850862df228, type: 2}
     overrideMaterialPassIndex: 0
@@ -242,7 +242,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b00045f12942b46c698459096c89274e, type: 3}
-  m_Name: FullScreenPassRendererFeature
+  m_Name: OutlinePass
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.FullScreenPassRendererFeature
   m_Active: 1
   injectionPoint: 450

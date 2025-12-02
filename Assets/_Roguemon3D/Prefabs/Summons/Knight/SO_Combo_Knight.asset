@@ -17,6 +17,7 @@ MonoBehaviour:
   entrySteps:
   - input: 0
     stepId: step
+    graphPosition: {x: 0, y: 0}
   steps:
   - id: step
     action: {fileID: 11400000, guid: 28204fe25e282f548bd607e7d251579b, type: 2}
@@ -42,6 +43,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
+    graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
       nextStepId: step2
@@ -143,6 +145,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
+    graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
       nextStepId: step3
@@ -244,6 +247,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
+    graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
       nextStepId: 

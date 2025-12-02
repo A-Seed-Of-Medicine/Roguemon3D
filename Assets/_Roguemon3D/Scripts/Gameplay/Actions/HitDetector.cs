@@ -254,7 +254,6 @@ public class HitDetector : MonoBehaviour
             colliders = new Collider[triggerColliders.Length + windupIndicator.colliders.Count];
             triggerColliders.CopyTo(colliders, 0);
             windupIndicator.colliders.CopyTo(colliders, triggerColliders.Length);
-            Debug.Log(windupIndicator.colliders.Count);
         }
         
         if (colliders == null || colliders.Length == 0)
@@ -270,8 +269,7 @@ public class HitDetector : MonoBehaviour
             {
                 continue;
             }
-            Debug.Log(source.gameObject.name);
-
+            
             int hitCount = OverlapColliderNonAlloc(source, colliderCache, settings);
             for (int i = 0; i < hitCount; i++)
             {

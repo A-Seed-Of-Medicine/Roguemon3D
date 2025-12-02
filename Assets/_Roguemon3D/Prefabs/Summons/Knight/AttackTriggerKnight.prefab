@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1962379263526211740}
-  - component: {fileID: 2961660400006672908}
-  - component: {fileID: 5196105398913751391}
-  - component: {fileID: 3597258102371763802}
+  - component: {fileID: -2117548074791956283}
+  - component: {fileID: -5453550814532736585}
+  - component: {fileID: -4292273768351024950}
   m_Layer: 2
   m_Name: Indicator_Cone_Simple_Red_TriggerVolume
   m_TagString: Untagged
@@ -34,7 +34,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5016021830088788754}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!64 &2961660400006672908
+--- !u!64 &-2117548074791956283
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -56,7 +56,7 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
---- !u!64 &5196105398913751391
+--- !u!64 &-5453550814532736585
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -78,7 +78,7 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
---- !u!64 &3597258102371763802
+--- !u!64 &-4292273768351024950
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
