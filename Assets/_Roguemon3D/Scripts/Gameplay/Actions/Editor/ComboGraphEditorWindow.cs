@@ -25,7 +25,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         ObjectField definitionField;
         Label emptySelectionLabel;
 
-        [MenuItem("Window/Gameplay/Combo Graph Editor")]
+        [MenuItem("Tools/Gameplay/Combo Graph Editor")]
         public static void ShowWindow()
         {
             ComboGraphEditorWindow window = GetWindow<ComboGraphEditorWindow>();

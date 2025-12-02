@@ -30,7 +30,7 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
         bool followSceneSelection = true;
         bool showAgentList = true;
 
-        [MenuItem("Window/Gameplay/Agent State Machine Debugger")]
+        //[MenuItem("Tools/Gameplay/Agent State Machine Debugger")]
         public static void Open()
         {
             var window = GetWindow<AgentStateMachineWindow>();

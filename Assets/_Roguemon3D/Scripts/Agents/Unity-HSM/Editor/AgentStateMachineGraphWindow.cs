@@ -27,7 +27,7 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
         double nextAgentRefresh;
         AgentController selectedAgent;
 
-        [MenuItem("Window/Gameplay/Agent State Graph (GraphToolkit)")]
+        [MenuItem("Tools/Gameplay/Agent State Graph (GraphToolkit)")]
         public static void Open()
         {
             var window = GetWindow<AgentStateMachineGraphWindow>();

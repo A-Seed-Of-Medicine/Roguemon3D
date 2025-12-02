@@ -37,6 +37,7 @@ public class CameraManager : MonoBehaviour
     public AnimCurveScale hitShakeDuration = new () { scale = 0.5f, curve = AnimationCurve.EaseInOut(0, 0, 1, 1) };
     [SerializeField] private float damageTakenMultiplier = 1f;
     [SerializeField] private float damageDealtMultiplier = 1f;
+    public Vector3 sortAxis;
     
     [Header("UI Settings")]
     public AnimCurveScale healthBarWidthPerUnit = new () { scale = 1f, curve = AnimationCurve.Linear(0, 0, 1, 1) };
@@ -64,6 +65,15 @@ public class CameraManager : MonoBehaviour
         {
             cinemachineCamera.Lens.FieldOfView = cameraFOV;
         }
+        if (!mainCamera) mainCamera = Camera.main;
+        if (sortAxis == Vector3.zero)
+            mainCamera.transparencySortMode = TransparencySortMode.Default;
+        else
+        {
+            mainCamera.transparencySortMode = TransparencySortMode.CustomAxis;
+            mainCamera.transparencySortAxis = sortAxis;
+        }
+
         if (!agentController)
             agentController = FindAnyObjectByType<PlayerController>();
         OnPreCull();
