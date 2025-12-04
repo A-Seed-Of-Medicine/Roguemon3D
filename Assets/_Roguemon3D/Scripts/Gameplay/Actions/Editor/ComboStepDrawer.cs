@@ -4,7 +4,7 @@ using _PinBoy.Scripts.Gameplay.Actions;
 
 namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 {
-    [CustomPropertyDrawer(typeof(CharacterComboAction.ComboStep))]
+    [CustomPropertyDrawer(typeof(ComboStep))]
     public class ComboStepDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)

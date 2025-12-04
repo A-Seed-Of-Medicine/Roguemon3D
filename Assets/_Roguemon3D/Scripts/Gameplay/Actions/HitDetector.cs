@@ -15,7 +15,7 @@ public class HitDetector : MonoBehaviour
 
         float? baseSimulationSpeed;
 
-        public void HandlePhaseStart(ExecutionPhase phase, CharacterComboAction.ComboStep step)
+        public void HandlePhaseStart(ExecutionPhase phase, ComboStep step)
         {
             if (particleEffect == null)
             {
@@ -71,7 +71,7 @@ public class HitDetector : MonoBehaviour
             baseSimulationSpeed = particleEffect.main.simulationSpeed;
         }
 
-        void ApplySimulationSpeed(CharacterComboAction.ComboStep step)
+        void ApplySimulationSpeed(ComboStep step)
         {
             if (particleEffect == null)
             {
@@ -102,7 +102,7 @@ public class HitDetector : MonoBehaviour
             main.simulationSpeed = baseSimulationSpeed.Value;
         }
 
-        static float CalculatePhaseDuration(CharacterComboAction.ComboStep step, ExecutionPhase start, ExecutionPhase end)
+        static float CalculatePhaseDuration(ComboStep step, ExecutionPhase start, ExecutionPhase end)
         {
             int startIndex = PhaseIndex(start);
             int endIndex = PhaseIndex(end);
@@ -138,7 +138,7 @@ public class HitDetector : MonoBehaviour
             };
         }
 
-        static float GetPhaseDuration(CharacterComboAction.ComboStep step, ExecutionPhase phase)
+        static float GetPhaseDuration(ComboStep step, ExecutionPhase phase)
         {
             return phase switch
             {
@@ -179,14 +179,14 @@ public class HitDetector : MonoBehaviour
     readonly Collider[] colliderCache = new Collider[16];
 
     AgentController owner;
-    CharacterComboAction.ComboStep activeStep;
+    ComboStep activeStep;
 
     public void Initialize(AgentController agentController)
     {
         owner = agentController;
     }
 
-    public void Activate(CharacterComboAction.ComboStep step, float activeDuration)
+    public void Activate(ComboStep step, float activeDuration)
     {
         activeStep = step;
         PlayActiveAnimation(activeDuration);
@@ -198,7 +198,7 @@ public class HitDetector : MonoBehaviour
         ResetPhaseParticleEffects();
     }
 
-    public void HandlePhaseStart(ExecutionPhase phase, CharacterComboAction.ComboStep step)
+    public void HandlePhaseStart(ExecutionPhase phase, ComboStep step)
     {
         if (phase == ExecutionPhase.Windup)
             HandleWindupIndicator(step);
@@ -227,7 +227,7 @@ public class HitDetector : MonoBehaviour
         }
     }
     
-    public void HandleWindupIndicator(CharacterComboAction.ComboStep step)
+    public void HandleWindupIndicator(ComboStep step)
     {
         if (!windupIndicator)
             return;

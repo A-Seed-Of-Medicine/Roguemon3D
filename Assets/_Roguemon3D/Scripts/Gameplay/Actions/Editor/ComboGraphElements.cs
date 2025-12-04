@@ -84,7 +84,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             positionProperty = entryProperty.FindPropertyRelative("graphPosition");
             this.onSelected = onSelected;
 
-            CharacterComboAction.ComboInput input = (CharacterComboAction.ComboInput)entryProperty.FindPropertyRelative("input").enumValueIndex;
+            ComboInput input = (ComboInput)entryProperty.FindPropertyRelative("input").enumValueIndex;
             title = $"Entry: {input}";
             capabilities |= Capabilities.Movable | Capabilities.Selectable;
             capabilities &= ~Capabilities.Deletable;

@@ -185,7 +185,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
         static string FormatTransitionLabel(SerializedProperty transition)
         {
-            string input = ((CharacterComboAction.ComboInput)transition.FindPropertyRelative("input").enumValueIndex).ToString();
+            string input = ((ComboInput)transition.FindPropertyRelative("input").enumValueIndex).ToString();
             float delay = transition.FindPropertyRelative("transitionDelay").floatValue;
             bool queued = transition.FindPropertyRelative("queueUntilWindow").boolValue;
 
