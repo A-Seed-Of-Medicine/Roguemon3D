@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor;
 using UnityEngine;
@@ -10,6 +12,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
     {
         readonly SerializedProperty stepProperty;
         readonly SerializedProperty positionProperty;
+        readonly Label transitionsLabel;
 
         public string StepId => stepProperty.FindPropertyRelative("id").stringValue;
         public SerializedProperty SerializedStep => stepProperty;
@@ -29,6 +32,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             capabilities |= Capabilities.Movable | Capabilities.Selectable | Capabilities.Ascendable;
             capabilities &= ~Capabilities.Deletable;
+            capabilities &= ~Capabilities.Collapsible;
 
             InputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(string));
             InputPort.portName = "Previous";
@@ -38,8 +42,22 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             OutputPort.portName = "Transitions";
             outputContainer.Add(OutputPort);
 
+            transitionsLabel = new Label("No transitions")
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    whiteSpace = WhiteSpace.Normal,
+                    unityTextAlign = TextAnchor.UpperLeft,
+                    marginTop = 4,
+                    marginBottom = 4
+                }
+            };
+            extensionContainer.Add(transitionsLabel);
+
             RefreshExpandedState();
             RefreshPorts();
+            RefreshTransitionSummary();
         }
 
         public override void OnSelected()
@@ -61,9 +79,39 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 return;
             }
 
-            Vector2 position = new Vector2(layout.xMin, layout.yMin);
+            Vector2 position = GetPosition().position;
             positionProperty.vector2Value = position;
             positionProperty.serializedObject.ApplyModifiedProperties();
+        }
+
+        public void RefreshTransitionSummary(Func<SerializedProperty, string> labelFormatter = null)
+        {
+            if (transitionsLabel == null)
+            {
+                return;
+            }
+
+            if (TransitionsProperty == null)
+            {
+                transitionsLabel.text = "No transitions";
+                return;
+            }
+
+            List<string> summaries = new();
+            for (int i = 0; i < TransitionsProperty.arraySize; i++)
+            {
+                SerializedProperty transition = TransitionsProperty.GetArrayElementAtIndex(i);
+                string target = transition.FindPropertyRelative("nextStepId").stringValue;
+                if (string.IsNullOrWhiteSpace(target))
+                {
+                    continue;
+                }
+
+                string label = labelFormatter != null ? labelFormatter.Invoke(transition) : transition.FindPropertyRelative("input").enumDisplayNames[transition.FindPropertyRelative("input").enumValueIndex];
+                summaries.Add($"{label} → {target}");
+            }
+
+            transitionsLabel.text = summaries.Count == 0 ? "No transitions" : string.Join("\n", summaries);
         }
     }
 
@@ -116,7 +164,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 return;
             }
 
-            Vector2 position = new Vector2(layout.xMin, layout.yMin);
+            Vector2 position = GetPosition().position;
             positionProperty.vector2Value = position;
             positionProperty.serializedObject.ApplyModifiedProperties();
         }

@@ -103,6 +103,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             }
 
             BuildConnections();
+            RefreshTransitionSummaries();
             NothingSelected?.Invoke();
         }
 
@@ -183,7 +184,24 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             }
         }
 
-        static string FormatTransitionLabel(SerializedProperty transition)
+        static void ResetTransition(SerializedProperty transition)
+        {
+            if (transition == null)
+            {
+                return;
+            }
+
+            transition.FindPropertyRelative("input").enumValueIndex = (int)CharacterComboAction.ComboInput.SameAsBinding;
+            transition.FindPropertyRelative("nextStepId").stringValue = string.Empty;
+            transition.FindPropertyRelative("queueUntilWindow").boolValue = true;
+            transition.FindPropertyRelative("transitionDelay").floatValue = 0f;
+            transition.FindPropertyRelative("minimumHoldTime").floatValue = 0f;
+            transition.FindPropertyRelative("longPress").boolValue = false;
+            transition.FindPropertyRelative("longPressMinThreshold").floatValue = 0.35f;
+            transition.FindPropertyRelative("longPressMaxThreshold").floatValue = 1f;
+        }
+
+        internal static string FormatTransitionLabel(SerializedProperty transition)
         {
             string input = ((CharacterComboAction.ComboInput)transition.FindPropertyRelative("input").enumValueIndex).ToString();
             float delay = transition.FindPropertyRelative("transitionDelay").floatValue;
@@ -194,6 +212,47 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
         GraphViewChange OnGraphViewChanged(GraphViewChange change)
         {
+            if (change.edgesToCreate != null)
+            {
+                List<Edge> newEdges = new();
+                foreach (Edge edge in change.edgesToCreate)
+                {
+                    switch (edge.output?.node)
+                    {
+                        case ComboStepNode sourceNode when edge.input?.node is ComboStepNode targetNode:
+                        {
+                            SerializedProperty transition = EnsureTransition(sourceNode, targetNode);
+                            if (transition != null)
+                            {
+                                ComboTransitionEdge newEdge = new(FormatTransitionLabel(transition))
+                                {
+                                    output = edge.output,
+                                    input = edge.input,
+                                    userData = transition
+                                };
+                                newEdges.Add(newEdge);
+                                sourceNode.RefreshTransitionSummary(FormatTransitionLabel);
+                            }
+                            break;
+                        }
+                        case EntryNode entryNode when edge.input?.node is ComboStepNode entryTarget:
+                        {
+                            entryNode.SerializedEntry.FindPropertyRelative("stepId").stringValue = entryTarget.StepId;
+                            entryNode.SerializedEntry.serializedObject.ApplyModifiedProperties();
+                            Edge lockedEdge = entryNode.OutputPort.ConnectTo(entryTarget.InputPort);
+                            lockedEdge.capabilities &= ~Capabilities.Deletable;
+                            newEdges.Add(lockedEdge);
+                            break;
+                        }
+                        default:
+                            newEdges.Add(edge);
+                            break;
+                    }
+                }
+
+                change.edgesToCreate = newEdges;
+            }
+
             if (change.movedElements != null)
             {
                 foreach (GraphElement element in change.movedElements)
@@ -210,6 +269,22 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 }
             }
 
+            if (change.elementsToRemove != null)
+            {
+                foreach (GraphElement element in change.elementsToRemove)
+                {
+                    if (element is ComboTransitionEdge transitionEdge && transitionEdge.userData is SerializedProperty transition)
+                    {
+                        transition.FindPropertyRelative("nextStepId").stringValue = string.Empty;
+                        transition.serializedObject.ApplyModifiedProperties();
+                        if (transitionEdge.output?.node is ComboStepNode stepNode)
+                        {
+                            stepNode.RefreshTransitionSummary(FormatTransitionLabel);
+                        }
+                    }
+                }
+            }
+
             serializedDefinition?.ApplyModifiedProperties();
             return change;
         }
@@ -222,6 +297,47 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         void HandleEntrySelected(EntryNode node)
         {
             EntrySelected?.Invoke(node.SerializedEntry);
+        }
+
+        SerializedProperty EnsureTransition(ComboStepNode source, ComboStepNode target)
+        {
+            SerializedProperty transitions = source.TransitionsProperty;
+            if (transitions == null)
+            {
+                return null;
+            }
+
+            serializedDefinition?.UpdateIfRequiredOrScript();
+
+            SerializedProperty transition = null;
+            for (int i = 0; i < transitions.arraySize; i++)
+            {
+                SerializedProperty candidate = transitions.GetArrayElementAtIndex(i);
+                if (candidate.FindPropertyRelative("nextStepId").stringValue == target.StepId)
+                {
+                    transition = candidate;
+                    break;
+                }
+            }
+
+            if (transition == null)
+            {
+                transitions.InsertArrayElementAtIndex(transitions.arraySize);
+                transition = transitions.GetArrayElementAtIndex(transitions.arraySize - 1);
+                ResetTransition(transition);
+            }
+
+            transition.FindPropertyRelative("nextStepId").stringValue = target.StepId;
+            transition.serializedObject.ApplyModifiedProperties();
+            return transition;
+        }
+
+        void RefreshTransitionSummaries()
+        {
+            foreach (ComboStepNode node in stepNodes.Values)
+            {
+                node.RefreshTransitionSummary(FormatTransitionLabel);
+            }
         }
     }
 }

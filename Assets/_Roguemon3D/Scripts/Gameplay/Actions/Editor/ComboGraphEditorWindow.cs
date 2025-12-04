@@ -114,8 +114,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             Button addEntryButton = new(() => AddEntry()) { text = "Add Entry" };
             toolbar.Add(addEntryButton);
 
-            Button addStepButton = new(() => AddStep()) { text = "Add Step" };
+            Button addStepButton = new(() => AddStep(typeof(CharacterComboAction.ComboStep))) { text = "Add Step" };
             toolbar.Add(addStepButton);
+
+            Button addChargeStepButton = new(() => AddStep(typeof(CharacterComboAction.ChargeStep))) { text = "Add Charge Step" };
+            toolbar.Add(addChargeStepButton);
 
             Button rebuildButton = new(() => graphView.RefreshGraph()) { text = "Refresh" };
             toolbar.Add(rebuildButton);
@@ -213,7 +216,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             field.Bind(serializedDefinition);
         }
 
-        void AddStep()
+        void AddStep(Type stepType)
         {
             if (serializedDefinition == null)
             {
@@ -224,6 +227,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             SerializedProperty steps = serializedDefinition.FindProperty("steps");
             steps.InsertArrayElementAtIndex(steps.arraySize);
             SerializedProperty newStep = steps.GetArrayElementAtIndex(steps.arraySize - 1);
+            Type concreteType = stepType ?? typeof(CharacterComboAction.ComboStep);
+            newStep.managedReferenceValue = Activator.CreateInstance(concreteType);
             ResetStep(newStep, steps.arraySize - 1);
             serializedDefinition.ApplyModifiedProperties();
             graphView.RefreshGraph();
@@ -261,24 +266,88 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("comboResetDelay").floatValue = 1.2f;
             step.FindPropertyRelative("transitionWindowOpen").floatValue = 0.35f;
             step.FindPropertyRelative("transitionWindowClose").floatValue = 0.9f;
-            step.FindPropertyRelative("lockMovement").boolValue = true;
-            step.FindPropertyRelative("lockMovementInRecovery").boolValue = true;
-            step.FindPropertyRelative("lockAim").boolValue = true;
-            step.FindPropertyRelative("zeroVelocityOnStart").boolValue = true;
-            step.FindPropertyRelative("missNudgeImpulse").floatValue = 0f;
-            step.FindPropertyRelative("missNudgeDelay").floatValue = 0f;
-            step.FindPropertyRelative("applyNudgeWhenHit").boolValue = false;
+            SerializedProperty lockWindup = step.FindPropertyRelative("lockMovementInWindup");
+            if (lockWindup != null)
+            {
+                lockWindup.boolValue = true;
+            }
+
+            SerializedProperty lockActive = step.FindPropertyRelative("lockMovementInActive");
+            if (lockActive != null)
+            {
+                lockActive.boolValue = true;
+            }
+
+            SerializedProperty lockRecovery = step.FindPropertyRelative("lockMovementInRecovery");
+            if (lockRecovery != null)
+            {
+                lockRecovery.boolValue = true;
+            }
+
+            SerializedProperty lockAim = step.FindPropertyRelative("lockAim");
+            if (lockAim != null)
+            {
+                lockAim.boolValue = true;
+            }
+
+            SerializedProperty zeroVelocity = step.FindPropertyRelative("zeroVelocityOnStart");
+            if (zeroVelocity != null)
+            {
+                zeroVelocity.boolValue = true;
+            }
+
+            SerializedProperty missImpulse = step.FindPropertyRelative("missNudgeImpulse");
+            if (missImpulse != null)
+            {
+                missImpulse.floatValue = 0f;
+            }
+
+            SerializedProperty missDelay = step.FindPropertyRelative("missNudgeDelay");
+            if (missDelay != null)
+            {
+                missDelay.floatValue = 0f;
+            }
+
+            SerializedProperty applyNudge = step.FindPropertyRelative("applyNudgeWhenHit");
+            if (applyNudge != null)
+            {
+                applyNudge.boolValue = false;
+            }
+
             step.FindPropertyRelative("hitDetectorPrefab").objectReferenceValue = null;
-            step.FindPropertyRelative("parentHitDetectorToPivot").boolValue = true;
-            step.FindPropertyRelative("hitDetectorPositionOffset").vector3Value = Vector3.zero;
-            step.FindPropertyRelative("hitDetectorRotationOffset").vector3Value = Vector3.zero;
-            step.FindPropertyRelative("fallbackDirection").vector3Value = Vector3.forward;
+            SerializedProperty parentToPivot = step.FindPropertyRelative("parentHitDetectorToPivot");
+            if (parentToPivot != null)
+            {
+                parentToPivot.boolValue = true;
+            }
+
+            SerializedProperty hitOffset = step.FindPropertyRelative("hitDetectorPositionOffset");
+            if (hitOffset != null)
+            {
+                hitOffset.vector3Value = Vector3.zero;
+            }
+
+            SerializedProperty hitRotation = step.FindPropertyRelative("hitDetectorRotationOffset");
+            if (hitRotation != null)
+            {
+                hitRotation.vector3Value = Vector3.zero;
+            }
+
+            SerializedProperty fallback = step.FindPropertyRelative("fallbackDirection");
+            if (fallback != null)
+            {
+                fallback.vector3Value = Vector3.forward;
+            }
             SerializedProperty transitions = step.FindPropertyRelative("transitions");
-            while (transitions.arraySize > 0)
+            while (transitions != null && transitions.arraySize > 0)
             {
                 transitions.DeleteArrayElementAtIndex(transitions.arraySize - 1);
             }
-            step.FindPropertyRelative("vfx").objectReferenceValue = null;
+            SerializedProperty vfxProperty = step.FindPropertyRelative("vfx");
+            if (vfxProperty != null)
+            {
+                vfxProperty.objectReferenceValue = null;
+            }
             step.FindPropertyRelative("usePhaseAnimations").boolValue = false;
             ResetAnimation(step.FindPropertyRelative("animation"));
             ResetAnimation(step.FindPropertyRelative("windupAnimation"));
@@ -294,6 +363,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("scaleActiveAnimationToStepDuration").boolValue = false;
             step.FindPropertyRelative("scaleRecoveryAnimationToStepDuration").boolValue = false;
             step.FindPropertyRelative("overrideAnimationSpeed").boolValue = false;
+            SerializedProperty minCharge = step.FindPropertyRelative("minimumChargeTime");
+            if (minCharge != null)
+            {
+                minCharge.floatValue = 0.1f;
+            }
+
+            SerializedProperty maxCharge = step.FindPropertyRelative("maximumChargeTime");
+            if (maxCharge != null)
+            {
+                maxCharge.floatValue = 0f;
+            }
             step.FindPropertyRelative("graphPosition").vector2Value = new Vector2(420f + (index % 4) * 240f, 100f + (index / 4) * 180f);
         }
 
