@@ -142,9 +142,9 @@ public class HitDetector : MonoBehaviour
         {
             return phase switch
             {
-                ExecutionPhase.Windup => step.windup,
-                ExecutionPhase.Active => step.active,
-                ExecutionPhase.Recovery => step.recovery,
+                ExecutionPhase.Windup => step.WindupDuration,
+                ExecutionPhase.Active => step.ActiveDuration,
+                ExecutionPhase.Recovery => step.RecoveryDuration,
                 _ => 0f
             };
         }
@@ -227,16 +227,16 @@ public class HitDetector : MonoBehaviour
         }
     }
     
-    public void HandleWindupIndicator(CharacterComboAction.ComboStep step)
-    {
-        if (!windupIndicator)
-            return;
-        if (scaleWindupDuration)
+        public void HandleWindupIndicator(CharacterComboAction.ComboStep step)
         {
-            float duration = scaleWindupDuration ? Mathf.Max(0.0001f, step.windup) : 1f;
-            ParticleSystem.MainModule main = windupIndicator.particleSystem.main;
-            main.startLifetime = duration;
-        }
+            if (!windupIndicator)
+                return;
+            if (scaleWindupDuration)
+            {
+                float duration = scaleWindupDuration ? Mathf.Max(0.0001f, step.WindupDuration) : 1f;
+                ParticleSystem.MainModule main = windupIndicator.particleSystem.main;
+                main.startLifetime = duration;
+            }
         windupIndicator.particleSystem.time = 0f;
         windupIndicator.particleSystem.Play();
     }

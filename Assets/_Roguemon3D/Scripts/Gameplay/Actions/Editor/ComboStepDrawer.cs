@@ -4,7 +4,7 @@ using _PinBoy.Scripts.Gameplay.Actions;
 
 namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 {
-    [CustomPropertyDrawer(typeof(CharacterComboAction.ComboStep))]
+    [CustomPropertyDrawer(typeof(CharacterComboAction.ComboStep), true)]
     public class ComboStepDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -65,7 +65,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
                 Header("Movement");
                 EditorGUI.indentLevel++;
-                DrawProperty(property.FindPropertyRelative("lockMovement"));
+                DrawProperty(property.FindPropertyRelative("lockMovementInWindup"));
+                DrawProperty(property.FindPropertyRelative("lockMovementInActive"));
                 DrawProperty(property.FindPropertyRelative("lockMovementInRecovery"));
                 DrawProperty(property.FindPropertyRelative("lockAim"));
                 DrawProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
@@ -144,6 +145,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 DrawProperty(property.FindPropertyRelative("vfx"));
                 EditorGUI.indentLevel--;
 
+                SerializedProperty minimumCharge = property.FindPropertyRelative("minimumChargeTime");
+                if (minimumCharge != null)
+                {
+                    Header("Charge");
+                    EditorGUI.indentLevel++;
+                    DrawProperty(minimumCharge, "Minimum Charge Time", includeChildren: false);
+                    DrawProperty(property.FindPropertyRelative("maximumChargeTime"), "Maximum Charge Time", includeChildren: false);
+                    EditorGUI.indentLevel--;
+                }
+
                 EditorGUI.indentLevel--;
             }
 
@@ -200,7 +211,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             // Movement
             AddHeader();
-            AddProperty(property.FindPropertyRelative("lockMovement"));
+            AddProperty(property.FindPropertyRelative("lockMovementInWindup"));
+            AddProperty(property.FindPropertyRelative("lockMovementInActive"));
             AddProperty(property.FindPropertyRelative("lockMovementInRecovery"));
             AddProperty(property.FindPropertyRelative("lockAim"));
             AddProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
@@ -271,6 +283,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             // VFX
             AddHeader();
             AddProperty(property.FindPropertyRelative("vfx"));
+
+            SerializedProperty minimumCharge = property.FindPropertyRelative("minimumChargeTime");
+            if (minimumCharge != null)
+            {
+                AddHeader();
+                AddProperty(minimumCharge);
+                AddProperty(property.FindPropertyRelative("maximumChargeTime"));
+            }
 
             // remove trailing spacing added after last property
             height -= spacing;

@@ -11,7 +11,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField, Tooltip("How long queued input remains valid before it expires.")]
         [Min(0f)] float queuedInputLifetime = 0.35f;
         [SerializeField] CharacterComboAction.ComboEntry[] entrySteps = Array.Empty<CharacterComboAction.ComboEntry>();
-        [SerializeField] CharacterComboAction.ComboStep[] steps = Array.Empty<CharacterComboAction.ComboStep>();
+        [SerializeReference] CharacterComboAction.ComboStep[] steps = Array.Empty<CharacterComboAction.ComboStep>();
 
         public bool RequiresAimInput => requiresAimInput;
         public float QueuedInputLifetime => Mathf.Max(0f, queuedInputLifetime);
