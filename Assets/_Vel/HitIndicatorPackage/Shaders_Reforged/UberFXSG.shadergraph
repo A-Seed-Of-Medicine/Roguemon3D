@@ -4746,8 +4746,8 @@
     "m_ObjectId": "0d2ba5659e754af08fe5d4506b1ca4f5",
     "m_Title": "Distortion Channel Picker",
     "m_Position": {
-        "x": -52.0,
-        "y": 1492.0
+        "x": -52.00006103515625,
+        "y": 1492.0001220703125
     }
 }
 
@@ -7002,7 +7002,7 @@
     "m_ObjectId": "2d749604e57341e5a70c4fe41db9f1f6",
     "m_Title": "Multiply Noise Channel Picker",
     "m_Position": {
-        "x": -525.0,
+        "x": -525.0000610351563,
         "y": 1879.0
     }
 }
@@ -7245,7 +7245,7 @@
     "m_Title": "Main Tex",
     "m_Position": {
         "x": 3264.0,
-        "y": 1385.0
+        "y": 1385.0001220703125
     }
 }
 
@@ -7364,7 +7364,7 @@
     "m_ObjectId": "30fe4db9fa7e48d3a41500b27c01c588",
     "m_Title": "Vertex Offset Channel Picker",
     "m_Position": {
-        "x": -267.0,
+        "x": -266.9999694824219,
         "y": 659.0
     }
 }
@@ -13553,7 +13553,7 @@
     "m_Title": "NODE B",
     "m_Position": {
         "x": 5102.0,
-        "y": -198.0
+        "y": -198.00003051757813
     }
 }
 
@@ -20265,8 +20265,8 @@
     "m_ObjectId": "ced30f52b6ef4cd4bcd3685bf3535b71",
     "m_Title": "User Parameters Gate",
     "m_Position": {
-        "x": 856.0,
-        "y": 471.0
+        "x": 856.0001220703125,
+        "y": 471.00006103515627
     }
 }
 
@@ -20777,8 +20777,8 @@
     "m_ObjectId": "d4d975d224e64f0cb9fe9a72f7e9c6b2",
     "m_Title": "Fresnel",
     "m_Position": {
-        "x": 6866.0,
-        "y": 474.0
+        "x": 6866.0009765625,
+        "y": 473.9999694824219
     }
 }
 
@@ -20940,7 +20940,7 @@
     "m_ObjectId": "d6e007ced09b4d0d88242a90128dee05",
     "m_Title": "Final Color Processing",
     "m_Position": {
-        "x": 6963.0,
+        "x": 6963.00048828125,
         "y": 1361.0
     }
 }
@@ -21698,7 +21698,7 @@
     "m_ObjectId": "e035b3950cd54be3a6f13eddd29f4342",
     "m_Title": "NODE A",
     "m_Position": {
-        "x": 4315.0,
+        "x": 4315.00048828125,
         "y": 143.0
     }
 }
@@ -21960,8 +21960,8 @@
     "m_ObjectId": "e3e34648219a4b72a30d47a989d32379",
     "m_Title": "Dissolve Channel Picker",
     "m_Position": {
-        "x": 442.0,
-        "y": 1171.0
+        "x": 441.9998474121094,
+        "y": 1171.0001220703125
     }
 }
 
@@ -22375,7 +22375,7 @@
     "m_ObjectId": "eb3ab196ae284f909fe1533ef6d45be2",
     "m_Title": "Uv Modifiers for Main Texture",
     "m_Position": {
-        "x": 1175.0,
+        "x": 1175.0001220703125,
         "y": 1150.0
     }
 }
