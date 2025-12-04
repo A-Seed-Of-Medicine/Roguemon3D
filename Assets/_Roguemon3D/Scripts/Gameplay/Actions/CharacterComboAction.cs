@@ -40,6 +40,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public ComboInput input = ComboInput.SameAsBinding;
             [Tooltip("Identifier of the combo step that should be triggered by this input when no combo is active.")]
             public string stepId;
+            [Tooltip("If true this entry is only taken on a long press using the configured thresholds.")]
+            public bool longPress;
+            [Tooltip("Minimum time (seconds) a button must be held to trigger this long press entry.")]
+            [Min(0f)] public float longPressMinThreshold = 0.35f;
+            [Tooltip("Maximum time (seconds) to consider when normalizing the press duration for a long press entry.")]
+            [Min(0f)] public float longPressMaxThreshold = 1f;
             [HideInInspector]
             public Vector2 graphPosition;
         }
@@ -54,6 +60,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool queueUntilWindow = true;
             [Tooltip("Additional delay applied once the transition window opens before the next step starts.")]
             [Min(0f)] public float transitionDelay;
+            [Header("Long Press")]
+            [Tooltip("If true this transition is triggered by a long press instead of a tap.")]
+            public bool longPress;
+            [Tooltip("Minimum time (seconds) a button must be held before this transition can trigger.")]
+            [Min(0f)] public float longPressMinThreshold = 0.35f;
+            [Tooltip("Maximum time (seconds) to consider when normalizing the press duration for this transition.")]
+            [Min(0f)] public float longPressMaxThreshold = 1f;
         }
 
         [Serializable]
@@ -130,6 +143,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool scaleRecoveryAnimationToStepDuration;
             public bool overrideAnimationSpeed;
 
+            [NonSerialized] public float pressDuration;
+            [NonSerialized] public float pressDurationNormalized;
+            [NonSerialized] public bool longPressTriggered;
+
             public float TotalDuration => Mathf.Max(0.0001f, windup + active + recovery);
             public float TransitionOpenTime => Mathf.Clamp01(transitionWindowOpen) * TotalDuration;
             public float TransitionCloseTime => Mathf.Clamp01(transitionWindowClose) * TotalDuration;
@@ -144,6 +161,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         readonly Dictionary<string, ComboStep> stepLookup = new();
         readonly HashSet<IDamageable> stepHitTargets = new();
         readonly Dictionary<ComboInput, UnityEngine.Events.UnityAction<bool>> inputHandlers = new();
+        readonly Dictionary<ComboInput, PressState> inputPressStates = new();
         bool statusEventsRegistered;
         HitDetector activeHitDetector;
 
@@ -172,6 +190,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         float pendingStepDelay;
         float pendingStepExpireTime;
         bool pendingDelayActive;
+        bool pendingStepIsLongPress;
+        float pendingStepHoldDuration;
+        float pendingStepHoldNormalized;
 
         float currentStepElapsed;
         bool stepWasActive;
@@ -205,6 +226,39 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool inRecoveryPhase;
 
         protected override bool UsesAimInput => comboDefinition ? comboDefinition.RequiresAimInput : true;
+
+        class PressState
+        {
+            public bool Pressed;
+            public float PressStartTime;
+            public bool LongTriggered;
+            public ComboTransition ShortTransition;
+            public ComboTransition LongTransition;
+            public ComboEntry ShortEntry;
+            public ComboEntry LongEntry;
+
+            public void ResetForPress(float time)
+            {
+                Pressed = true;
+                PressStartTime = time;
+                LongTriggered = false;
+                ShortTransition = null;
+                LongTransition = null;
+                ShortEntry = null;
+                LongEntry = null;
+            }
+
+            public void Reset()
+            {
+                Pressed = false;
+                LongTriggered = false;
+                ShortTransition = null;
+                LongTransition = null;
+                ShortEntry = null;
+                LongEntry = null;
+                PressStartTime = 0f;
+            }
+        }
 
         protected override void Awake()
         {
@@ -246,6 +300,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void FixedUpdate()
         {
+            EvaluateLongPressStates();
+
             if (IsCurrentStepRunning)
             {
                 AdvanceCurrentStep(Time.fixedDeltaTime);
@@ -307,17 +363,15 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void HandleBindingInput(bool pressed)
         {
             ComboInput mapped = MapBindingToInput(binding);
-            if (pressed)
+            ProcessComboInput(mapped, pressed);
+
+            if (!pressed)
             {
-                ProcessComboInput(mapped);
-            }
-            else
-            {
-                ProcessComboInput(ComboInput.Release);
+                EvaluateReleaseTransitions();
             }
         }
 
-        void ProcessComboInput(ComboInput input)
+        void ProcessComboInput(ComboInput input, bool pressed)
         {
             if (!isActiveAndEnabled)
             {
@@ -329,39 +383,253 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 EvaluateReleaseTransitions();
                 return;
             }
-            
-            if (!comboActive)
+
+            if (pressed)
             {
-                comboActive = TryBeginCombo(input);
-                return;
+                HandleInputPressed(input);
             }
-            
-            if (!IsCurrentStepRunning && currentStep == null)
+            else
             {
-                TryBeginCombo(input);
+                HandleInputReleased(input);
+            }
+        }
+
+        void HandleInputPressed(ComboInput input)
+        {
+            PressState state = GetOrCreatePressState(input);
+            state.ResetForPress(Time.time);
+
+            if (TryHandleEntryPress(input, state))
+            {
                 return;
             }
 
-            ComboTransition transition = FindTransition(currentStep, input);
+            TryHandleTransitionPress(input, state);
+        }
+
+        void HandleInputReleased(ComboInput input)
+        {
+            if (!inputPressStates.TryGetValue(input, out PressState state) || !state.Pressed)
+            {
+                return;
+            }
+
+            float duration = Mathf.Max(0f, Time.time - state.PressStartTime);
+
+            if (!state.LongTriggered)
+            {
+                if (state.LongTransition != null && HasLongPressElapsed(duration, state.LongTransition.longPressMinThreshold))
+                {
+                    float normalized = CalculateHoldNormalized(duration, state.LongTransition.longPressMinThreshold,
+                        state.LongTransition.longPressMaxThreshold);
+                    TriggerTransition(state.LongTransition, true, duration, normalized);
+                    state.LongTriggered = true;
+                }
+                else if (state.LongEntry != null && HasLongPressElapsed(duration, state.LongEntry.longPressMinThreshold))
+                {
+                    float normalized = CalculateHoldNormalized(duration, state.LongEntry.longPressMinThreshold,
+                        state.LongEntry.longPressMaxThreshold);
+                    TriggerEntry(state.LongEntry, true, duration, normalized);
+                    state.LongTriggered = true;
+                }
+            }
+
+            if (!state.LongTriggered)
+            {
+                float normalized = CalculateShortPressNormalized(duration, state);
+
+                if (state.ShortTransition != null)
+                {
+                    TriggerTransition(state.ShortTransition, false, duration, normalized);
+                }
+                else if (state.ShortEntry != null)
+                {
+                    TriggerEntry(state.ShortEntry, false, duration, normalized);
+                }
+            }
+
+            state.Reset();
+        }
+
+        bool TryHandleEntryPress(ComboInput input, PressState state)
+        {
+            bool canStartEntry = !comboActive || (!IsCurrentStepRunning && currentStep == null);
+            if (!canStartEntry)
+            {
+                return false;
+            }
+
+            GetEntryOptions(input, out ComboEntry shortEntry, out ComboEntry longEntry);
+
+            state.ShortEntry = shortEntry;
+            state.LongEntry = longEntry;
+
+            if (shortEntry == null && longEntry == null && EntrySteps.Length == 0 && Steps.Length > 0)
+            {
+                StartStep(Steps[0], false, false, 0f, 0f);
+                state.Reset();
+                return true;
+            }
+
+            if (longEntry != null)
+            {
+                return true;
+            }
+
+            if (shortEntry != null)
+            {
+                TriggerEntry(shortEntry, false, 0f, 0f);
+                state.Reset();
+                return true;
+            }
+
+            return false;
+        }
+
+        void TryHandleTransitionPress(ComboInput input, PressState state)
+        {
+            if (currentStep == null)
+            {
+                return;
+            }
+
+            FindTransitionOptions(currentStep, input, out ComboTransition shortTransition, out ComboTransition longTransition);
+
+            state.ShortTransition = shortTransition;
+            state.LongTransition = longTransition;
+
+            if (longTransition != null)
+            {
+                return;
+            }
+
+            if (shortTransition != null)
+            {
+                TriggerTransition(shortTransition, false, 0f, 0f);
+                state.Reset();
+            }
+        }
+
+        float CalculateShortPressNormalized(float duration, PressState state)
+        {
+            if (state.LongTransition != null)
+            {
+                return CalculateHoldNormalized(duration, state.LongTransition.longPressMinThreshold,
+                    state.LongTransition.longPressMaxThreshold);
+            }
+
+            if (state.LongEntry != null)
+            {
+                return CalculateHoldNormalized(duration, state.LongEntry.longPressMinThreshold,
+                    state.LongEntry.longPressMaxThreshold);
+            }
+
+            return 0f;
+        }
+
+        void TriggerTransition(ComboTransition transition, bool isLongPress, float holdDuration, float holdNormalized)
+        {
             if (transition == null)
             {
                 return;
             }
 
-            QueueOrExecuteTransition(transition);
+            QueueOrExecuteTransition(transition, holdDuration, holdNormalized, isLongPress);
         }
 
-        bool TryBeginCombo(ComboInput input)
+        void TriggerEntry(ComboEntry entry, bool isLongPress, float holdDuration, float holdNormalized)
         {
-            ComboStep step = ResolveEntryStep(input);
-            if (step == null)
+            if (entry == null)
             {
-                return false;
+                return;
             }
 
-            StartStep(step, false);
-            actionStarted?.Invoke();
-            return true;
+            ComboStep step = ResolveStep(entry.stepId);
+            if (step == null)
+            {
+                return;
+            }
+
+            StartStep(step, false, isLongPress, holdDuration, holdNormalized);
+        }
+
+        void GetEntryOptions(ComboInput input, out ComboEntry shortEntry, out ComboEntry longEntry)
+        {
+            shortEntry = ResolveEntry(input, false);
+            longEntry = ResolveEntry(input, true);
+        }
+
+        ComboEntry ResolveEntry(ComboInput input, bool requireLongPress)
+        {
+            ComboInput bindingInput = MapBindingToInput(binding);
+            foreach (ComboEntry entry in EntrySteps)
+            {
+                ComboInput mapped = entry.input == ComboInput.SameAsBinding ? bindingInput : entry.input;
+                if (mapped == input && entry.longPress == requireLongPress)
+                {
+                    return entry;
+                }
+            }
+
+            return null;
+        }
+
+        float CalculateHoldNormalized(float duration, float minThreshold, float maxThreshold)
+        {
+            float min = Mathf.Max(0f, minThreshold);
+            float max = Mathf.Max(min, maxThreshold);
+
+            if (max <= 0f)
+            {
+                return 1f;
+            }
+
+            float clamped = Mathf.Clamp(duration, min, max);
+            return Mathf.InverseLerp(min, max, clamped);
+        }
+
+        bool HasLongPressElapsed(float duration, float minThreshold)
+        {
+            return duration >= Mathf.Max(0f, minThreshold);
+        }
+
+        PressState GetOrCreatePressState(ComboInput input)
+        {
+            if (!inputPressStates.TryGetValue(input, out PressState state))
+            {
+                state = new PressState();
+                inputPressStates[input] = state;
+            }
+
+            return state;
+        }
+
+        void EvaluateLongPressStates()
+        {
+            foreach (PressState state in inputPressStates.Values)
+            {
+                if (!state.Pressed || state.LongTriggered)
+                {
+                    continue;
+                }
+
+                float duration = Mathf.Max(0f, Time.time - state.PressStartTime);
+
+                if (state.LongTransition != null && HasLongPressElapsed(duration, state.LongTransition.longPressMinThreshold))
+                {
+                    float normalized = CalculateHoldNormalized(duration, state.LongTransition.longPressMinThreshold,
+                        state.LongTransition.longPressMaxThreshold);
+                    TriggerTransition(state.LongTransition, true, duration, normalized);
+                    state.LongTriggered = true;
+                }
+                else if (state.LongEntry != null && HasLongPressElapsed(duration, state.LongEntry.longPressMinThreshold))
+                {
+                    float normalized = CalculateHoldNormalized(duration, state.LongEntry.longPressMinThreshold,
+                        state.LongEntry.longPressMaxThreshold);
+                    TriggerEntry(state.LongEntry, true, duration, normalized);
+                    state.LongTriggered = true;
+                }
+            }
         }
 
         void AdvanceCurrentStep(float delta)
@@ -451,7 +719,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             StartComboResetCountdown();
         }
 
-        void StartStep(ComboStep step, bool isContinuation)
+        void StartStep(ComboStep step, bool isContinuation, bool isLongPress, float holdDuration, float holdNormalized)
         {
             if (step == null || Controller == null)
             {
@@ -475,6 +743,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             ResetPendingTransition();
             comboResetTimer.Cancel();
             currentStep = step;
+            ApplyStepPressMetadata(step, isLongPress, holdDuration, holdNormalized);
             currentStepElapsed = 0f;
             stepWasActive = false;
             stepRegisteredHit = false;
@@ -535,6 +804,18 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Controller.ApplyMovementModifier(overrideMovementProfile, -1f);
 
             StartWindupPhase(step);
+        }
+
+        void ApplyStepPressMetadata(ComboStep step, bool isLongPress, float holdDuration, float holdNormalized)
+        {
+            if (step == null)
+            {
+                return;
+            }
+
+            step.longPressTriggered = isLongPress;
+            step.pressDuration = Mathf.Max(0f, holdDuration);
+            step.pressDurationNormalized = Mathf.Clamp01(holdNormalized);
         }
 
         void ApplyStepAnimation(ComboStep step, HitDetector.ExecutionPhase phase)
@@ -952,7 +1233,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             body.linearVelocity = new Vector3(planarVelocity.x, current.y, planarVelocity.z);
         }
 
-        void QueueOrExecuteTransition(ComboTransition transition)
+        void QueueOrExecuteTransition(ComboTransition transition, float holdDuration, float holdNormalized, bool isLongPress)
         {
             ComboStep step = ResolveStep(transition.nextStepId);
             if (step == null)
@@ -970,6 +1251,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             pendingStepExpireTime = Time.time + QueuedInputLifetime;
             pendingDelayActive = false;
             pendingStepReady = false;
+            pendingStepIsLongPress = isLongPress;
+            pendingStepHoldDuration = Mathf.Max(0f, holdDuration);
+            pendingStepHoldNormalized = Mathf.Clamp01(holdNormalized);
             transitionDelayTimer.Cancel();
 
             if (!transition.queueUntilWindow && CanTransitionFromCurrentStep() && pendingStepDelay <= 0f)
@@ -1003,8 +1287,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (pendingStepReady && currentStepExpired)
             {
                 ComboStep step = pendingStep;
+                bool isLongPress = pendingStepIsLongPress;
+                float holdDuration = pendingStepHoldDuration;
+                float holdNormalized = pendingStepHoldNormalized;
                 ResetPendingTransition();
-                StartStep(step, true);
+                StartStep(step, true, isLongPress, holdDuration, holdNormalized);
             }
         }
 
@@ -1077,18 +1364,21 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
-            ComboTransition releaseTransition = FindTransition(currentStep, ComboInput.Release);
+            FindTransitionOptions(currentStep, ComboInput.Release, out ComboTransition releaseTransition, out _);
             if (releaseTransition != null)
             {
-                QueueOrExecuteTransition(releaseTransition);
+                QueueOrExecuteTransition(releaseTransition, 0f, 0f, false);
             }
         }
 
-        ComboTransition FindTransition(ComboStep step, ComboInput input)
+        void FindTransitionOptions(ComboStep step, ComboInput input, out ComboTransition shortPress, out ComboTransition longPress)
         {
+            shortPress = null;
+            longPress = null;
+
             if (step == null || step.transitions == null)
             {
-                return null;
+                return;
             }
 
             foreach (ComboTransition transition in step.transitions)
@@ -1099,35 +1389,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
                 if (mapped == input)
                 {
-                    return transition;
-                }
-            }
-
-            return null;
-        }
-
-        ComboStep ResolveEntryStep(ComboInput input)
-        {
-            ComboInput bindingInput = MapBindingToInput(binding);
-            foreach (ComboEntry entry in EntrySteps)
-            {
-                ComboInput mapped = entry.input == ComboInput.SameAsBinding ? bindingInput : entry.input;
-                if (mapped == input)
-                {
-                    ComboStep step = ResolveStep(entry.stepId);
-                    if (step != null)
+                    if (transition.longPress)
                     {
-                        return step;
+                        longPress ??= transition;
+                    }
+                    else
+                    {
+                        shortPress ??= transition;
                     }
                 }
             }
-
-            if (EntrySteps.Length == 0)
-            {
-                return Steps.Length > 0 ? Steps[0] : null;
-            }
-
-            return null;
         }
 
         ComboStep ResolveStep(string id)
@@ -1143,6 +1414,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void ResetStepState(bool clearStepReference = true)
         {
+            if (clearStepReference && currentStep != null)
+            {
+                ApplyStepPressMetadata(currentStep, false, 0f, 0f);
+            }
+
             if (clearStepReference)
             {
                 currentStep = null;
@@ -1170,6 +1446,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             pendingStepExpireTime = 0f;
             pendingDelayActive = false;
             pendingStepReady = false;
+            pendingStepIsLongPress = false;
+            pendingStepHoldDuration = 0f;
+            pendingStepHoldNormalized = 0f;
             transitionDelayTimer.Cancel();
         }
 
@@ -1180,6 +1459,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             ResetStepState();
             comboResetTimer.Cancel();
             pendingComboResetDelay = 0f;
+            inputPressStates.Clear();
             if (comboActive)
             {
                 comboActive = false;
@@ -1315,10 +1595,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
                 void Handler(bool pressed)
                 {
-                    if (pressed)
-                    {
-                        ProcessComboInput(input);
-                    }
+                    ProcessComboInput(input, pressed);
                 }
 
                 UnityEngine.Events.UnityAction<bool> action = Handler;
