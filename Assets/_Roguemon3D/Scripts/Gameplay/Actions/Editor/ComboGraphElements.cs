@@ -10,12 +10,21 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
     {
         readonly SerializedProperty stepProperty;
         readonly SerializedProperty positionProperty;
+        readonly SerializedProperty transitionsProperty;
+        readonly System.Collections.Generic.List<Port> transitionPorts = new();
 
-        public string StepId => stepProperty.FindPropertyRelative("id").stringValue;
+        public string StepId
+        {
+            get
+            {
+                string id = stepProperty.FindPropertyRelative("id").stringValue;
+                return string.IsNullOrWhiteSpace(id) ? stepProperty.propertyPath : id;
+            }
+        }
         public SerializedProperty SerializedStep => stepProperty;
-        public SerializedProperty TransitionsProperty => stepProperty.FindPropertyRelative("transitions");
+        public SerializedProperty TransitionsProperty => transitionsProperty;
         public Port InputPort { get; }
-        public Port OutputPort { get; }
+        public System.Collections.Generic.IReadOnlyList<Port> TransitionPorts => transitionPorts;
 
         readonly System.Action<ComboStepNode> onSelected;
 
@@ -23,20 +32,21 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         {
             this.stepProperty = stepProperty;
             positionProperty = stepProperty.FindPropertyRelative("graphPosition");
+            transitionsProperty = stepProperty.FindPropertyRelative("transitions");
             this.onSelected = onSelected;
 
             title = string.IsNullOrWhiteSpace(StepId) ? "Step" : StepId;
 
             capabilities |= Capabilities.Movable | Capabilities.Selectable | Capabilities.Ascendable;
             capabilities &= ~Capabilities.Deletable;
+            capabilities &= ~Capabilities.Collapsible;
+            titleButtonContainer?.Clear();
 
             InputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(string));
             InputPort.portName = "Previous";
             inputContainer.Add(InputPort);
 
-            OutputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(string));
-            OutputPort.portName = "Transitions";
-            outputContainer.Add(OutputPort);
+            RebuildTransitionPorts(null);
 
             RefreshExpandedState();
             RefreshPorts();
@@ -61,9 +71,55 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 return;
             }
 
-            Vector2 position = new Vector2(layout.xMin, layout.yMin);
+            Rect rect = GetPosition();
+            Vector2 position = rect.position;
             positionProperty.vector2Value = position;
             positionProperty.serializedObject.ApplyModifiedProperties();
+        }
+
+        public void RebuildTransitionPorts(System.Func<SerializedProperty, string> labelFormatter)
+        {
+            foreach (Port port in transitionPorts)
+            {
+                outputContainer.Remove(port);
+            }
+            transitionPorts.Clear();
+
+            if (transitionsProperty == null)
+            {
+                RefreshExpandedState();
+                RefreshPorts();
+                return;
+            }
+
+            for (int i = 0; i < transitionsProperty.arraySize; i++)
+            {
+                SerializedProperty transition = transitionsProperty.GetArrayElementAtIndex(i);
+                Port port = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(string));
+                port.portName = labelFormatter != null ? labelFormatter(transition) : transition.displayName;
+                port.userData = i;
+                outputContainer.Add(port);
+                transitionPorts.Add(port);
+            }
+
+            RefreshExpandedState();
+            RefreshPorts();
+        }
+
+        public SerializedProperty GetTransitionPropertyForPort(Port port)
+        {
+            if (transitionsProperty == null)
+            {
+                return null;
+            }
+
+            int index = transitionPorts.IndexOf(port);
+            if (index < 0 || index >= transitionsProperty.arraySize)
+            {
+                return null;
+            }
+
+            return transitionsProperty.GetArrayElementAtIndex(index);
         }
     }
 
@@ -91,6 +147,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             OutputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(string));
             OutputPort.portName = "Start";
+            OutputPort.userData = entryProperty;
             outputContainer.Add(OutputPort);
 
             RefreshExpandedState();
@@ -116,7 +173,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 return;
             }
 
-            Vector2 position = new Vector2(layout.xMin, layout.yMin);
+            Rect rect = GetPosition();
+            Vector2 position = rect.position;
             positionProperty.vector2Value = position;
             positionProperty.serializedObject.ApplyModifiedProperties();
         }

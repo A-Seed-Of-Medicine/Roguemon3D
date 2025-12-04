@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using _PinBoy.Scripts.Gameplay.Actions;
@@ -7,10 +8,43 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
     [CustomPropertyDrawer(typeof(CharacterComboAction.ComboStep), true)]
     public class ComboStepDrawer : PropertyDrawer
     {
+        static readonly System.Type[] StepTypes = TypeCache.GetTypesDerivedFrom<CharacterComboAction.ComboStep>()
+            .Where(t => !t.IsAbstract)
+            .Prepend(typeof(CharacterComboAction.ComboStep))
+            .Distinct()
+            .ToArray();
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
-            Rect foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+
+            float lineHeight = EditorGUIUtility.singleLineHeight;
+            Rect typeRect = new Rect(position.x, position.y, position.width, lineHeight);
+
+            System.Type currentType = GetManagedReferenceType(property) ?? typeof(CharacterComboAction.ComboStep);
+            if (property.managedReferenceValue == null)
+            {
+                property.serializedObject.Update();
+                property.managedReferenceValue = System.Activator.CreateInstance(currentType);
+                property.serializedObject.ApplyModifiedProperties();
+            }
+            int currentIndex = System.Array.IndexOf(StepTypes, currentType);
+            if (currentIndex < 0)
+            {
+                currentIndex = 0;
+            }
+
+            string[] typeOptions = StepTypes.Select(t => t.Name).ToArray();
+            int selectedIndex = EditorGUI.Popup(typeRect, "Step Type", currentIndex, typeOptions);
+            if (selectedIndex != currentIndex)
+            {
+                System.Type selectedType = StepTypes[selectedIndex];
+                property.serializedObject.Update();
+                property.managedReferenceValue = System.Activator.CreateInstance(selectedType);
+                property.serializedObject.ApplyModifiedProperties();
+            }
+
+            Rect foldoutRect = new Rect(position.x, typeRect.yMax + EditorGUIUtility.standardVerticalSpacing, position.width, lineHeight);
             property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label, true);
 
             if (property.isExpanded)
@@ -163,13 +197,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            float height = EditorGUIUtility.singleLineHeight;
+            float spacing = EditorGUIUtility.standardVerticalSpacing;
+            float height = EditorGUIUtility.singleLineHeight; // Type dropdown
+            height += spacing + EditorGUIUtility.singleLineHeight; // Foldout line
             if (!property.isExpanded)
             {
                 return height;
             }
 
-            float spacing = EditorGUIUtility.standardVerticalSpacing;
+            height += spacing;
+
             float headerHeight = EditorGUIUtility.singleLineHeight;
 
             float AddHeader()
@@ -313,6 +350,22 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                    animationProperty.FindPropertyRelative("southEastClip").objectReferenceValue != null ||
                    animationProperty.FindPropertyRelative("northWestClip").objectReferenceValue != null ||
                    animationProperty.FindPropertyRelative("southWestClip").objectReferenceValue != null;
+        }
+
+        static System.Type GetManagedReferenceType(SerializedProperty property)
+        {
+            if (property == null)
+            {
+                return null;
+            }
+
+            string fullTypeName = property.managedReferenceFullTypename;
+            if (string.IsNullOrEmpty(fullTypeName))
+            {
+                return null;
+            }
+
+            return System.Type.GetType(fullTypeName);
         }
     }
 }

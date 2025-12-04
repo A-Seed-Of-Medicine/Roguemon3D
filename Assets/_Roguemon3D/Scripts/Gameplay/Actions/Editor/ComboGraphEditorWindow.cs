@@ -114,8 +114,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             Button addEntryButton = new(() => AddEntry()) { text = "Add Entry" };
             toolbar.Add(addEntryButton);
 
-            Button addStepButton = new(() => AddStep()) { text = "Add Step" };
+            Button addStepButton = new(() => AddStep(typeof(CharacterComboAction.ComboStep))) { text = "Add Step" };
             toolbar.Add(addStepButton);
+
+            Button addChargeStepButton = new(() => AddStep(typeof(CharacterComboAction.ChargeStep))) { text = "Add Charge Step" };
+            toolbar.Add(addChargeStepButton);
 
             Button rebuildButton = new(() => graphView.RefreshGraph()) { text = "Refresh" };
             toolbar.Add(rebuildButton);
@@ -213,7 +216,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             field.Bind(serializedDefinition);
         }
 
-        void AddStep()
+        void AddStep(System.Type stepType)
         {
             if (serializedDefinition == null)
             {
@@ -224,7 +227,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             SerializedProperty steps = serializedDefinition.FindProperty("steps");
             steps.InsertArrayElementAtIndex(steps.arraySize);
             SerializedProperty newStep = steps.GetArrayElementAtIndex(steps.arraySize - 1);
-            ResetStep(newStep, steps.arraySize - 1);
+            ResetStep(newStep, steps.arraySize - 1, stepType);
             serializedDefinition.ApplyModifiedProperties();
             graphView.RefreshGraph();
         }
@@ -247,8 +250,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             graphView.RefreshGraph();
         }
 
-        void ResetStep(SerializedProperty step, int index)
+        void ResetStep(SerializedProperty step, int index, System.Type stepType)
         {
+            stepType ??= typeof(CharacterComboAction.ComboStep);
+            step.managedReferenceValue = System.Activator.CreateInstance(stepType);
+
             step.FindPropertyRelative("id").stringValue = $"step_{index + 1}";
             step.FindPropertyRelative("action").objectReferenceValue = null;
             step.FindPropertyRelative("magnitudeMultiplier").floatValue = 1f;
@@ -261,7 +267,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("comboResetDelay").floatValue = 1.2f;
             step.FindPropertyRelative("transitionWindowOpen").floatValue = 0.35f;
             step.FindPropertyRelative("transitionWindowClose").floatValue = 0.9f;
-            step.FindPropertyRelative("lockMovement").boolValue = true;
+
+            SerializedProperty legacyLockMovement = step.FindPropertyRelative("legacyLockMovement");
+            if (legacyLockMovement != null)
+            {
+                legacyLockMovement.boolValue = true;
+            }
+
+            SerializedProperty legacyLockMovementInRecovery = step.FindPropertyRelative("legacyLockMovementInRecovery");
+            if (legacyLockMovementInRecovery != null)
+            {
+                legacyLockMovementInRecovery.boolValue = true;
+            }
+
+            SerializedProperty movementLocksInitialized = step.FindPropertyRelative("movementLocksInitialized");
+            if (movementLocksInitialized != null)
+            {
+                movementLocksInitialized.boolValue = false;
+            }
+
+            step.FindPropertyRelative("lockMovementInWindup").boolValue = true;
+            step.FindPropertyRelative("lockMovementInActive").boolValue = true;
             step.FindPropertyRelative("lockMovementInRecovery").boolValue = true;
             step.FindPropertyRelative("lockAim").boolValue = true;
             step.FindPropertyRelative("zeroVelocityOnStart").boolValue = true;
@@ -295,6 +321,18 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             step.FindPropertyRelative("scaleRecoveryAnimationToStepDuration").boolValue = false;
             step.FindPropertyRelative("overrideAnimationSpeed").boolValue = false;
             step.FindPropertyRelative("graphPosition").vector2Value = new Vector2(420f + (index % 4) * 240f, 100f + (index / 4) * 180f);
+
+            SerializedProperty minimumCharge = step.FindPropertyRelative("minimumChargeTime");
+            if (minimumCharge != null)
+            {
+                minimumCharge.floatValue = 0.1f;
+            }
+
+            SerializedProperty maximumCharge = step.FindPropertyRelative("maximumChargeTime");
+            if (maximumCharge != null)
+            {
+                maximumCharge.floatValue = 0f;
+            }
         }
 
         static void ResetAnimation(SerializedProperty animation)
