@@ -27,6 +27,12 @@ MonoBehaviour:
     longPressMinThreshold: 0.35
     longPressMaxThreshold: 1
     graphPosition: {x: 0, y: 0}
+  - input: 0
+    stepId: stepLong
+    longPress: 1
+    longPressMinThreshold: 0.2
+    longPressMaxThreshold: 1
+    graphPosition: {x: 0, y: 0}
   steps:
   - id: step
     action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
@@ -63,10 +69,10 @@ MonoBehaviour:
       longPressMaxThreshold: 1
     - input: 0
       nextStepId: stepLong
-      queueUntilWindow: 0
+      queueUntilWindow: 1
       transitionDelay: 0
-      longPress: 0
-      longPressMinThreshold: 0.35
+      longPress: 1
+      longPressMinThreshold: 0.2
       longPressMaxThreshold: 1
     vfx: {fileID: 0}
     hitStopOnExecute: 0
@@ -164,7 +170,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: 4}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
-    graphPosition: {x: 379, y: 443}
+    graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
       nextStepId: 
@@ -461,8 +467,8 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0
-    active: 0.2
+    windup: 0.5
+    active: 0.1
     recovery: 0.1
     comboResetDelay: 0
     transitionWindowOpen: 0.35
@@ -474,7 +480,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 2a2154c2086bcaf4ea14cbf1795233d6, type: 3}
+    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}

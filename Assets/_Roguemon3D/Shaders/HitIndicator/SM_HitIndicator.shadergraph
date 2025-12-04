@@ -203,9 +203,6 @@
             "m_Id": "5708c200816646bfa7b6d3eaa438c082"
         },
         {
-            "m_Id": "1fd70a4c801b4f8ca7dcfa57aa4df99d"
-        },
-        {
             "m_Id": "5688b9d3e53a479eb5a2891701e0aa34"
         },
         {
@@ -1403,9 +1400,6 @@
                 "m_Id": "934864f0f2394f57832bd1d5c5e0f179"
             },
             {
-                "m_Id": "1fd70a4c801b4f8ca7dcfa57aa4df99d"
-            },
-            {
                 "m_Id": "7a39df2118434eedac5c6e7e4b115752"
             }
         ]
@@ -2364,40 +2358,6 @@
 
 {
     "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.BlockNode",
-    "m_ObjectId": "1fd70a4c801b4f8ca7dcfa57aa4df99d",
-    "m_Group": {
-        "m_Id": ""
-    },
-    "m_Name": "SurfaceDescription.AlphaClipThreshold",
-    "m_DrawState": {
-        "m_Expanded": true,
-        "m_Position": {
-            "serializedVersion": "2",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 0.0,
-            "height": 0.0
-        }
-    },
-    "m_Slots": [
-        {
-            "m_Id": "461e3f70ba814c3394a92258fd0663ea"
-        }
-    ],
-    "synonyms": [],
-    "m_Precision": 0,
-    "m_PreviewExpanded": true,
-    "m_DismissedVersion": 0,
-    "m_PreviewMode": 0,
-    "m_CustomColors": {
-        "m_SerializableColors": []
-    },
-    "m_SerializedDescriptor": "SurfaceDescription.AlphaClipThreshold"
-}
-
-{
-    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector2Node",
     "m_ObjectId": "20b90129bde841af82d2370899315602",
     "m_Group": {
@@ -3312,22 +3272,6 @@
         "z": 0.0,
         "w": 0.0
     },
-    "m_LiteralMode": false
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
-    "m_ObjectId": "461e3f70ba814c3394a92258fd0663ea",
-    "m_Id": 0,
-    "m_DisplayName": "Alpha Clip Threshold",
-    "m_SlotType": 0,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "AlphaClipThreshold",
-    "m_StageCapability": 2,
-    "m_Value": 0.5,
-    "m_DefaultValue": 0.5,
-    "m_Labels": [],
     "m_LiteralMode": false
 }
 
@@ -7164,7 +7108,7 @@
     "m_ZWriteControl": 0,
     "m_AlphaMode": 0,
     "m_RenderFace": 0,
-    "m_AlphaClip": true,
+    "m_AlphaClip": false,
     "m_CastShadows": false,
     "m_ReceiveShadows": false,
     "m_DisableTint": true,

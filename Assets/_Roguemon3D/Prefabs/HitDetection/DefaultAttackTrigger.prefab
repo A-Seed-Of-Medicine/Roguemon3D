@@ -46,13 +46,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitDetector
   triggerColliders:
-  - {fileID: 0}
+  - {fileID: 7789018480142547350}
+  - {fileID: 3924906810030853818}
+  - {fileID: 1410922674722212531}
   targetLayers:
     serializedVersion: 2
     m_Bits: 243
   includeTriggerColliders: 0
   allegianceMask: 01000000
-  windupIndicator: {fileID: 3555899409847565027}
+  windupIndicator: {fileID: 0}
   scaleWindupDuration: 1
   windupDeactivePhase: 2
   activeAnimation: {fileID: 0}
@@ -121,17 +123,21 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
---- !u!114 &3555899409847565027 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1568467376540128524, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+--- !u!64 &1410922674722212531 stripped
+MeshCollider:
+  m_CorrespondingSourceObject: {fileID: 3965944875397293404, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
   m_PrefabInstance: {fileID: 2638343471001939951}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 271498f36ec95b3488847b73cb4c54d8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ProceduralMeshGenerator
+--- !u!64 &3924906810030853818 stripped
+MeshCollider:
+  m_CorrespondingSourceObject: {fileID: 1361589683199156565, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+  m_PrefabInstance: {fileID: 2638343471001939951}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &7789018480142547350 stripped
+MeshCollider:
+  m_CorrespondingSourceObject: {fileID: 5225688919363016313, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+  m_PrefabInstance: {fileID: 2638343471001939951}
+  m_PrefabAsset: {fileID: 0}
 --- !u!198 &8755687311842327937 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
