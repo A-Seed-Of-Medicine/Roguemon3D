@@ -46,13 +46,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitDetector
   triggerColliders:
-  - {fileID: 896092550556888608}
+  - {fileID: 0}
   targetLayers:
     serializedVersion: 2
     m_Bits: 243
   includeTriggerColliders: 0
   allegianceMask: 01000000
-  windupIndicator: {fileID: 0}
+  windupIndicator: {fileID: 3555899409847565027}
   scaleWindupDuration: 1
   windupDeactivePhase: 2
   activeAnimation: {fileID: 0}
@@ -82,7 +82,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalRotation.x
@@ -90,7 +90,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalRotation.z
@@ -102,7 +102,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 180
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580329, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -112,28 +112,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: CFXR4 Sword Trail PLAIN (360 Spiral)
       objectReference: {fileID: 0}
-    - target: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
-      propertyPath: InitialModule.startColor.maxColor.b
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
-      propertyPath: InitialModule.startColor.maxColor.g
-      value: 0.98000383
-      objectReference: {fileID: 0}
-    - target: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
-      propertyPath: InitialModule.startColor.maxColor.r
-      value: 0
+    - target: {fileID: 6710139492206580335, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+      propertyPath: m_Mesh
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
---- !u!65 &896092550556888608 stripped
-BoxCollider:
-  m_CorrespondingSourceObject: {fileID: 2950640633328140751, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+--- !u!114 &3555899409847565027 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1568467376540128524, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
   m_PrefabInstance: {fileID: 2638343471001939951}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 271498f36ec95b3488847b73cb4c54d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProceduralMeshGenerator
 --- !u!198 &8755687311842327937 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}

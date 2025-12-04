@@ -21,8 +21,8 @@ Material:
   - _CFXR_OVERLAYBLEND_RGB
   - _CFXR_OVERLAYTEX_OFF
   - _CFXR_SINGLE_CHANNEL
-  - _SINGLECHANNEL_ON
   - _USEDISSOLVEOFFSETUV_ON
+  - _UVDISTORTIONADD_ON
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -50,7 +50,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: d7a96f1609d58e84cbf9f0a5d6182983, type: 3}
+        m_Texture: {fileID: 2800000, guid: 90d9528c3998f1d458c0ce29415205ac, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OverlayTex:
@@ -74,11 +74,11 @@ Material:
     - _DirectLightingRamp: 1
     - _DissolveAlongUVY: 0
     - _DissolveOffsetStrength: 0
-    - _DissolveSmooth: 0.025
-    - _Distort: 0.1
+    - _DissolveSmooth: 0.014
+    - _Distort: 0
     - _DoubleDissolve: 1
     - _DstBlend: 10
-    - _EdgeFadePow: 1
+    - _EdgeFadePow: 14.23
     - _FadeAlongU: 0
     - _HdrBoost: 0
     - _HdrMultiply: 0
@@ -89,11 +89,11 @@ Material:
     - _OVERLAYTEX: 0
     - _SecondColorSmooth: 0.2
     - _ShadowStrength: 1
-    - _SingleChannel: 1
+    - _SingleChannel: 0
     - _SoftParticlesFadeDistanceFar: 1
     - _SoftParticlesFadeDistanceNear: 0
     - _SrcBlend: 5
-    - _UVDistortionAdd: 0
+    - _UVDistortionAdd: 1
     - _UseAlphaClip: 0
     - _UseBackLighting: 0
     - _UseDissolve: 1
@@ -113,8 +113,8 @@ Material:
     m_Colors:
     - _Color: {r: 4.237095, g: 4.237095, b: 4.237095, a: 1}
     - _DissolveScroll: {r: -0.5, g: 0, b: 0, a: 0}
-    - _DistortScrolling: {r: 0, g: 0, b: 1, a: 1}
-    - _OverlayTex_Scroll: {r: 1, g: 0, b: 0.5, a: 1}
+    - _DistortScrolling: {r: -0.58, g: -1.32, b: 1, a: 1}
+    - _OverlayTex_Scroll: {r: 2.47, g: 0, b: 0.5, a: 1}
     - _ShadowColor: {r: 0, g: 0, b: 0, a: 1}
     - _SoftParticlesFadeDistance: {r: 0, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []

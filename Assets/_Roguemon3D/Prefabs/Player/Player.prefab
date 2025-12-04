@@ -433,6 +433,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9211809507394601753}
     m_Modifications:
+    - target: {fileID: 722093685692686077, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
+      propertyPath: m_Camera
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 1238320139362148339, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_Name
       value: PlayerSprite_SkinnedQuad

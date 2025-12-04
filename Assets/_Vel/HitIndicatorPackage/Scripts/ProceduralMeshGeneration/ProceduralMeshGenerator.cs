@@ -96,8 +96,6 @@ public class ProceduralMeshGenerator : MonoBehaviour
 
         if (autoUpdate)
             GenerateMesh(true);
-        else
-            UpdateTriggerVolume(true);
     }
 
     [ContextMenu("Generate Mesh")]
@@ -127,7 +125,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
 
         mesh.RecalculateNormals();
         UpdateParticleMesh();
-        UpdateTriggerVolume(destroyImmediate);
+        //UpdateTriggerVolume(destroyImmediate);
     }
 
     private void GenerateQuad(Mesh mesh)
