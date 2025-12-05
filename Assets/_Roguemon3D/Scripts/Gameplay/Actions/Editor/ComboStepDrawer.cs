@@ -63,10 +63,18 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 DrawProperty(property.FindPropertyRelative("transitionWindowClose"));
                 EditorGUI.indentLevel--;
 
+                Header("Charge");
+                EditorGUI.indentLevel++;
+                SerializedProperty chargeWindup = property.FindPropertyRelative("chargeWindup");
+                DrawProperty(chargeWindup);
+                DrawProperty(property.FindPropertyRelative("minimumChargeTime"));
+                DrawProperty(property.FindPropertyRelative("maximumChargeTime"));
+                DrawProperty(property.FindPropertyRelative("chargeMovementLocks"), "Charge Movement Locks", disabled: !chargeWindup.boolValue);
+                EditorGUI.indentLevel--;
+
                 Header("Movement");
                 EditorGUI.indentLevel++;
-                DrawProperty(property.FindPropertyRelative("lockMovement"));
-                DrawProperty(property.FindPropertyRelative("lockMovementInRecovery"));
+                DrawProperty(property.FindPropertyRelative("movementLocks"), "Movement Locks");
                 DrawProperty(property.FindPropertyRelative("lockAim"));
                 DrawProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
                 DrawProperty(property.FindPropertyRelative("missNudgeImpulse"));
@@ -198,10 +206,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             AddProperty(property.FindPropertyRelative("transitionWindowOpen"));
             AddProperty(property.FindPropertyRelative("transitionWindowClose"));
 
+            // Charge
+            AddHeader();
+            SerializedProperty chargeWindup = property.FindPropertyRelative("chargeWindup");
+            AddProperty(chargeWindup);
+            AddProperty(property.FindPropertyRelative("minimumChargeTime"));
+            AddProperty(property.FindPropertyRelative("maximumChargeTime"));
+            AddProperty(property.FindPropertyRelative("chargeMovementLocks"));
+
             // Movement
             AddHeader();
-            AddProperty(property.FindPropertyRelative("lockMovement"));
-            AddProperty(property.FindPropertyRelative("lockMovementInRecovery"));
+            AddProperty(property.FindPropertyRelative("movementLocks"));
             AddProperty(property.FindPropertyRelative("lockAim"));
             AddProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
             AddProperty(property.FindPropertyRelative("missNudgeImpulse"));
@@ -293,6 +308,121 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                    animationProperty.FindPropertyRelative("southEastClip").objectReferenceValue != null ||
                    animationProperty.FindPropertyRelative("northWestClip").objectReferenceValue != null ||
                    animationProperty.FindPropertyRelative("southWestClip").objectReferenceValue != null;
+        }
+    }
+
+    [CustomPropertyDrawer(typeof(CharacterComboAction.ComboTransition))]
+    public class ComboTransitionDrawer : PropertyDrawer
+    {
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+            Rect foldoutRect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
+            property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label, true);
+
+            if (property.isExpanded)
+            {
+                float spacing = EditorGUIUtility.standardVerticalSpacing;
+                float y = foldoutRect.y + EditorGUIUtility.singleLineHeight + spacing;
+                EditorGUI.indentLevel++;
+
+                Rect NextRect(float height)
+                {
+                    Rect rect = new Rect(position.x, y, position.width, height);
+                    y += height + spacing;
+                    return rect;
+                }
+
+                SerializedProperty input = property.FindPropertyRelative("input");
+                SerializedProperty nextStep = property.FindPropertyRelative("nextStepIndex");
+                SerializedProperty queue = property.FindPropertyRelative("queueUntilWindow");
+                SerializedProperty delay = property.FindPropertyRelative("transitionDelay");
+                SerializedProperty minimumHold = property.FindPropertyRelative("minimumHoldTime");
+                SerializedProperty longPress = property.FindPropertyRelative("longPress");
+                SerializedProperty longMin = property.FindPropertyRelative("longPressMinThreshold");
+                SerializedProperty longMax = property.FindPropertyRelative("longPressMaxThreshold");
+
+                float inputHeight = EditorGUI.GetPropertyHeight(input, true);
+                EditorGUI.PropertyField(NextRect(inputHeight), input, true);
+
+                DrawStepSelector(NextRect(EditorGUIUtility.singleLineHeight), nextStep, property.serializedObject);
+
+                float queueHeight = EditorGUI.GetPropertyHeight(queue, true);
+                EditorGUI.PropertyField(NextRect(queueHeight), queue, true);
+
+                float delayHeight = EditorGUI.GetPropertyHeight(delay, true);
+                EditorGUI.PropertyField(NextRect(delayHeight), delay, true);
+
+                float minHoldHeight = EditorGUI.GetPropertyHeight(minimumHold, true);
+                EditorGUI.PropertyField(NextRect(minHoldHeight), minimumHold, true);
+
+                float longPressHeight = EditorGUI.GetPropertyHeight(longPress, true);
+                EditorGUI.PropertyField(NextRect(longPressHeight), longPress, true);
+
+                float longMinHeight = EditorGUI.GetPropertyHeight(longMin, true);
+                EditorGUI.PropertyField(NextRect(longMinHeight), longMin, true);
+
+                float longMaxHeight = EditorGUI.GetPropertyHeight(longMax, true);
+                EditorGUI.PropertyField(NextRect(longMaxHeight), longMax, true);
+
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUI.EndProperty();
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            float height = EditorGUIUtility.singleLineHeight;
+            if (!property.isExpanded)
+            {
+                return height;
+            }
+
+            float spacing = EditorGUIUtility.standardVerticalSpacing;
+
+            float AddHeight(SerializedProperty prop)
+            {
+                float h = EditorGUI.GetPropertyHeight(prop, true);
+                height += h + spacing;
+                return h;
+            }
+
+            AddHeight(property.FindPropertyRelative("input"));
+            height += EditorGUIUtility.singleLineHeight + spacing; // step selector
+            AddHeight(property.FindPropertyRelative("queueUntilWindow"));
+            AddHeight(property.FindPropertyRelative("transitionDelay"));
+            AddHeight(property.FindPropertyRelative("minimumHoldTime"));
+            AddHeight(property.FindPropertyRelative("longPress"));
+            AddHeight(property.FindPropertyRelative("longPressMinThreshold"));
+            AddHeight(property.FindPropertyRelative("longPressMaxThreshold"));
+
+            height -= spacing;
+            return height;
+        }
+
+        static void DrawStepSelector(Rect position, SerializedProperty nextStep, SerializedObject serializedObject)
+        {
+            SerializedProperty steps = serializedObject.FindProperty("steps");
+            string[] options;
+            if (steps != null && steps.isArray && steps.arraySize > 0)
+            {
+                options = new string[steps.arraySize];
+                for (int i = 0; i < steps.arraySize; i++)
+                {
+                    SerializedProperty step = steps.GetArrayElementAtIndex(i);
+                    string id = step.FindPropertyRelative("id")?.stringValue;
+                    options[i] = string.IsNullOrWhiteSpace(id) ? $"Step {i}" : id;
+                }
+            }
+            else
+            {
+                options = new[] { "None" };
+            }
+
+            int current = Mathf.Clamp(nextStep.intValue, 0, Mathf.Max(0, options.Length - 1));
+            int selected = EditorGUI.Popup(position, "Next Step", current, options);
+            nextStep.intValue = Mathf.Clamp(selected, 0, options.Length - 1);
         }
     }
 }

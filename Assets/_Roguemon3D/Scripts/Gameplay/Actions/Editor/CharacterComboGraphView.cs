@@ -25,7 +25,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         SerializedProperty stepsProperty;
         SerializedProperty entryStepsProperty;
 
-        readonly Dictionary<string, ComboStepNode> stepNodes = new();
+        readonly Dictionary<int, ComboStepNode> stepNodesByIndex = new();
+        readonly Dictionary<string, ComboStepNode> stepNodesById = new();
         readonly List<EntryNode> entryNodes = new();
 
         public event Action<SerializedProperty> StepSelected;
@@ -70,7 +71,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 //if (element != grid)
                 RemoveElement(element);
             }
-            stepNodes.Clear();
+            stepNodesByIndex.Clear();
+            stepNodesById.Clear();
             entryNodes.Clear();
 
             if (serializedDefinition == null)
@@ -87,7 +89,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                     SerializedProperty stepProperty = stepsProperty.GetArrayElementAtIndex(i);
                     ComboStepNode node = CreateStepNode(stepProperty, i);
                     AddElement(node);
-                    stepNodes[node.StepId] = node;
+                    stepNodesByIndex[i] = node;
+                    stepNodesById[node.StepId] = node;
                 }
             }
 
@@ -117,7 +120,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 stepProperty.FindPropertyRelative("graphPosition").vector2Value = position;
             }
 
-            ComboStepNode node = new(stepProperty, HandleStepSelected)
+            ComboStepNode node = new(stepProperty, index, HandleStepSelected)
             {
                 userData = stepProperty
             };
@@ -144,7 +147,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
         void BuildConnections()
         {
-            foreach (ComboStepNode source in stepNodes.Values)
+            foreach (ComboStepNode source in stepNodesByIndex.Values)
             {
                 SerializedProperty transitions = source.TransitionsProperty;
                 if (transitions == null)
@@ -155,8 +158,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 for (int i = 0; i < transitions.arraySize; i++)
                 {
                     SerializedProperty transition = transitions.GetArrayElementAtIndex(i);
-                    string targetId = transition.FindPropertyRelative("nextStepId").stringValue;
-                    if (string.IsNullOrWhiteSpace(targetId) || !stepNodes.TryGetValue(targetId, out ComboStepNode target))
+                    int targetIndex = transition.FindPropertyRelative("nextStepIndex").intValue;
+                    if (!stepNodesByIndex.TryGetValue(targetIndex, out ComboStepNode target))
                     {
                         continue;
                     }
@@ -174,7 +177,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             foreach (EntryNode entryNode in entryNodes)
             {
                 string targetId = entryNode.StepId;
-                if (!string.IsNullOrWhiteSpace(targetId) && stepNodes.TryGetValue(targetId, out ComboStepNode stepNode))
+                if (!string.IsNullOrWhiteSpace(targetId) && stepNodesById.TryGetValue(targetId, out ComboStepNode stepNode))
                 {
                     Edge edge = entryNode.OutputPort.ConnectTo(stepNode.InputPort);
                     edge.capabilities &= ~Capabilities.Deletable;

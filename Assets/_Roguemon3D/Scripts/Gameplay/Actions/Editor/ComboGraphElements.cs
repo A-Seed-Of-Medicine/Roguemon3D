@@ -10,8 +10,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
     {
         readonly SerializedProperty stepProperty;
         readonly SerializedProperty positionProperty;
+        readonly int stepIndex;
 
         public string StepId => stepProperty.FindPropertyRelative("id").stringValue;
+        public int StepIndex => stepIndex;
         public SerializedProperty SerializedStep => stepProperty;
         public SerializedProperty TransitionsProperty => stepProperty.FindPropertyRelative("transitions");
         public Port InputPort { get; }
@@ -19,10 +21,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
         readonly System.Action<ComboStepNode> onSelected;
 
-        public ComboStepNode(SerializedProperty stepProperty, System.Action<ComboStepNode> onSelected)
+        public ComboStepNode(SerializedProperty stepProperty, int stepIndex, System.Action<ComboStepNode> onSelected)
         {
             this.stepProperty = stepProperty;
             positionProperty = stepProperty.FindPropertyRelative("graphPosition");
+            this.stepIndex = stepIndex;
             this.onSelected = onSelected;
 
             title = string.IsNullOrWhiteSpace(StepId) ? "Step" : StepId;
