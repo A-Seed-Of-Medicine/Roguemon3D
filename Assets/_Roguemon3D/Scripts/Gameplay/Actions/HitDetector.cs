@@ -142,7 +142,7 @@ public class HitDetector : MonoBehaviour
         {
             return phase switch
             {
-                ExecutionPhase.Windup => step.windup,
+                ExecutionPhase.Windup => step.WindupDuration,
                 ExecutionPhase.Active => step.active,
                 ExecutionPhase.Recovery => step.recovery,
                 _ => 0f
@@ -227,18 +227,18 @@ public class HitDetector : MonoBehaviour
         }
     }
     
-    public void HandleWindupIndicator(CharacterComboAction.ComboStep step)
-    {
-        if (!windupIndicator)
-            return;
-        if (scaleWindupDuration)
+        public void HandleWindupIndicator(CharacterComboAction.ComboStep step)
         {
-            float duration = scaleWindupDuration ? Mathf.Max(0.0001f, step.windup) : 1f;
-            ParticleSystem.MainModule main = windupIndicator.particleSystem.main;
-            main.startLifetime = duration;
-        }
-        windupIndicator.particleSystem.time = 0f;
-        windupIndicator.particleSystem.Play();
+            if (!windupIndicator)
+                return;
+            if (scaleWindupDuration)
+            {
+                float duration = scaleWindupDuration ? Mathf.Max(0.0001f, step.WindupDuration) : 1f;
+                ParticleSystem.MainModule main = windupIndicator.particleSystem.main;
+                main.startLifetime = duration;
+            }
+            windupIndicator.particleSystem.time = 0f;
+            windupIndicator.particleSystem.Play();
     }
 
     public void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits, System.Action<IDamageable> onHit)

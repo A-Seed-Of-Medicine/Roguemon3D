@@ -65,13 +65,21 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
                 Header("Movement");
                 EditorGUI.indentLevel++;
-                DrawProperty(property.FindPropertyRelative("lockMovement"));
-                DrawProperty(property.FindPropertyRelative("lockMovementInRecovery"));
+                DrawProperty(property.FindPropertyRelative("movementLocks"), "Movement Locks");
                 DrawProperty(property.FindPropertyRelative("lockAim"));
                 DrawProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
                 DrawProperty(property.FindPropertyRelative("missNudgeImpulse"));
                 DrawProperty(property.FindPropertyRelative("missNudgeDelay"));
                 DrawProperty(property.FindPropertyRelative("applyNudgeWhenHit"));
+                EditorGUI.indentLevel--;
+
+                Header("Charge");
+                EditorGUI.indentLevel++;
+                SerializedProperty chargeSettings = property.FindPropertyRelative("chargeSettings");
+                DrawProperty(chargeSettings.FindPropertyRelative("chargeWindup"));
+                DrawProperty(chargeSettings.FindPropertyRelative("minimumChargeTime"));
+                DrawProperty(chargeSettings.FindPropertyRelative("maximumChargeTime"));
+                DrawProperty(chargeSettings.FindPropertyRelative("movementLocks"), "Charge Movement Locks");
                 EditorGUI.indentLevel--;
 
                 Header("Hit Detection");
@@ -200,13 +208,20 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             // Movement
             AddHeader();
-            AddProperty(property.FindPropertyRelative("lockMovement"));
-            AddProperty(property.FindPropertyRelative("lockMovementInRecovery"));
+            AddProperty(property.FindPropertyRelative("movementLocks"));
             AddProperty(property.FindPropertyRelative("lockAim"));
             AddProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
             AddProperty(property.FindPropertyRelative("missNudgeImpulse"));
             AddProperty(property.FindPropertyRelative("missNudgeDelay"));
             AddProperty(property.FindPropertyRelative("applyNudgeWhenHit"));
+
+            // Charge
+            AddHeader();
+            SerializedProperty chargeSettings = property.FindPropertyRelative("chargeSettings");
+            AddProperty(chargeSettings.FindPropertyRelative("chargeWindup"));
+            AddProperty(chargeSettings.FindPropertyRelative("minimumChargeTime"));
+            AddProperty(chargeSettings.FindPropertyRelative("maximumChargeTime"));
+            AddProperty(chargeSettings.FindPropertyRelative("movementLocks"));
 
             // Hit Detection
             AddHeader();
