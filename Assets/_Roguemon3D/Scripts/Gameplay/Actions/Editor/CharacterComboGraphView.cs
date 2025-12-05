@@ -155,7 +155,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 for (int i = 0; i < transitions.arraySize; i++)
                 {
                     SerializedProperty transition = transitions.GetArrayElementAtIndex(i);
-                    string targetId = transition.FindPropertyRelative("nextStepId").stringValue;
+                    int targetIndex = transition.FindPropertyRelative("nextStep")?.FindPropertyRelative("stepIndex")?.intValue ?? -1;
+                    string targetId = ResolveStepId(targetIndex);
                     if (string.IsNullOrWhiteSpace(targetId) || !stepNodes.TryGetValue(targetId, out ComboStepNode target))
                     {
                         continue;
@@ -181,6 +182,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                     AddElement(edge);
                 }
             }
+        }
+
+        string ResolveStepId(int stepIndex)
+        {
+            if (stepsProperty == null || stepIndex < 0 || stepIndex >= stepsProperty.arraySize)
+            {
+                return null;
+            }
+
+            SerializedProperty stepProperty = stepsProperty.GetArrayElementAtIndex(stepIndex);
+            return stepProperty.FindPropertyRelative("id")?.stringValue;
         }
 
         static string FormatTransitionLabel(SerializedProperty transition)

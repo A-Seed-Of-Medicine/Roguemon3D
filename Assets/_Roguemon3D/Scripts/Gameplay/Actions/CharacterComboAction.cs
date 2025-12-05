@@ -8,6 +8,7 @@ using UnityEngine;
 using HSM;
 using ImprovedTimers;
 using _Roguemon3D.Scripts.Utils;
+using UnityEngine.Serialization;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
 {
@@ -54,8 +55,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         public class ComboTransition
         {
             public ComboInput input = ComboInput.SameAsBinding;
-            [Tooltip("Identifier of the combo step to play when this transition is taken.")]
-            public string nextStepId;
+            [Tooltip("Combo step to play when this transition is taken.")]
+            public ComboStepReference nextStep = new ComboStepReference();
             [Tooltip("If true the input will be stored until the transition window opens.")]
             public bool queueUntilWindow = true;
             [Tooltip("Additional delay applied once the transition window opens before the next step starts.")]
@@ -86,6 +87,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             [Header("Timing")]
             [Min(0f)] public float windup = 0.05f;
+            [Tooltip("If true the windup phase will wait for input release before proceeding.")]
+            public bool chargeWindup;
+            [Tooltip("Minimum time (seconds) the windup must last before the attack can execute when charging.")]
+            [Min(0f)] public float minimumChargeTime = 0.05f;
+            [Tooltip("Maximum time (seconds) the windup can be held before executing. Set to 0 for unlimited.")]
+            [Min(0f)] public float maximumChargeTime;
             [Tooltip("Duration of the active window when hits can be registered.")]
             [Min(0f)] public float active = 0.15f;
             [Tooltip("Recovery time after the active window.")]
@@ -98,9 +105,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             [Range(0f, 1f)] public float transitionWindowClose = 0.9f;
 
             [Header("Movement")]
-            public bool lockMovement = true;
+            public bool lockMovementInWindup = true;
+            public bool lockMovementInActive = true;
             public bool lockMovementInRecovery = true;
-            public bool lockAim = true;
+            public bool lockAimInWindup = true;
+            public bool lockAimInActive = true;
+            public bool lockAimInRecovery = true;
             public bool zeroVelocityOnStart = true;
             [Tooltip("Impulse applied along the aim direction if the step doesn't connect with a target.")]
             public float missNudgeImpulse;
@@ -152,6 +162,30 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public float TransitionCloseTime => Mathf.Clamp01(transitionWindowClose) * TotalDuration;
         }
 
+        [Serializable]
+        public class ComboStepReference
+        {
+            [SerializeField, FormerlySerializedAs("nextStepId")]
+            int stepIndex = -1;
+
+            public int StepIndex => stepIndex;
+
+            public ComboStep Resolve(IReadOnlyList<ComboStep> steps)
+            {
+                if (steps == null)
+                {
+                    return null;
+                }
+
+                return stepIndex >= 0 && stepIndex < steps.Count ? steps[stepIndex] : null;
+            }
+
+            public void SetIndex(int index)
+            {
+                stepIndex = index;
+            }
+        }
+
         [Header("Combo Definition")]
         [SerializeField] CharacterComboDefinition comboDefinition;
 
@@ -166,6 +200,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         HitDetector activeHitDetector;
 
         const float DefaultQueuedInputLifetime = 0.35f;
+        const float UnlimitedChargeStepDuration = 30f;
+        const float InfinitePhaseLockDuration = 9999f;
 
         ComboEntry[] EntrySteps => comboDefinition ? comboDefinition.EntrySteps : Array.Empty<ComboEntry>();
         ComboStep[] Steps => comboDefinition ? comboDefinition.Steps : Array.Empty<ComboStep>();
@@ -193,6 +229,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool pendingStepIsLongPress;
         float pendingStepHoldDuration;
         float pendingStepHoldNormalized;
+        ComboInput pendingStepInput = ComboInput.SameAsBinding;
+
+        ComboInput currentStepInput = ComboInput.SameAsBinding;
+        bool awaitingChargeRelease;
+        bool chargeReleaseRequested;
+        float chargeWindupElapsed;
+        bool windupPhaseComplete;
+        float stepStartTime;
 
         float currentStepElapsed;
         bool stepWasActive;
@@ -204,11 +248,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         Vector3 cachedStepDirection = Vector3.forward;
         float pendingComboResetDelay;
         bool stepHitStopAppliedOnHit;
+        bool movementLockedByStep;
+        bool aimLockedByStep;
 
         internal bool IsComboExecuting => comboActive || IsCurrentStepRunning || pendingDelayActive;
 
         internal bool IsCurrentStepRunning => currentStep != null &&
-                                      ((windupTimer?.IsRunning ?? false) ||
+                                      (awaitingChargeRelease ||
+                                       (windupTimer?.IsRunning ?? false) ||
                                        (activeTimer?.IsRunning ?? false) ||
                                        (recoveryTimer?.IsRunning ?? false) ||
                                        (stepTimer?.IsRunning ?? false));
@@ -236,6 +283,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public ComboTransition LongTransition;
             public ComboEntry ShortEntry;
             public ComboEntry LongEntry;
+            public ComboInput Input = ComboInput.SameAsBinding;
 
             public void ResetForPress(float time)
             {
@@ -246,6 +294,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 LongTransition = null;
                 ShortEntry = null;
                 LongEntry = null;
+                Input = ComboInput.SameAsBinding;
             }
 
             public void Reset()
@@ -257,6 +306,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 ShortEntry = null;
                 LongEntry = null;
                 PressStartTime = 0f;
+                Input = ComboInput.SameAsBinding;
             }
         }
 
@@ -398,6 +448,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             PressState state = GetOrCreatePressState(input);
             state.ResetForPress(Time.time);
+            state.Input = input;
 
             if (TryHandleEntryPress(input, state))
             {
@@ -422,14 +473,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 {
                     float normalized = CalculateHoldNormalized(duration, state.LongTransition.longPressMinThreshold,
                         state.LongTransition.longPressMaxThreshold);
-                    TriggerTransition(state.LongTransition, true, duration, normalized);
+                    TriggerTransition(state.LongTransition, state.Input, true, duration, normalized);
                     state.LongTriggered = true;
                 }
                 else if (state.LongEntry != null && HasLongPressElapsed(duration, state.LongEntry.longPressMinThreshold))
                 {
                     float normalized = CalculateHoldNormalized(duration, state.LongEntry.longPressMinThreshold,
                         state.LongEntry.longPressMaxThreshold);
-                    TriggerEntry(state.LongEntry, true, duration, normalized);
+                    TriggerEntry(state.LongEntry, state.Input, true, duration, normalized);
                     state.LongTriggered = true;
                 }
             }
@@ -440,15 +491,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
                 if (state.ShortTransition != null)
                 {
-                    TriggerTransition(state.ShortTransition, false, duration, normalized);
+                    TriggerTransition(state.ShortTransition, state.Input, false, duration, normalized);
                 }
                 else if (state.ShortEntry != null)
                 {
-                    TriggerEntry(state.ShortEntry, false, duration, normalized);
+                    TriggerEntry(state.ShortEntry, state.Input, false, duration, normalized);
                 }
             }
 
             state.Reset();
+
+            TryRequestChargeRelease(input);
         }
 
         bool TryHandleEntryPress(ComboInput input, PressState state)
@@ -466,7 +519,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (shortEntry == null && longEntry == null && EntrySteps.Length == 0 && Steps.Length > 0)
             {
-                StartStep(Steps[0], false, false, 0f, 0f);
+                StartStep(Steps[0], false, false, 0f, 0f, input);
                 state.Reset();
                 return true;
             }
@@ -478,7 +531,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (shortEntry != null)
             {
-                TriggerEntry(shortEntry, false, 0f, 0f);
+                TriggerEntry(shortEntry, input, false, 0f, 0f);
                 state.Reset();
                 return true;
             }
@@ -505,7 +558,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (shortTransition != null)
             {
-                TriggerTransition(shortTransition, false, 0f, 0f);
+                TriggerTransition(shortTransition, input, false, 0f, 0f);
                 state.Reset();
             }
         }
@@ -527,17 +580,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return 0f;
         }
 
-        void TriggerTransition(ComboTransition transition, bool isLongPress, float holdDuration, float holdNormalized)
+        void TriggerTransition(ComboTransition transition, ComboInput input, bool isLongPress, float holdDuration, float holdNormalized)
         {
             if (transition == null)
             {
                 return;
             }
 
-            QueueOrExecuteTransition(transition, holdDuration, holdNormalized, isLongPress);
+            QueueOrExecuteTransition(transition, input, holdDuration, holdNormalized, isLongPress);
         }
 
-        void TriggerEntry(ComboEntry entry, bool isLongPress, float holdDuration, float holdNormalized)
+        void TriggerEntry(ComboEntry entry, ComboInput input, bool isLongPress, float holdDuration, float holdNormalized)
         {
             if (entry == null)
             {
@@ -550,7 +603,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
-            StartStep(step, false, isLongPress, holdDuration, holdNormalized);
+            StartStep(step, false, isLongPress, holdDuration, holdNormalized, input);
         }
 
         void GetEntryOptions(ComboInput input, out ComboEntry shortEntry, out ComboEntry longEntry)
@@ -619,14 +672,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 {
                     float normalized = CalculateHoldNormalized(duration, state.LongTransition.longPressMinThreshold,
                         state.LongTransition.longPressMaxThreshold);
-                    TriggerTransition(state.LongTransition, true, duration, normalized);
+                    TriggerTransition(state.LongTransition, state.Input, true, duration, normalized);
                     state.LongTriggered = true;
                 }
                 else if (state.LongEntry != null && HasLongPressElapsed(duration, state.LongEntry.longPressMinThreshold))
                 {
                     float normalized = CalculateHoldNormalized(duration, state.LongEntry.longPressMinThreshold,
                         state.LongEntry.longPressMaxThreshold);
-                    TriggerEntry(state.LongEntry, true, duration, normalized);
+                    TriggerEntry(state.LongEntry, state.Input, true, duration, normalized);
                     state.LongTriggered = true;
                 }
             }
@@ -637,6 +690,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (!IsCurrentStepRunning)
             {
                 return;
+            }
+
+            if (currentStep?.chargeWindup == true)
+            {
+                UpdateChargeWindup(delta);
             }
 
             currentStepElapsed = GetCurrentStepElapsed();
@@ -678,9 +736,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return 0f;
             }
 
-            float totalDuration = Mathf.Max(0f, currentStep.TotalDuration);
-            float remaining = Mathf.Clamp(stepTimer?.CurrentTime ?? 0f, 0f, totalDuration);
-            return totalDuration - remaining;
+            return Mathf.Max(0f, Time.time - stepStartTime);
         }
 
         void OnStepActiveWindowEnded()
@@ -696,6 +752,29 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             activeHitDetector?.Deactivate();
+        }
+
+        float GetPlannedStepDuration(ComboStep step)
+        {
+            if (step == null)
+            {
+                return 0f;
+            }
+
+            float duration = Mathf.Max(0f, step.TotalDuration);
+            if (step.chargeWindup)
+            {
+                if (step.maximumChargeTime > 0f)
+                {
+                    duration += Mathf.Max(0f, step.maximumChargeTime - step.windup);
+                }
+                else
+                {
+                    duration += UnlimitedChargeStepDuration;
+                }
+            }
+
+            return duration;
         }
 
         void CompleteCurrentStep()
@@ -719,7 +798,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             StartComboResetCountdown();
         }
 
-        void StartStep(ComboStep step, bool isContinuation, bool isLongPress, float holdDuration, float holdNormalized)
+        void StartStep(ComboStep step, bool isContinuation, bool isLongPress, float holdDuration, float holdNormalized, ComboInput input)
         {
             if (step == null || Controller == null)
             {
@@ -743,6 +822,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             ResetPendingTransition();
             comboResetTimer.Cancel();
             currentStep = step;
+            currentStepInput = input;
             ApplyStepPressMetadata(step, isLongPress, holdDuration, holdNormalized);
             currentStepElapsed = 0f;
             stepWasActive = false;
@@ -754,6 +834,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             nudgeTimer = 0f;
             pendingComboResetDelay = 0f;
             stepHitStopAppliedOnHit = false;
+            stepStartTime = Time.time;
 
             inActivePhase = false;
             inRecoveryPhase = false;
@@ -764,7 +845,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             stepTimer.Cancel();
             transitionDelayTimer.Cancel();
 
-            float totalDuration = Mathf.Max(0f, currentStep.TotalDuration);
+            float totalDuration = Mathf.Max(0f, GetPlannedStepDuration(currentStep));
             if (totalDuration > 0f)
             {
                 stepTimer.Start(totalDuration);
@@ -776,20 +857,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             SpawnHitDetectorForStep(step);
             ApplyStepHitStopOnExecute(step);
 
-            if (step.lockMovement)
-            {
-                float recoveryDuration = step.lockMovementInRecovery ? step.recovery : 0f;
-                float lockTime = step.windup + step.active + recoveryDuration;
-                Controller.LockMovement(lockTime, step.zeroVelocityOnStart);
-            }
-            
-            if (step.lockAim)
-            {
-                float recoveryDuration = step.lockMovementInRecovery ? step.recovery : 0f;
-                float lockTime = step.windup + step.active + recoveryDuration;
-                Controller.LockAim(lockTime);
-            }
-
             if (step.zeroVelocityOnStart && body)
             {
                 Vector3 currentVelocity = body.linearVelocity;
@@ -800,7 +867,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 Controller.ForceFacing(cachedStepDirection);
             }
-            
+
             Controller.ApplyMovementModifier(overrideMovementProfile, -1f);
 
             StartWindupPhase(step);
@@ -945,9 +1012,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             activeHitDetector?.HandlePhaseStart(HitDetector.ExecutionPhase.Windup, step);
 
+            windupPhaseComplete = false;
+            awaitingChargeRelease = step.chargeWindup;
+            chargeReleaseRequested = false;
+            chargeWindupElapsed = 0f;
+
+            ApplyPhaseLocks(step, HitDetector.ExecutionPhase.Windup);
+
             if (step.windup > 0f)
             {
-                windupTimer.Start(step.windup);
+                if (step.chargeWindup)
+                {
+                    float maxCharge = Mathf.Max(0f, step.maximumChargeTime);
+                    if (maxCharge > 0f)
+                    {
+                        windupTimer.Start(maxCharge);
+                    }
+                }
+                else
+                {
+                    windupTimer.Start(step.windup);
+                }
             }
             else
             {
@@ -962,8 +1047,188 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
+            if (currentStep.chargeWindup && awaitingChargeRelease && !HasReachedMinimumCharge(currentStep))
+            {
+                chargeReleaseRequested = true;
+                return;
+            }
+
+            CompleteWindupPhase();
+        }
+
+        void CompleteWindupPhase()
+        {
+            if (currentStep == null || windupPhaseComplete)
+            {
+                return;
+            }
+
+            awaitingChargeRelease = false;
+            windupPhaseComplete = true;
+            windupTimer.Cancel();
             activeHitDetector?.HandlePhaseEnd(HitDetector.ExecutionPhase.Windup);
             StartActivePhase();
+        }
+
+        void UpdateChargeWindup(float delta)
+        {
+            if (currentStep == null || windupPhaseComplete || !awaitingChargeRelease)
+            {
+                return;
+            }
+
+            chargeWindupElapsed += Mathf.Max(0f, delta);
+
+            if (currentStep.maximumChargeTime > 0f && chargeWindupElapsed >= currentStep.maximumChargeTime)
+            {
+                CompleteWindupPhase();
+                return;
+            }
+
+            if (chargeReleaseRequested && HasReachedMinimumCharge(currentStep))
+            {
+                CompleteWindupPhase();
+            }
+        }
+
+        bool HasReachedMinimumCharge(ComboStep step)
+        {
+            if (step == null)
+            {
+                return true;
+            }
+
+            float minCharge = step.chargeWindup ? Mathf.Max(step.minimumChargeTime, step.windup) : step.windup;
+            return chargeWindupElapsed >= minCharge;
+        }
+
+        ComboInput ResolveStepInput(ComboInput input)
+        {
+            return input == ComboInput.SameAsBinding ? MapBindingToInput(binding) : input;
+        }
+
+        void TryRequestChargeRelease(ComboInput input)
+        {
+            if (currentStep == null || !currentStep.chargeWindup)
+            {
+                return;
+            }
+
+            ComboInput resolved = ResolveStepInput(currentStepInput);
+            if (resolved == input)
+            {
+                chargeReleaseRequested = true;
+                if (HasReachedMinimumCharge(currentStep))
+                {
+                    CompleteWindupPhase();
+                }
+            }
+        }
+
+        void ApplyPhaseLocks(ComboStep step, HitDetector.ExecutionPhase phase)
+        {
+            if (Controller == null || step == null)
+            {
+                return;
+            }
+
+            float duration = GetPhaseLockDuration(step, phase);
+            bool zeroVelocity = phase == HitDetector.ExecutionPhase.Windup && step.zeroVelocityOnStart;
+
+            SetMovementLockForPhase(ShouldLockMovement(step, phase), duration, zeroVelocity);
+            SetAimLockForPhase(ShouldLockAim(step, phase), duration);
+        }
+
+        void SetMovementLockForPhase(bool shouldLock, float duration, bool zeroVelocity)
+        {
+            if (Controller == null)
+            {
+                return;
+            }
+
+            if (shouldLock)
+            {
+                Controller.LockMovement(Mathf.Max(0f, duration), zeroVelocity);
+                movementLockedByStep = true;
+            }
+            else if (movementLockedByStep)
+            {
+                Controller.UnlockMovement();
+                movementLockedByStep = false;
+            }
+        }
+
+        void SetAimLockForPhase(bool shouldLock, float duration)
+        {
+            if (Controller == null)
+            {
+                return;
+            }
+
+            if (shouldLock)
+            {
+                Controller.LockAim(Mathf.Max(0f, duration));
+                aimLockedByStep = true;
+            }
+            else if (aimLockedByStep)
+            {
+                Controller.UnlockAim();
+                aimLockedByStep = false;
+            }
+        }
+
+        float GetPhaseLockDuration(ComboStep step, HitDetector.ExecutionPhase phase)
+        {
+            return phase switch
+            {
+                HitDetector.ExecutionPhase.Windup => step.chargeWindup
+                    ? (step.maximumChargeTime > 0f ? step.maximumChargeTime : InfinitePhaseLockDuration)
+                    : step.windup,
+                HitDetector.ExecutionPhase.Active => step.active,
+                HitDetector.ExecutionPhase.Recovery => step.recovery,
+                _ => 0f
+            };
+        }
+
+        bool ShouldLockMovement(ComboStep step, HitDetector.ExecutionPhase phase)
+        {
+            return phase switch
+            {
+                HitDetector.ExecutionPhase.Windup => step.lockMovementInWindup,
+                HitDetector.ExecutionPhase.Active => step.lockMovementInActive,
+                HitDetector.ExecutionPhase.Recovery => step.lockMovementInRecovery,
+                _ => false
+            };
+        }
+
+        bool ShouldLockAim(ComboStep step, HitDetector.ExecutionPhase phase)
+        {
+            return phase switch
+            {
+                HitDetector.ExecutionPhase.Windup => step.lockAimInWindup,
+                HitDetector.ExecutionPhase.Active => step.lockAimInActive,
+                HitDetector.ExecutionPhase.Recovery => step.lockAimInRecovery,
+                _ => false
+            };
+        }
+
+        void ReleasePhaseLocks()
+        {
+            if (Controller != null)
+            {
+                if (movementLockedByStep)
+                {
+                    Controller.UnlockMovement();
+                }
+
+                if (aimLockedByStep)
+                {
+                    Controller.UnlockAim();
+                }
+            }
+
+            movementLockedByStep = false;
+            aimLockedByStep = false;
         }
 
         void StartActivePhase()
@@ -978,6 +1243,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             activeHitDetector?.HandlePhaseStart(HitDetector.ExecutionPhase.Active, currentStep);
             ApplyStepAnimation(currentStep, HitDetector.ExecutionPhase.Active);
+
+            ApplyPhaseLocks(currentStep, HitDetector.ExecutionPhase.Active);
 
             if (currentStep.vfx)
             {
@@ -1036,6 +1303,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             activeHitDetector?.HandlePhaseStart(HitDetector.ExecutionPhase.Recovery, currentStep);
             ApplyStepAnimation(currentStep, HitDetector.ExecutionPhase.Recovery);
+
+            ApplyPhaseLocks(currentStep, HitDetector.ExecutionPhase.Recovery);
 
             if (inRecoveryPhase)
             {
@@ -1233,9 +1502,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             body.linearVelocity = new Vector3(planarVelocity.x, current.y, planarVelocity.z);
         }
 
-        void QueueOrExecuteTransition(ComboTransition transition, float holdDuration, float holdNormalized, bool isLongPress)
+        void QueueOrExecuteTransition(ComboTransition transition, ComboInput input, float holdDuration, float holdNormalized, bool isLongPress)
         {
-            ComboStep step = ResolveStep(transition.nextStepId);
+            ComboStep step = ResolveTransitionStep(transition);
             if (step == null)
             {
                 return;
@@ -1254,6 +1523,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             pendingStepIsLongPress = isLongPress;
             pendingStepHoldDuration = Mathf.Max(0f, holdDuration);
             pendingStepHoldNormalized = Mathf.Clamp01(holdNormalized);
+            pendingStepInput = input;
             transitionDelayTimer.Cancel();
 
             if (!transition.queueUntilWindow && CanTransitionFromCurrentStep() && pendingStepDelay <= 0f)
@@ -1291,7 +1561,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 float holdDuration = pendingStepHoldDuration;
                 float holdNormalized = pendingStepHoldNormalized;
                 ResetPendingTransition();
-                StartStep(step, true, isLongPress, holdDuration, holdNormalized);
+                StartStep(step, true, isLongPress, holdDuration, holdNormalized, pendingStepInput);
             }
         }
 
@@ -1329,6 +1599,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             float totalDuration = Mathf.Max(0f, currentStep.TotalDuration);
+            if (currentStep.chargeWindup)
+            {
+                totalDuration = Mathf.Max(totalDuration, GetPlannedStepDuration(currentStep));
+            }
             if (totalDuration <= 0f)
             {
                 return true;
@@ -1367,7 +1641,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             FindTransitionOptions(currentStep, ComboInput.Release, out ComboTransition releaseTransition, out _);
             if (releaseTransition != null)
             {
-                QueueOrExecuteTransition(releaseTransition, 0f, 0f, false);
+                QueueOrExecuteTransition(releaseTransition, ComboInput.Release, 0f, 0f, false);
             }
         }
 
@@ -1399,6 +1673,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     }
                 }
             }
+        }
+
+        ComboStep ResolveTransitionStep(ComboTransition transition)
+        {
+            return transition?.nextStep?.Resolve(Steps);
         }
 
         ComboStep ResolveStep(string id)
@@ -1437,6 +1716,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             recoveryTimer.Cancel();
             stepTimer.Cancel();
             pendingComboResetDelay = 0f;
+            awaitingChargeRelease = false;
+            chargeReleaseRequested = false;
+            chargeWindupElapsed = 0f;
+            windupPhaseComplete = false;
+            currentStepInput = ComboInput.SameAsBinding;
+            stepStartTime = 0f;
+            ReleasePhaseLocks();
         }
 
         void ResetPendingTransition()
@@ -1449,6 +1735,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             pendingStepIsLongPress = false;
             pendingStepHoldDuration = 0f;
             pendingStepHoldNormalized = 0f;
+            pendingStepInput = ComboInput.SameAsBinding;
             transitionDelayTimer.Cancel();
         }
 
