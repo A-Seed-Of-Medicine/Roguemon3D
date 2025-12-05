@@ -1098,7 +1098,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return true;
             }
 
-            float minCharge = step.chargeWindup ? Mathf.Max(step.minimumChargeTime, step.windup) : step.windup;
+            float minCharge = step.chargeWindup ? step.minimumChargeTime : step.windup;
             return chargeWindupElapsed >= minCharge;
         }
 
