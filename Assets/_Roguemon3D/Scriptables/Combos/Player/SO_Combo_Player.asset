@@ -26,13 +26,13 @@ MonoBehaviour:
     longPress: 0
     longPressMinThreshold: 0.35
     longPressMaxThreshold: 1
-    graphPosition: {x: 0, y: 0}
+    graphPosition: {x: 41, y: 661}
   - input: 0
     stepId: stepLong
     longPress: 1
     longPressMinThreshold: 0.2
     longPressMaxThreshold: 1
-    graphPosition: {x: 0, y: 0}
+    graphPosition: {x: 41, y: 319}
   steps:
   - id: step
     action: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
@@ -170,7 +170,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: 4}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
-    graphPosition: {x: 0, y: 0}
+    graphPosition: {x: 400, y: 623}
     transitions:
     - input: 0
       nextStepId: 

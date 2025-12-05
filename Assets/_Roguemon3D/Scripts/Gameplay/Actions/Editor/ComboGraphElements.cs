@@ -48,12 +48,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             onSelected?.Invoke(this);
         }
 
-        public override void SetPosition(Rect newPos)
-        {
-            base.SetPosition(newPos);
-            UpdateStoredPosition();
-        }
-
         public void UpdateStoredPosition()
         {
             if (positionProperty == null)
@@ -101,12 +95,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         {
             base.OnSelected();
             onSelected?.Invoke(this);
-        }
-
-        public override void SetPosition(Rect newPos)
-        {
-            base.SetPosition(newPos);
-            UpdateStoredPosition();
         }
 
         public void UpdateStoredPosition()
