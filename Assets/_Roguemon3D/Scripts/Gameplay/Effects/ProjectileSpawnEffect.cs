@@ -30,7 +30,7 @@ namespace _PinBoy.Scripts.Gameplay.Effects
             }
 
             Vector3? directionOverride = useContextDirection ? context.Direction : (Vector3?)null;
-            controller.aimData.TryFireConfiguredProjectile(projectileConfigurationId, directionOverride, context.Source,
+            controller.aimData.TryFireConfiguredProjectile(projectileConfigurationId, context.TargetPosition, context.Source,
                 context.Magnitude);
         }
     }

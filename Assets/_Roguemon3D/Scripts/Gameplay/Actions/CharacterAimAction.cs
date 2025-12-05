@@ -68,9 +68,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             UpdateAimLine();
         }
 
-        public bool TryFireConfiguredProjectile(string configurationId = null, Vector3? directionOverride = null,
+        public bool TryFireConfiguredProjectile(string configurationId, Vector3 targetPosition,
             IDamager sourceOverride = null, float? effectMagnitudeOverride = null)
         {
+            Vector3 direction = targetPosition - GetSpawnPosition(ResolveConfiguration(configurationId)).normalized;
+            
             ProjectileConfiguration configuration = ResolveConfiguration(configurationId);
             Debug.Log($"Trying to fire projectile with configuration '{configurationId ?? "default"}' on {name}.", this);
             if (configuration == null)
@@ -79,13 +81,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return false;
             }
 
-            Vector3? normalizedDirection = directionOverride;
-            if (normalizedDirection.HasValue && normalizedDirection.Value.sqrMagnitude > 0.0001f)
-            {
-                normalizedDirection = normalizedDirection.Value.normalized;
-            }
-
-            return TryFire(configuration, GetCurrentAimWorldPosition(), normalizedDirection, sourceOverride,
+            return TryFire(configuration, GetCurrentAimWorldPosition(), direction, sourceOverride,
                 effectMagnitudeOverride);
         }
 
