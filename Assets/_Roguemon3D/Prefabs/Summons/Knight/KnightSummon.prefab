@@ -153,6 +153,7 @@ MonoBehaviour:
     crossFade: 0
     playbackSpeed: 1
     overrideSpeed: 0
+  <Controller>k__BackingField: {fileID: 1926462323346943907}
   comboDefinition: {fileID: 11400000, guid: f5a8fcabb714c0248a4da3fb994bd65a, type: 2}
   overrideMovementProfile: {fileID: 0}
 --- !u!114 &1926462323346943907
@@ -194,7 +195,8 @@ MonoBehaviour:
   jumpReleaseGravityMultiplier: 2
   terminalVelocity: -60
   <allegiance>k__BackingField: 1
-  SummonData: {fileID: 0}
+  summonData: {fileID: 0}
+  aimData: {fileID: 0}
   <health>k__BackingField:
     max: 50
     current: 50
@@ -890,11 +892,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: InitialModule.startRotationX.scalar
-      value: 1.5707963
+      value: 1.5707964
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: InitialModule.startRotationY.scalar
       value: -1.5707963
+      objectReference: {fileID: 0}
+    - target: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+      propertyPath: EmissionModule.m_Bursts.Array.data[0].repeatInterval
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580335, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_Mesh

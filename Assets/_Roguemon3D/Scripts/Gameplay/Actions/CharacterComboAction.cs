@@ -343,8 +343,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
         }
 
-        void OnValidate()
+        public override void OnValidate()
         {
+            base.OnValidate();
             BuildLookups();
         }
 

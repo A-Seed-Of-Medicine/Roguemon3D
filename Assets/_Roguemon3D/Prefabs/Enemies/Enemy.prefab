@@ -251,7 +251,8 @@ MonoBehaviour:
   jumpReleaseGravityMultiplier: 2
   terminalVelocity: -60
   <allegiance>k__BackingField: 1
-  SummonData: {fileID: 0}
+  summonData: {fileID: 0}
+  aimData: {fileID: 0}
   <health>k__BackingField:
     max: 30
     current: 30
@@ -374,6 +375,7 @@ MonoBehaviour:
     crossFade: 0
     playbackSpeed: 1
     overrideSpeed: 0
+  <Controller>k__BackingField: {fileID: 5590122781720635312}
   comboDefinition: {fileID: 11400000, guid: b8732f25e346d0e469833ef33a1f7e77, type: 2}
   overrideMovementProfile: {fileID: 0}
 --- !u!1 &4839880524471253835

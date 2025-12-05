@@ -35,5 +35,5 @@ MonoBehaviour:
     - rid: 8319331094120890578
       type: {class: ProjectileSpawnEffect, ns: _PinBoy.Scripts.Gameplay.Effects, asm: Assembly-CSharp}
       data:
-        projectileConfigurationId: default
+        projectileConfigurationId: Default
         useContextDirection: 1

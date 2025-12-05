@@ -36,7 +36,7 @@ namespace _PinBoy.Scripts.Gameplay.Creatures
         void Awake()
         {
             agentController ??= GetComponent<AgentController>();
-            agentController.SummonData = this;
+            agentController.summonData = this;
             comboAction ??= GetComponent<CharacterComboAction>();
             summonSpawnPoint ??= transform;
         }

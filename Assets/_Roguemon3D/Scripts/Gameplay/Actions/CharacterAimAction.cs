@@ -12,7 +12,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
     /// Character aim action that spawns and launches a projectile towards the current aim direction.
     /// Works with both player input and AI driven contexts.
     /// </summary>
-    public class ProjectileCharacterAimAction : CharacterAction
+    public class CharacterAimAction : CharacterAction
     {
         [Serializable]
         public class ProjectileConfiguration
@@ -29,18 +29,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public float projectileSpeedMultiplier = 1f;
         }
 
-        [Header("Projectile")]
-        [SerializeField] private Projectile projectilePrefab;
-        [SerializeField] private Transform projectileSpawnPoint;
-        [SerializeField] private Vector3 spawnPositionOffset;
-        [SerializeField] private Vector3 spawnRotationOffset;
-        [SerializeField] private bool parentProjectileToSpawnPoint;
+        [Header("Defaults")]
+        [SerializeField] private Transform defaultSpawnPoint;
+        [SerializeField] private Vector3 defaultPositionOffset;
+        [SerializeField] private Vector3 defaultRotationOffset;
         [SerializeField, Min(0f)] private float fireCooldown = 0.1f;
         [SerializeField] private bool fireOnRelease;
-        [SerializeField] private bool alignSpawnRotation = true;
-        [SerializeField] private bool inheritControllerVelocity = true;
-        [SerializeField] private bool ignoreOwnerColliders = true;
-        [SerializeField] private float projectileSpeedMultiplier = 1f;
         [SerializeField] private ProjectileConfiguration[] projectileConfigurations = Array.Empty<ProjectileConfiguration>();
 
         [Header("Events")]
@@ -55,6 +49,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         readonly List<Collider> cachedOwnerColliders = new List<Collider>();
 
         protected override bool UsesAimInput => true;
+
+        public override void OnValidate()
+        {
+            base.OnValidate();
+            if (Controller)
+                Controller.aimData = this;
+        }
 
         protected override void Awake()
         {
@@ -71,9 +72,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             IDamager sourceOverride = null, float? effectMagnitudeOverride = null)
         {
             ProjectileConfiguration configuration = ResolveConfiguration(configurationId);
+            Debug.Log($"Trying to fire projectile with configuration '{configurationId ?? "default"}' on {name}.", this);
             if (configuration == null)
             {
-                Debug.LogWarning($"{nameof(ProjectileCharacterAimAction)} on {name} could not resolve configuration '{configurationId ?? "default"}'.", this);
+                Debug.LogWarning($"{nameof(CharacterAimAction)} on {name} could not resolve configuration '{configurationId ?? "default"}'.", this);
                 return false;
             }
 
@@ -145,24 +147,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 }
             }
 
-            return BuildDefaultConfiguration();
-        }
-
-        ProjectileConfiguration BuildDefaultConfiguration()
-        {
-            return new ProjectileConfiguration
-            {
-                id = "default",
-                projectilePrefab = projectilePrefab,
-                projectileSpawnPoint = projectileSpawnPoint,
-                spawnPositionOffset = spawnPositionOffset,
-                spawnRotationOffset = spawnRotationOffset,
-                parentProjectileToSpawnPoint = parentProjectileToSpawnPoint,
-                alignSpawnRotation = alignSpawnRotation,
-                inheritControllerVelocity = inheritControllerVelocity,
-                ignoreOwnerColliders = ignoreOwnerColliders,
-                projectileSpeedMultiplier = projectileSpeedMultiplier
-            };
+            return null;
         }
 
         bool TryFire(ProjectileConfiguration configuration, Vector3 worldPosition, Vector3? directionOverride,
@@ -170,7 +155,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             if (configuration == null || !configuration.projectilePrefab)
             {
-                Debug.LogWarning($"{nameof(ProjectileCharacterAimAction)} on {name} requires a projectile prefab.", this);
+                Debug.LogWarning($"{nameof(CharacterAimAction)} on {name} requires a projectile prefab.", this);
                 return false;
             }
 
@@ -234,9 +219,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return configuration.projectileSpawnPoint;
             }
 
-            if (projectileSpawnPoint)
+            if (defaultSpawnPoint)
             {
-                return projectileSpawnPoint;
+                return defaultSpawnPoint;
             }
 
             return Controller ? Controller.transform : transform;
@@ -245,7 +230,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         Vector3 GetSpawnPosition(ProjectileConfiguration configuration)
         {
             Transform root = GetSpawnRoot(configuration);
-            Vector3 offset = configuration?.spawnPositionOffset ?? spawnPositionOffset;
+            Vector3 offset = configuration?.spawnPositionOffset ?? defaultPositionOffset;
             return root ? root.TransformPoint(offset) : offset;
         }
 
@@ -262,7 +247,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         Quaternion GetSpawnRotation(ProjectileConfiguration configuration, Vector3 direction)
         {
             Transform root = GetSpawnRoot(configuration);
-            Quaternion baseRotation = root ? root.rotation : Quaternion.identity;
+            Quaternion baseRotation = Quaternion.identity;
 
             if (configuration.alignSpawnRotation)
             {

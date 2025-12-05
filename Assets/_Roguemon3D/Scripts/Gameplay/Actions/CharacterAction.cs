@@ -34,6 +34,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [Header("Animation")]
         [SerializeField] private AgentAnimationRequest defaultAnimationRequest;
 
+        [field: SerializeField, HideInInspector]
         public AgentController Controller { get; private set; }
         protected InputReader InputReader => Controller != null ? Controller.inputReader : null;
         protected Vector3 LastAimWorldPosition => lastAimWorldPosition;
@@ -50,9 +51,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         private AgentAnimationRequest runtimeAnimationRequest;
         private event Action<AgentAnimationRequest> animationRequestChanged;
 
+        public virtual void OnValidate()
+        {
+            if (!Controller)
+                Controller = GetComponent<AgentController>();
+        }
+
         protected virtual void Awake()
         {
-            Controller = GetComponent<AgentController>();
             if (!Controller)
             {
                 Debug.LogError($"{GetType().Name} requires an {nameof(AgentController)} on the same GameObject.", this);

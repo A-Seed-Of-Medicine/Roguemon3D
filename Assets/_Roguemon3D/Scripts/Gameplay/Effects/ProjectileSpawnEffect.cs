@@ -1,4 +1,5 @@
 using System;
+using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Actions;
 using UnityEngine;
 
@@ -12,30 +13,24 @@ namespace _PinBoy.Scripts.Gameplay.Effects
 
         public override void Apply(EffectContext context)
         {
-            Debug.Log("Applying projectile spawn effect.");
             if (context == null || context.Source == null)
             {
                 return;
             }
 
-            if (context.Source is not Component sourceComponent)
+            if (context.Source is not AgentController controller)
             {
                 return;
             }
-
-            ProjectileCharacterAimAction aimAction = sourceComponent.GetComponent<ProjectileCharacterAimAction>();
-            if (!aimAction)
-            {
-                aimAction = sourceComponent.GetComponentInChildren<ProjectileCharacterAimAction>();
-            }
-
-            if (!aimAction)
+            
+            
+            if (!controller.aimData)
             {
                 return;
             }
 
             Vector3? directionOverride = useContextDirection ? context.Direction : (Vector3?)null;
-            aimAction.TryFireConfiguredProjectile(projectileConfigurationId, directionOverride, context.Source,
+            controller.aimData.TryFireConfiguredProjectile(projectileConfigurationId, directionOverride, context.Source,
                 context.Magnitude);
         }
     }

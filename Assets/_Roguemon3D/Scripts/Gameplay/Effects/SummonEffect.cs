@@ -14,10 +14,10 @@ namespace _PinBoy.Scripts.Gameplay.Effects
             if (context?.Source is not AgentController controller)
                 return;
 
-            if (!controller?.SummonData)
+            if (!controller?.summonData)
                 return;
 
-            controller.SummonData.SwapHostAndSummon();
+            controller.summonData.SwapHostAndSummon();
         }
     }
 }
