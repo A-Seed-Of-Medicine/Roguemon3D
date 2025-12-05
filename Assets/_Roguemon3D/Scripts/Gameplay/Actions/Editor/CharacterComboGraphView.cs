@@ -155,7 +155,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 for (int i = 0; i < transitions.arraySize; i++)
                 {
                     SerializedProperty transition = transitions.GetArrayElementAtIndex(i);
-                    string targetId = transition.FindPropertyRelative("nextStepId").stringValue;
+                    SerializedProperty nextStep = transition.FindPropertyRelative("nextStep");
+                    CharacterComboAction.ComboStep targetStep = nextStep?.managedReferenceValue as CharacterComboAction.ComboStep;
+                    string targetId = targetStep?.id;
                     if (string.IsNullOrWhiteSpace(targetId) || !stepNodes.TryGetValue(targetId, out ComboStepNode target))
                     {
                         continue;

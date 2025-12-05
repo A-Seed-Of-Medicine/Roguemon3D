@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using _PinBoy.Scripts.Gameplay.Actions;
@@ -63,10 +65,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 DrawProperty(property.FindPropertyRelative("transitionWindowClose"));
                 EditorGUI.indentLevel--;
 
+                Header("Charge");
+                EditorGUI.indentLevel++;
+                DrawProperty(property.FindPropertyRelative("chargeWindup"));
+                DrawProperty(property.FindPropertyRelative("minimumChargeTime"));
+                DrawProperty(property.FindPropertyRelative("maximumChargeTime"));
+                EditorGUI.indentLevel--;
+
                 Header("Movement");
                 EditorGUI.indentLevel++;
-                DrawProperty(property.FindPropertyRelative("lockMovement"));
-                DrawProperty(property.FindPropertyRelative("lockMovementInRecovery"));
+                DrawProperty(property.FindPropertyRelative("movementLocks"));
+                DrawProperty(property.FindPropertyRelative("chargeMovementLocks"));
                 DrawProperty(property.FindPropertyRelative("lockAim"));
                 DrawProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
                 DrawProperty(property.FindPropertyRelative("missNudgeImpulse"));
@@ -198,10 +207,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             AddProperty(property.FindPropertyRelative("transitionWindowOpen"));
             AddProperty(property.FindPropertyRelative("transitionWindowClose"));
 
+            // Charge
+            AddHeader();
+            AddProperty(property.FindPropertyRelative("chargeWindup"));
+            AddProperty(property.FindPropertyRelative("minimumChargeTime"));
+            AddProperty(property.FindPropertyRelative("maximumChargeTime"));
+
             // Movement
             AddHeader();
-            AddProperty(property.FindPropertyRelative("lockMovement"));
-            AddProperty(property.FindPropertyRelative("lockMovementInRecovery"));
+            AddProperty(property.FindPropertyRelative("movementLocks"));
+            AddProperty(property.FindPropertyRelative("chargeMovementLocks"));
             AddProperty(property.FindPropertyRelative("lockAim"));
             AddProperty(property.FindPropertyRelative("zeroVelocityOnStart"));
             AddProperty(property.FindPropertyRelative("missNudgeImpulse"));
@@ -293,6 +308,83 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                    animationProperty.FindPropertyRelative("southEastClip").objectReferenceValue != null ||
                    animationProperty.FindPropertyRelative("northWestClip").objectReferenceValue != null ||
                    animationProperty.FindPropertyRelative("southWestClip").objectReferenceValue != null;
+        }
+    }
+
+    [CustomPropertyDrawer(typeof(CharacterComboAction.ComboTransition))]
+    public class ComboTransitionDrawer : PropertyDrawer
+    {
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(position, label, property);
+            float spacing = EditorGUIUtility.standardVerticalSpacing;
+            float y = position.y;
+            float line = EditorGUIUtility.singleLineHeight;
+
+            Rect InputRect() => new(position.x, y, position.width, line);
+
+            SerializedProperty inputProp = property.FindPropertyRelative("input");
+            SerializedProperty nextStepProp = property.FindPropertyRelative("nextStep");
+            SerializedProperty queueProp = property.FindPropertyRelative("queueUntilWindow");
+            SerializedProperty delayProp = property.FindPropertyRelative("transitionDelay");
+            SerializedProperty minHoldProp = property.FindPropertyRelative("minimumHoldTime");
+            SerializedProperty longPressProp = property.FindPropertyRelative("longPress");
+            SerializedProperty longMinProp = property.FindPropertyRelative("longPressMinThreshold");
+            SerializedProperty longMaxProp = property.FindPropertyRelative("longPressMaxThreshold");
+
+            EditorGUI.PropertyField(InputRect(), inputProp);
+            y += line + spacing;
+
+            DrawNextStepField(new Rect(position.x, y, position.width, line), nextStepProp, property.serializedObject);
+            y += line + spacing;
+
+            EditorGUI.PropertyField(new Rect(position.x, y, position.width, line), queueProp);
+            y += line + spacing;
+            EditorGUI.PropertyField(new Rect(position.x, y, position.width, line), delayProp);
+            y += line + spacing;
+            EditorGUI.PropertyField(new Rect(position.x, y, position.width, line), minHoldProp);
+            y += line + spacing;
+
+            EditorGUI.PropertyField(new Rect(position.x, y, position.width, line), longPressProp);
+            y += line + spacing;
+            EditorGUI.PropertyField(new Rect(position.x, y, position.width, line), longMinProp);
+            y += line + spacing;
+            EditorGUI.PropertyField(new Rect(position.x, y, position.width, line), longMaxProp);
+
+            EditorGUI.EndProperty();
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            int lines = 8;
+            return lines * (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) -
+                   EditorGUIUtility.standardVerticalSpacing;
+        }
+
+        static void DrawNextStepField(Rect rect, SerializedProperty nextStepProp, SerializedObject serializedObject)
+        {
+            CharacterComboAction.ComboStep[] steps = GetSteps(serializedObject);
+            string[] options = steps.Select(step => string.IsNullOrWhiteSpace(step.id) ? "Unnamed" : step.id).ToArray();
+
+            CharacterComboAction.ComboStep current = nextStepProp?.managedReferenceValue as CharacterComboAction.ComboStep;
+            int currentIndex = Array.IndexOf(steps, current);
+
+            int newIndex = EditorGUI.Popup(rect, "Next Step", currentIndex, options);
+            if (newIndex != currentIndex && newIndex >= 0 && newIndex < steps.Length)
+            {
+                nextStepProp.managedReferenceValue = steps[newIndex];
+                serializedObject.ApplyModifiedProperties();
+            }
+        }
+
+        static CharacterComboAction.ComboStep[] GetSteps(SerializedObject serializedObject)
+        {
+            if (serializedObject?.targetObject is CharacterComboDefinition definition && definition.Steps != null)
+            {
+                return definition.Steps;
+            }
+
+            return Array.Empty<CharacterComboAction.ComboStep>();
         }
     }
 }
