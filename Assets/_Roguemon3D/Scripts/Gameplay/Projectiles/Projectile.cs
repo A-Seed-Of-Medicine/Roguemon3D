@@ -17,6 +17,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
         {
             public Vector3 Origin;
             public Vector3 Direction;
+            public Vector3? TargetPosition;
             public Vector3 InitialVelocity;
             public float SpeedMultiplier;
             public Transform Owner;
@@ -56,10 +57,21 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
         float currentSpeed;
         float lifetime;
         Vector3 launchPosition;
+        Vector3? targetPosition;
         bool launched;
         Transform owner;
         IDamager damager;
         float launchMagnitude = 1f;
+
+        protected Rigidbody Body => body;
+        protected Vector3 LaunchDirection => launchDirection;
+        protected Vector3 LaunchPosition => launchPosition;
+        protected Vector3 InheritedVelocity => inheritedVelocity;
+        protected float CurrentSpeed => currentSpeed;
+        protected float LaunchMagnitude => launchMagnitude;
+        protected Transform Owner => owner;
+        protected IDamager Damager => damager;
+        protected Vector3? TargetPosition => targetPosition;
 
         void Awake()
         {
@@ -78,7 +90,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             RestoreIgnoredCollisions();
         }
 
-        public void Launch(LaunchData data)
+        public virtual void Launch(LaunchData data)
         {
             if (data.Direction.sqrMagnitude <= 0.0001f)
             {
@@ -90,6 +102,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             inheritedVelocity = data.InitialVelocity;
             currentSpeed = Mathf.Max(0f, baseSpeed * (data.SpeedMultiplier <= 0f ? 1f : data.SpeedMultiplier));
             launchPosition = data.Origin;
+            targetPosition = data.TargetPosition;
             owner = data.Owner;
             damager = data.Damager;
             launchMagnitude = Mathf.Max(0f, data.EffectMagnitude <= 0f ? 1f : data.EffectMagnitude);
@@ -120,6 +133,11 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             }
 
             ApplyVelocity();
+            OnLaunched(data);
+        }
+
+        protected virtual void OnLaunched(LaunchData data)
+        {
         }
 
         void Update()
@@ -145,11 +163,22 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
                     return;
                 }
             }
+
+            OnProjectileUpdate(Time.deltaTime);
+        }
+
+        protected virtual void OnProjectileUpdate(float deltaTime)
+        {
         }
 
         void FixedUpdate()
         {
             if (!launched)
+            {
+                return;
+            }
+
+            if (CustomFixedUpdate(Time.fixedDeltaTime))
             {
                 return;
             }
@@ -178,13 +207,18 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             }
         }
 
+        protected virtual bool CustomFixedUpdate(float deltaTime)
+        {
+            return false;
+        }
+
         void ApplyVelocity()
         {
             Vector3 velocity = launchDirection * currentSpeed + inheritedVelocity;
             body.linearVelocity = velocity;
         }
 
-        void Expire()
+        protected virtual void Expire()
         {
             onExpired?.Invoke();
             if (destroyOnImpact)

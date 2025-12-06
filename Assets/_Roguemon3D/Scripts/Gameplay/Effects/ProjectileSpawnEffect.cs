@@ -9,7 +9,6 @@ namespace _PinBoy.Scripts.Gameplay.Effects
     public class ProjectileSpawnEffect : Effect
     {
         [SerializeField] private string projectileConfigurationId = "default";
-        [SerializeField] private bool useContextDirection = true;
 
         public override void Apply(EffectContext context)
         {
@@ -29,7 +28,6 @@ namespace _PinBoy.Scripts.Gameplay.Effects
                 return;
             }
 
-            Vector3? directionOverride = useContextDirection ? context.Direction : (Vector3?)null;
             controller.aimData.TryFireConfiguredProjectile(projectileConfigurationId, context.TargetPosition, context.Source,
                 context.Magnitude);
         }

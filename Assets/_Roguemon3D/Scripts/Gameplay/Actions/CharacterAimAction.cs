@@ -71,8 +71,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         public bool TryFireConfiguredProjectile(string configurationId, Vector3 targetPosition,
             IDamager sourceOverride = null, float? effectMagnitudeOverride = null)
         {
-            Vector3 direction = targetPosition - GetSpawnPosition(ResolveConfiguration(configurationId)).normalized;
-            
             ProjectileConfiguration configuration = ResolveConfiguration(configurationId);
             Debug.Log($"Trying to fire projectile with configuration '{configurationId ?? "default"}' on {name}.", this);
             if (configuration == null)
@@ -81,8 +79,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return false;
             }
 
-            return TryFire(configuration, GetCurrentAimWorldPosition(), direction, sourceOverride,
-                effectMagnitudeOverride);
+            return TryFire(configuration, targetPosition, null, sourceOverride, effectMagnitudeOverride);
         }
 
         void HandleFireInput(bool pressed)
@@ -182,8 +179,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (!projectileInstance)
                 return false;
 
-            Projectile.LaunchData launchData = BuildLaunchData(direction, origin, configuration, sourceOverride,
-                effectMagnitudeOverride);
+            Projectile.LaunchData launchData = BuildLaunchData(direction, origin, worldPosition, configuration,
+                sourceOverride, effectMagnitudeOverride);
             projectileInstance.Launch(launchData);
 
             onProjectileFired?.Invoke(projectileInstance);
@@ -263,8 +260,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return baseRotation;
         }
 
-        Projectile.LaunchData BuildLaunchData(Vector3 direction, Vector3 origin, ProjectileConfiguration configuration,
-            IDamager sourceOverride, float? effectMagnitudeOverride)
+        Projectile.LaunchData BuildLaunchData(Vector3 direction, Vector3 origin, Vector3 targetPosition,
+            ProjectileConfiguration configuration, IDamager sourceOverride, float? effectMagnitudeOverride)
         {
             Rigidbody ownerBody = Controller ? Controller.GetComponent<Rigidbody>() : GetComponent<Rigidbody>();
             Vector3 inheritedVelocity = configuration.inheritControllerVelocity && ownerBody ? ownerBody.linearVelocity : Vector3.zero;
@@ -277,6 +274,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 Origin = origin,
                 Direction = direction,
+                TargetPosition = targetPosition,
                 SpeedMultiplier = configuration.projectileSpeedMultiplier * (actionMagnitude <= 0f ? 1f : actionMagnitude),
                 Owner = Controller ? Controller.transform : transform,
                 IgnoredColliders = configuration.ignoreOwnerColliders && cachedOwnerColliders.Count > 0
