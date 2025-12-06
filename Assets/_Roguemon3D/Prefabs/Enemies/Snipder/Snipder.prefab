@@ -327,7 +327,7 @@ MonoBehaviour:
   fireOnRelease: 0
   projectileConfigurations:
   - id: Default
-    projectilePrefab: {fileID: 8360347831319862281, guid: 268aba4f42bb13d4987739b499a90097, type: 3}
+    projectilePrefab: {fileID: 2349765595431512368, guid: 268aba4f42bb13d4987739b499a90097, type: 3}
     projectileSpawnPoint: {fileID: 745101305400280081}
     spawnPositionOffset: {x: 0, y: 0, z: 0}
     spawnRotationOffset: {x: 0, y: 0, z: 0}
