@@ -23,6 +23,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             public Collider[] IgnoredColliders;
             public IDamager Damager;
             public float EffectMagnitude;
+            public Vector3? TargetPosition;
         }
 
         [Header("Motion")]
@@ -61,6 +62,18 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
         IDamager damager;
         float launchMagnitude = 1f;
 
+        protected Rigidbody Body => body;
+        protected bool Launched => launched;
+        protected Vector3 LaunchPosition => launchPosition;
+        protected float CurrentSpeed
+        {
+            get => currentSpeed;
+            set => currentSpeed = value;
+        }
+
+        protected float BaseSpeed => baseSpeed;
+        protected bool DestroyOnImpact => destroyOnImpact;
+
         void Awake()
         {
             body = GetComponent<Rigidbody>();
@@ -78,7 +91,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             RestoreIgnoredCollisions();
         }
 
-        public void Launch(LaunchData data)
+        public virtual void Launch(LaunchData data)
         {
             if (data.Direction.sqrMagnitude <= 0.0001f)
             {
@@ -122,7 +135,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             ApplyVelocity();
         }
 
-        void Update()
+        protected virtual void Update()
         {
             if (!launched)
             {
@@ -147,7 +160,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             }
         }
 
-        void FixedUpdate()
+        protected virtual void FixedUpdate()
         {
             if (!launched)
             {
@@ -155,13 +168,13 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             }
 
             bool velocityChanged = false;
-            if (Mathf.Abs(acceleration) > 0.0001f)
+            if (ShouldApplyAcceleration)
             {
                 currentSpeed = Mathf.Max(0f, currentSpeed + acceleration * Time.fixedDeltaTime);
                 velocityChanged = true;
             }
 
-            if (maintainVelocityEveryFrame || velocityChanged)
+            if (ShouldMaintainVelocity || velocityChanged)
             {
                 ApplyVelocity();
             }
@@ -178,13 +191,17 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             }
         }
 
-        void ApplyVelocity()
+        protected virtual bool ShouldApplyAcceleration => Mathf.Abs(acceleration) > 0.0001f;
+
+        protected virtual bool ShouldMaintainVelocity => maintainVelocityEveryFrame;
+
+        protected virtual void ApplyVelocity()
         {
             Vector3 velocity = launchDirection * currentSpeed + inheritedVelocity;
             body.linearVelocity = velocity;
         }
 
-        void Expire()
+        protected virtual void Expire()
         {
             onExpired?.Invoke();
             if (destroyOnImpact)

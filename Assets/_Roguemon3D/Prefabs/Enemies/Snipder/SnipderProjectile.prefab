@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5345042757894128888}
   - component: {fileID: 3044905232689478819}
   - component: {fileID: 1217018047450712983}
-  - component: {fileID: 8360347831319862281}
+  - component: {fileID: 2349765595431512368}
   m_Layer: 0
   m_Name: SnipderProjectile
   m_TagString: Untagged
@@ -83,7 +83,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!114 &8360347831319862281
+--- !u!114 &2349765595431512368
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -92,10 +92,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 3365648881386310071}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a08c48a988f8954d8c9d2ef68b391ed, type: 3}
+  m_Script: {fileID: 11500000, guid: 81bf0d88b53f447283ef9407764a14d0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Projectiles.Projectile
-  baseSpeed: 12
+  m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Projectiles.ArcProjectile
+  baseSpeed: 3
   acceleration: 0
   maxLifetime: 5
   maxTravelDistance: 0
@@ -103,33 +103,76 @@ MonoBehaviour:
   maintainVelocityEveryFrame: 1
   collisionMask:
     serializedVersion: 2
-    m_Bits: 473
+    m_Bits: 505
   _allegianceType: 2
   destroyOnImpact: 1
   impactPrefab: {fileID: 2336955926572963415, guid: 30042e234964e5642a864a048db3e407, type: 3}
-  impactPrefabLifetime: 1
+  impactPrefabLifetime: 2
   onHitEffects:
-  - rid: 8319331094120890575
-  - rid: 8319331094120890576
+  - rid: 4875902098164416600
   onHit:
     m_PersistentCalls:
       m_Calls: []
   onExpired:
     m_PersistentCalls:
       m_Calls: []
+  defaultDistance: 8
+  minDistance: 0
+  maxDistance: 30
+  heightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  arcHeight: 2
+  useSpeedForDuration: 1
+  baseFlightDuration: 0.75
+  minFlightDuration: 0.1
+  maxFlightDuration: 5
+  expireAtEndOfArc: 1
+  targetEffectPrefab: {fileID: 4683562531078001350, guid: 05c0ddb1e07a33e4da53dc33924e1d81, type: 3}
+  targetEffectLifetimeMultiplier: 1
+  alignEffectToSurface: 0
+  surfaceRaycastDistance: 2
+  surfaceMask:
+    serializedVersion: 2
+    m_Bits: 8
   references:
     version: 2
     RefIds:
-    - rid: 8319331094120890575
-      type: {class: DamageEffect, ns: _PinBoy.Scripts.Gameplay.Effects, asm: Assembly-CSharp}
-      data:
-        amount: 10
-        scaleWithMagnitude: 0
-    - rid: 8319331094120890576
+    - rid: 4875902098164416600
       type: {class: KnockbackEffect, ns: _PinBoy.Scripts.Gameplay.Effects, asm: Assembly-CSharp}
       data:
         force: 5
-        scaleWithMagnitude: 0
+        scaleWithMagnitude: 1
         clearVelocity: 1
         forceMode: 1
         useContextDirection: 1

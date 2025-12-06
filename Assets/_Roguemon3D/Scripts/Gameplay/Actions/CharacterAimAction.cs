@@ -182,8 +182,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (!projectileInstance)
                 return false;
 
-            Projectile.LaunchData launchData = BuildLaunchData(direction, origin, configuration, sourceOverride,
-                effectMagnitudeOverride);
+            Projectile.LaunchData launchData = BuildLaunchData(direction, origin, worldPosition, configuration,
+                sourceOverride, effectMagnitudeOverride);
             projectileInstance.Launch(launchData);
 
             onProjectileFired?.Invoke(projectileInstance);
@@ -263,8 +263,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return baseRotation;
         }
 
-        Projectile.LaunchData BuildLaunchData(Vector3 direction, Vector3 origin, ProjectileConfiguration configuration,
-            IDamager sourceOverride, float? effectMagnitudeOverride)
+        Projectile.LaunchData BuildLaunchData(Vector3 direction, Vector3 origin, Vector3 targetPosition,
+            ProjectileConfiguration configuration, IDamager sourceOverride, float? effectMagnitudeOverride)
         {
             Rigidbody ownerBody = Controller ? Controller.GetComponent<Rigidbody>() : GetComponent<Rigidbody>();
             Vector3 inheritedVelocity = configuration.inheritControllerVelocity && ownerBody ? ownerBody.linearVelocity : Vector3.zero;
@@ -284,7 +284,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     : null,
                 InitialVelocity = inheritedVelocity,
                 Damager = sourceOverride ?? Controller,
-                EffectMagnitude = effectMagnitudeOverride ?? 1f
+                EffectMagnitude = effectMagnitudeOverride ?? 1f,
+                TargetPosition = targetPosition
             };
         }
 
