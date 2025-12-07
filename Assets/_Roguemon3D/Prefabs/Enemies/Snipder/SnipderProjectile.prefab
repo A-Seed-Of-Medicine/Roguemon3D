@@ -98,7 +98,7 @@ MonoBehaviour:
   baseSpeed: 3
   acceleration: 0
   maxLifetime: 5
-  maxTravelDistance: 0
+  maxTravelDistance: 20
   alignToVelocity: 0
   maintainVelocityEveryFrame: 1
   collisionMask:
