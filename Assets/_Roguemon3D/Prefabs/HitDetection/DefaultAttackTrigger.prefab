@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2143327111452036423}
-  - component: {fileID: 6643509938996099555}
+  - component: {fileID: 4414084094921264450}
   m_Layer: 2
   m_Name: DefaultAttackTrigger
   m_TagString: Untagged
@@ -33,7 +33,7 @@ Transform:
   - {fileID: 8755687311842327942}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6643509938996099555
+--- !u!114 &4414084094921264450
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,9 +42,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 6364161695781007711}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e65ece85ea171b49b7f1d295ef2b3aa, type: 3}
+  m_Script: {fileID: 11500000, guid: 0237649f34d7d064cab872711e15805d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HitDetector
+  m_EditorClassIdentifier: Assembly-CSharp::HitComboDetector
+  windupIndicator: {fileID: 3555899409847565027}
+  scaleWindupDuration: 1
   triggerColliders:
   - {fileID: 7789018480142547350}
   - {fileID: 3924906810030853818}
@@ -54,14 +56,15 @@ MonoBehaviour:
     m_Bits: 243
   includeTriggerColliders: 0
   allegianceMask: 01000000
-  windupIndicator: {fileID: 0}
-  scaleWindupDuration: 1
-  windupDeactivePhase: 2
   activeAnimation: {fileID: 0}
-  phaseParticleEffects:
-  - particleEffect: {fileID: 8755687311842327937}
-    startPhase: 1
-    endPhase: 1
+  alignToGround: 0
+  groundRaycastDistance: 2
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 8
+  groundHeightOffset: 0.05
+  windupDeactivePhase: 2
+  phaseParticleEffects: []
 --- !u!1001 &2638343471001939951
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -114,6 +117,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CFXR4 Sword Trail PLAIN (360 Spiral)
       objectReference: {fileID: 0}
+    - target: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+      propertyPath: EmissionModule.m_Bursts.Array.data[0].repeatInterval
+      value: 0.01
+      objectReference: {fileID: 0}
     - target: {fileID: 6710139492206580335, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: m_Mesh
       value: 
@@ -128,6 +135,17 @@ MeshCollider:
   m_CorrespondingSourceObject: {fileID: 3965944875397293404, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
   m_PrefabInstance: {fileID: 2638343471001939951}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3555899409847565027 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1568467376540128524, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+  m_PrefabInstance: {fileID: 2638343471001939951}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 271498f36ec95b3488847b73cb4c54d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProceduralMeshGenerator
 --- !u!64 &3924906810030853818 stripped
 MeshCollider:
   m_CorrespondingSourceObject: {fileID: 1361589683199156565, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
@@ -136,11 +154,6 @@ MeshCollider:
 --- !u!64 &7789018480142547350 stripped
 MeshCollider:
   m_CorrespondingSourceObject: {fileID: 5225688919363016313, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
-  m_PrefabInstance: {fileID: 2638343471001939951}
-  m_PrefabAsset: {fileID: 0}
---- !u!198 &8755687311842327937 stripped
-ParticleSystem:
-  m_CorrespondingSourceObject: {fileID: 6710139492206580334, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
   m_PrefabInstance: {fileID: 2638343471001939951}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &8755687311842327942 stripped

@@ -158,8 +158,6 @@ public class HitComboDetector : HitDetector
     }
 
     [Header("Phase Effects")]
-    [SerializeField] ProceduralMeshGenerator windupIndicator;
-    [SerializeField] bool scaleWindupDuration = true;
     [SerializeField] ExecutionPhase windupDeactivePhase = ExecutionPhase.Recovery;
     [SerializeField] PhaseParticleEffect[] phaseParticleEffects = System.Array.Empty<PhaseParticleEffect>();
 
@@ -181,7 +179,7 @@ public class HitComboDetector : HitDetector
     public void HandlePhaseStart(ExecutionPhase phase, CharacterComboAction.ComboStep step)
     {
         if (phase == ExecutionPhase.Windup)
-            HandleWindupIndicator(step);
+            HandleWindupIndicator(step.windup);
 
         if (phaseParticleEffects == null || phaseParticleEffects.Length == 0)
         {
@@ -207,20 +205,6 @@ public class HitComboDetector : HitDetector
         }
     }
 
-    public void HandleWindupIndicator(CharacterComboAction.ComboStep step)
-    {
-        if (!windupIndicator)
-            return;
-        if (scaleWindupDuration)
-        {
-            float duration = scaleWindupDuration ? Mathf.Max(0.0001f, step.windup) : 1f;
-            ParticleSystem.MainModule main = windupIndicator.particleSystem.main;
-            main.startLifetime = duration;
-        }
-        windupIndicator.particleSystem.time = 0f;
-        windupIndicator.particleSystem.Play();
-    }
-
     public override void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits,
         System.Action<IDamageable, Collider> onHit)
     {
@@ -231,20 +215,7 @@ public class HitComboDetector : HitDetector
 
         base.EvaluateHits(hitTargets, allowRepeatedHits, onHit);
     }
-
-    protected override Collider[] GetSourceColliders()
-    {
-        if (windupIndicator && windupIndicator.colliders != null)
-        {
-            Collider[] colliders = new Collider[triggerColliders.Length + windupIndicator.colliders.Count];
-            triggerColliders.CopyTo(colliders, 0);
-            windupIndicator.colliders.CopyTo(colliders, triggerColliders.Length);
-            return colliders;
-        }
-
-        return base.GetSourceColliders();
-    }
-
+    
     void ResetPhaseParticleEffects()
     {
         if (phaseParticleEffects == null || phaseParticleEffects.Length == 0)

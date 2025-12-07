@@ -158,13 +158,9 @@ MonoBehaviour:
   minFlightDuration: 0.1
   maxFlightDuration: 5
   expireAtEndOfArc: 1
-  targetEffectPrefab: {fileID: 4683562531078001350, guid: 05c0ddb1e07a33e4da53dc33924e1d81, type: 3}
-  targetEffectLifetimeMultiplier: 1
-  alignEffectToSurface: 0
-  surfaceRaycastDistance: 2
-  surfaceMask:
-    serializedVersion: 2
-    m_Bits: 8
+  targetDetectorPrefab: {fileID: 6649055039279671585, guid: 05c0ddb1e07a33e4da53dc33924e1d81, type: 3}
+  activateDetectorOnLaunch: 1
+  detectorLifetimeMultiplier: 1
   references:
     version: 2
     RefIds:

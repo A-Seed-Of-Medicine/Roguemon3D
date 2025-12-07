@@ -6,6 +6,8 @@ using UnityEngine;
 public class HitDetector : MonoBehaviour
 {
     [Header("Detection")]
+    [SerializeField] protected ProceduralMeshGenerator windupIndicator;
+    [SerializeField] protected bool scaleWindupDuration = true;
     [SerializeField] protected Collider[] triggerColliders = System.Array.Empty<Collider>();
     [SerializeField] protected LayerMask targetLayers = Physics.DefaultRaycastLayers;
     [SerializeField] protected bool includeTriggerColliders = true;
@@ -15,10 +17,10 @@ public class HitDetector : MonoBehaviour
     [SerializeField] protected AnimationClip activeAnimation;
 
     [Header("Ground Alignment")]
-    [SerializeField] protected bool alignToGround;
+    [SerializeField] protected bool alignToGround = true;
     [SerializeField, Min(0f)] protected float groundRaycastDistance = 2f;
-    [SerializeField] protected LayerMask groundLayerMask = Physics.DefaultRaycastLayers;
-    [SerializeField, Min(0f)] protected float groundHeightOffset = 0.05f;
+    [SerializeField] protected LayerMask groundLayerMask = 1 << 3; // Default to "Ground" layer
+    [SerializeField, Min(0f)] protected float groundHeightOffset = 0.01f;
 
     protected readonly Collider[] colliderCache = new Collider[16];
 
@@ -40,6 +42,20 @@ public class HitDetector : MonoBehaviour
     public virtual void Deactivate()
     {
         detectionActive = false;
+    }
+    
+    public void HandleWindupIndicator(float windupDuration)
+    {
+        if (!windupIndicator)
+            return;
+        if (scaleWindupDuration)
+        {
+            float duration = scaleWindupDuration ? Mathf.Max(0.0001f, windupDuration) : 1f;
+            ParticleSystem.MainModule main = windupIndicator.particleSystem.main;
+            main.startLifetime = duration;
+        }
+        windupIndicator.particleSystem.time = 0f;
+        windupIndicator.particleSystem.Play();
     }
 
     public void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits,
@@ -107,6 +123,14 @@ public class HitDetector : MonoBehaviour
 
     protected virtual Collider[] GetSourceColliders()
     {
+        if (windupIndicator && windupIndicator.colliders != null)
+        {
+            Collider[] colliders = new Collider[triggerColliders.Length + windupIndicator.colliders.Count];
+            triggerColliders.CopyTo(colliders, 0);
+            windupIndicator.colliders.CopyTo(colliders, triggerColliders.Length);
+            return colliders;
+        }
+        
         return triggerColliders;
     }
 
