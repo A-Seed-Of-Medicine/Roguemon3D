@@ -1,261 +1,63 @@
 using System.Collections.Generic;
 using _PinBoy.Scripts.CharacterMovement;
-using _PinBoy.Scripts.Gameplay.Actions;
 using _PinBoy.Scripts.Gameplay.Effects;
 using UnityEngine;
 
 public class HitDetector : MonoBehaviour
 {
-    [System.Serializable]
-    public class PhaseParticleEffect
-    {
-        public ParticleSystem particleEffect;
-        public ExecutionPhase startPhase = ExecutionPhase.Active;
-        public ExecutionPhase endPhase = ExecutionPhase.None;
-
-        float? baseSimulationSpeed;
-
-        public void HandlePhaseStart(ExecutionPhase phase, CharacterComboAction.ComboStep step)
-        {
-            if (particleEffect == null)
-            {
-                return;
-            }
-
-            if (phase != startPhase)
-            {
-                return;
-            }
-
-            CacheBaseSimulationSpeed();
-            //Debug.Log($"Starting particle effect for phase {phase} with step {step} and base speed {baseSimulationSpeed}");
-            ApplySimulationSpeed(step);
-            particleEffect.Clear(true);
-            particleEffect.Play();
-        }
-
-        public void HandlePhaseEnd(ExecutionPhase phase)
-        {
-            if (particleEffect == null)
-            {
-                return;
-            }
-
-            if (endPhase == ExecutionPhase.None || phase != endPhase)
-            {
-                return;
-            }
-
-            particleEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            RestoreBaseSimulationSpeed();
-        }
-
-        public void Reset()
-        {
-            if (particleEffect == null)
-            {
-                return;
-            }
-
-            particleEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            RestoreBaseSimulationSpeed();
-        }
-
-        void CacheBaseSimulationSpeed()
-        {
-            if (particleEffect == null || baseSimulationSpeed.HasValue)
-            {
-                return;
-            }
-
-            baseSimulationSpeed = particleEffect.main.simulationSpeed;
-        }
-
-        void ApplySimulationSpeed(CharacterComboAction.ComboStep step)
-        {
-            if (particleEffect == null)
-            {
-                return;
-            }
-
-            if (endPhase == ExecutionPhase.None || step == null)
-            {
-                RestoreBaseSimulationSpeed();
-                return;
-            }
-
-            float targetDuration = CalculatePhaseDuration(step, startPhase, endPhase);
-            float particleDuration = Mathf.Max(0.0001f, particleEffect.main.duration);
-            float speed = particleDuration / Mathf.Max(0.0001f, targetDuration);
-            ParticleSystem.MainModule main = particleEffect.main;
-            main.simulationSpeed = speed;
-        }
-
-        void RestoreBaseSimulationSpeed()
-        {
-            if (particleEffect == null || !baseSimulationSpeed.HasValue)
-            {
-                return;
-            }
-
-            ParticleSystem.MainModule main = particleEffect.main;
-            main.simulationSpeed = baseSimulationSpeed.Value;
-        }
-
-        static float CalculatePhaseDuration(CharacterComboAction.ComboStep step, ExecutionPhase start, ExecutionPhase end)
-        {
-            int startIndex = PhaseIndex(start);
-            int endIndex = PhaseIndex(end);
-
-            if (startIndex < 0 || endIndex < 0)
-            {
-                return 0f;
-            }
-
-            if (startIndex > endIndex)
-            {
-                (startIndex, endIndex) = (endIndex, startIndex);
-            }
-
-            float duration = 0f;
-            for (int i = startIndex; i <= endIndex; i++)
-            {
-                ExecutionPhase phase = (ExecutionPhase)i;
-                duration += GetPhaseDuration(step, phase);
-            }
-
-            return Mathf.Max(0.0001f, duration);
-        }
-
-        static int PhaseIndex(ExecutionPhase phase)
-        {
-            return phase switch
-            {
-                ExecutionPhase.Windup => 0,
-                ExecutionPhase.Active => 1,
-                ExecutionPhase.Recovery => 2,
-                _ => -1
-            };
-        }
-
-        static float GetPhaseDuration(CharacterComboAction.ComboStep step, ExecutionPhase phase)
-        {
-            return phase switch
-            {
-                ExecutionPhase.Windup => step.windup,
-                ExecutionPhase.Active => step.active,
-                ExecutionPhase.Recovery => step.recovery,
-                _ => 0f
-            };
-        }
-    }
-
-    public enum ExecutionPhase
-    {
-        None = -1,
-        Windup,
-        Active,
-        Recovery
-    }
-
     [Header("Detection")]
-    [SerializeField] Collider[] triggerColliders = System.Array.Empty<Collider>();
-    [SerializeField] LayerMask targetLayers = Physics.DefaultRaycastLayers;
-    [SerializeField] bool includeTriggerColliders = true;
-    [SerializeField] List<AllegianceType> allegianceMask = new();
-    
-    public ProceduralMeshGenerator windupIndicator;
-    public bool scaleWindupDuration = true;
-    public ExecutionPhase windupDeactivePhase = ExecutionPhase.Recovery;
-    private static readonly int TimerStart = Shader.PropertyToID("_TimerStart");
-    private static readonly int TimerDuration = Shader.PropertyToID("_TimerDuration");
+    [SerializeField] protected Collider[] triggerColliders = System.Array.Empty<Collider>();
+    [SerializeField] protected LayerMask targetLayers = Physics.DefaultRaycastLayers;
+    [SerializeField] protected bool includeTriggerColliders = true;
+    [SerializeField] protected List<AllegianceType> allegianceMask = new();
 
     [Header("Animation")]
-    [SerializeField] AnimationClip activeAnimation;
+    [SerializeField] protected AnimationClip activeAnimation;
 
-    [Header("Phase Effects")]
-    [SerializeField] PhaseParticleEffect[] phaseParticleEffects = System.Array.Empty<PhaseParticleEffect>();
+    [Header("Ground Alignment")]
+    [SerializeField] protected bool alignToGround;
+    [SerializeField, Min(0f)] protected float groundRaycastDistance = 2f;
+    [SerializeField] protected LayerMask groundLayerMask = Physics.DefaultRaycastLayers;
+    [SerializeField, Min(0f)] protected float groundHeightOffset = 0.05f;
 
-    readonly Collider[] colliderCache = new Collider[16];
+    protected readonly Collider[] colliderCache = new Collider[16];
 
     AgentController owner;
-    CharacterComboAction.ComboStep activeStep;
+    bool detectionActive;
 
-    public void Initialize(AgentController agentController)
+    public virtual void Initialize(AgentController agentController)
     {
         owner = agentController;
     }
 
-    public void Activate(CharacterComboAction.ComboStep step, float activeDuration)
+    public virtual void Activate(float activeDuration)
     {
-        activeStep = step;
+        detectionActive = true;
+        AlignToGroundIfNeeded();
         PlayActiveAnimation(activeDuration);
     }
 
-    public void Deactivate()
+    public virtual void Deactivate()
     {
-        activeStep = null;
-        ResetPhaseParticleEffects();
+        detectionActive = false;
     }
 
-    public void HandlePhaseStart(ExecutionPhase phase, CharacterComboAction.ComboStep step)
+    public void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits,
+        System.Action<IDamageable> onHit)
     {
-        if (phase == ExecutionPhase.Windup)
-            HandleWindupIndicator(step);
-        
-        if (phaseParticleEffects == null || phaseParticleEffects.Length == 0)
+        EvaluateHits(hitTargets, allowRepeatedHits, (damageable, _) => onHit?.Invoke(damageable));
+    }
+
+    public virtual void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits,
+        System.Action<IDamageable, Collider> onHit)
+    {
+        if (!detectionActive)
         {
             return;
         }
 
-        foreach (PhaseParticleEffect effect in phaseParticleEffects)
-        {
-            effect?.HandlePhaseStart(phase, step);
-        }
-    }
+        Collider[] colliders = GetSourceColliders();
 
-    public void HandlePhaseEnd(ExecutionPhase phase)
-    {
-        if (phaseParticleEffects == null || phaseParticleEffects.Length == 0)
-        {
-            return;
-        }
-
-        foreach (PhaseParticleEffect effect in phaseParticleEffects)
-        {
-            effect?.HandlePhaseEnd(phase);
-        }
-    }
-    
-    public void HandleWindupIndicator(CharacterComboAction.ComboStep step)
-    {
-        if (!windupIndicator)
-            return;
-        if (scaleWindupDuration)
-        {
-            float duration = scaleWindupDuration ? Mathf.Max(0.0001f, step.windup) : 1f;
-            ParticleSystem.MainModule main = windupIndicator.particleSystem.main;
-            main.startLifetime = duration;
-        }
-        windupIndicator.particleSystem.time = 0f;
-        windupIndicator.particleSystem.Play();
-    }
-
-    public void EvaluateHits(HashSet<IDamageable> hitTargets, bool allowRepeatedHits, System.Action<IDamageable> onHit)
-    {
-        if (activeStep == null)
-        {
-            return;
-        }
-        
-        Collider[] colliders = triggerColliders;
-        if (windupIndicator && windupIndicator.colliders != null)
-        {
-            colliders = new Collider[triggerColliders.Length + windupIndicator.colliders.Count];
-            triggerColliders.CopyTo(colliders, 0);
-            windupIndicator.colliders.CopyTo(colliders, triggerColliders.Length);
-        }
-        
         if (colliders == null || colliders.Length == 0)
         {
             return;
@@ -269,7 +71,7 @@ public class HitDetector : MonoBehaviour
             {
                 continue;
             }
-            
+
             int hitCount = OverlapColliderNonAlloc(source, colliderCache, settings);
             for (int i = 0; i < hitCount; i++)
             {
@@ -298,12 +100,17 @@ public class HitDetector : MonoBehaviour
                 }
 
                 hitTargets.Add(damageable);
-                onHit?.Invoke(damageable);
+                onHit?.Invoke(damageable, other);
             }
         }
     }
 
-    void PlayActiveAnimation(float activeDuration)
+    protected virtual Collider[] GetSourceColliders()
+    {
+        return triggerColliders;
+    }
+
+    protected void PlayActiveAnimation(float activeDuration)
     {
         if (activeAnimation == null)
         {
@@ -335,17 +142,34 @@ public class HitDetector : MonoBehaviour
         animation.Play(clipName);
     }
 
-    void ResetPhaseParticleEffects()
+    protected bool AlignToGroundIfNeeded()
     {
-        if (phaseParticleEffects == null || phaseParticleEffects.Length == 0)
+        if (!alignToGround)
         {
-            return;
+            return false;
         }
 
-        foreach (PhaseParticleEffect effect in phaseParticleEffects)
+        Vector3 origin = transform.position + Vector3.up * groundRaycastDistance;
+        if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, groundRaycastDistance * 2f, groundLayerMask,
+                QueryTriggerInteraction.Ignore))
         {
-            effect?.Reset();
+            transform.position = hit.point + hit.normal * groundHeightOffset;
+            Vector3 projectedForward = Vector3.ProjectOnPlane(transform.forward, hit.normal);
+            if (projectedForward.sqrMagnitude <= 0.0001f)
+            {
+                projectedForward = Vector3.ProjectOnPlane(transform.up, hit.normal);
+            }
+
+            if (projectedForward.sqrMagnitude <= 0.0001f)
+            {
+                projectedForward = Vector3.forward;
+            }
+
+            transform.rotation = Quaternion.LookRotation(projectedForward, hit.normal);
+            return true;
         }
+
+        return false;
     }
 
     StepOverlapSettings GetOverlapSettings()

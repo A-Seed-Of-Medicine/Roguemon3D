@@ -35,24 +35,24 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
         [SerializeField] private bool maintainVelocityEveryFrame = true;
 
         [Header("Impact")]
-        [SerializeField] private LayerMask collisionMask = ~0;
+        [SerializeField] protected LayerMask collisionMask = ~0;
         [SerializeField] private AllegianceType _allegianceType = AllegianceType.Neutral;
         [SerializeField] private bool destroyOnImpact = true;
         [SerializeField] private GameObject impactPrefab;
         [SerializeField, Min(0f)] private float impactPrefabLifetime = 2f;
 
         [Header("Effects")]
-        [SerializeReference] private List<Effect> onHitEffects = new();
+        [SerializeReference] protected List<Effect> onHitEffects = new();
 
         [Header("Events")]
-        [SerializeField] private UnityEvent<Collider> onHit;
-        [SerializeField] private UnityEvent onExpired;
+        [SerializeField] protected UnityEvent<Collider> onHit;
+        [SerializeField] protected UnityEvent onExpired;
 
         Rigidbody body;
         Collider projectileCollider;
         readonly HashSet<Collider> ignoredColliders = new HashSet<Collider>();
 
-        Vector3 launchDirection = Vector3.forward;
+        protected Vector3 launchDirection = Vector3.forward;
         Vector3 inheritedVelocity;
         float currentSpeed;
         float lifetime;
@@ -234,7 +234,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             ignoredColliders.Clear();
         }
 
-        void HandleHit(Collider other, Vector3? hitPoint = null)
+        protected virtual void HandleHit(Collider other, Vector3? hitPoint = null)
         {
             if (!launched)
             {
@@ -248,7 +248,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
             onHit?.Invoke(other);
 
-            ApplyHitEffects(other);
+            ApplyHitEffects(other, hitPoint ?? transform.position);
 
             if (impactPrefab)
             {
@@ -266,7 +266,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             }
         }
 
-        void ApplyHitEffects(Collider other)
+        protected virtual void ApplyHitEffects(Collider other, Vector3 hitPosition)
         {
             if (onHitEffects == null || onHitEffects.Count == 0)
             {
@@ -275,6 +275,16 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
             IDamageable damageable = other.GetComponentInParent<IDamageable>();
             if (damageable == null)
+            {
+                return;
+            }
+
+            ApplyHitEffects(damageable, hitPosition);
+        }
+
+        protected void ApplyHitEffects(IDamageable damageable, Vector3 hitPosition)
+        {
+            if (onHitEffects == null || onHitEffects.Count == 0)
             {
                 return;
             }
@@ -290,8 +300,8 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
                 return;
             }
 
-            Vector3 targetPosition = damageable.transform ? damageable.transform.position : other.transform.position;
-            EffectContext context = new EffectContext(null, source, damageable, transform.position, targetPosition,
+            Vector3 targetPosition = damageable.transform ? damageable.transform.position : hitPosition;
+            EffectContext context = new EffectContext(null, source, damageable, hitPosition, targetPosition,
                 body != null ? body.linearVelocity : launchDirection, launchMagnitude);
 
             foreach (Effect effect in onHitEffects)

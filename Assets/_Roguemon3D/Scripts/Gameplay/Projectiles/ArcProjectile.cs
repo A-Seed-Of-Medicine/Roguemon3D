@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using _PinBoy.Scripts.CharacterMovement;
+using _PinBoy.Scripts.Gameplay.Effects;
 using UnityEngine;
 
 namespace _PinBoy.Scripts.Gameplay.Projectiles
@@ -25,17 +28,15 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
         [SerializeField, Min(0f)] private float maxFlightDuration = 5f;
         [SerializeField] private bool expireAtEndOfArc = true;
 
-        [Header("Target Effect")]
-        [SerializeField] private ParticleSystem targetEffectPrefab;
-        [SerializeField] private float targetEffectLifetimeMultiplier = 1f;
-        [SerializeField] private bool alignEffectToSurface = true;
-        [SerializeField, Min(0f)] private float surfaceRaycastDistance = 2f;
-        [SerializeField] private LayerMask surfaceMask = ~0;
+        [Header("Target Detection")]
+        [SerializeField] private HitDetector targetDetectorPrefab;
+        [SerializeField] private bool activateDetectorOnLaunch = true;
+        [SerializeField, Min(0f)] private float detectorLifetimeMultiplier = 1f;
 
         Vector3 targetPosition;
         float flightDuration;
         float flightElapsed;
-        ParticleSystem activeTargetEffect;
+        HitDetector activeTargetDetector;
 
         protected override bool ShouldApplyAcceleration => false;
         protected override bool ShouldMaintainVelocity => true;
@@ -49,7 +50,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             flightElapsed = 0f;
 
             base.Launch(data);
-            SpawnTargetEffect();
+            SpawnTargetDetector(data);
         }
 
         protected override void FixedUpdate()
@@ -83,6 +84,19 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             Vector3 velocity = (nextPosition - Body.position) / Time.fixedDeltaTime;
             Body.linearVelocity = velocity;
             Body.MovePosition(nextPosition);
+        }
+
+        protected override void HandleHit(Collider other, Vector3? hitPoint = null)
+        {
+            UpdateDetectorPosition(hitPoint);
+            ApplyTargetDetectorHits();
+            base.HandleHit(other, hitPoint);
+        }
+
+        protected override void Expire()
+        {
+            ApplyTargetDetectorHits();
+            base.Expire();
         }
 
         Vector3 ResolveLaunchDirection(LaunchData data, Vector3 resolvedTarget)
@@ -152,30 +166,77 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             return clamped;
         }
 
-        void SpawnTargetEffect()
+        void SpawnTargetDetector(LaunchData data)
         {
-            if (!targetEffectPrefab)
+            if (!targetDetectorPrefab)
             {
                 return;
             }
 
-            Vector3 spawnPosition = targetPosition;
-            Quaternion spawnRotation = Quaternion.identity;
+            Quaternion spawnRotation = Quaternion.LookRotation(data.Direction, Vector3.up);
+            activeTargetDetector = Instantiate(targetDetectorPrefab, targetPosition, spawnRotation);
 
-            if (alignEffectToSurface)
+            AgentController owner = data.Owner ? data.Owner.GetComponentInParent<AgentController>() : null;
+            activeTargetDetector.Initialize(owner);
+
+            if (activateDetectorOnLaunch)
             {
-                if (Physics.Raycast(targetPosition + Vector3.up * surfaceRaycastDistance, Vector3.down, out RaycastHit hit,
-                        surfaceRaycastDistance * 2f, surfaceMask))
-                {
-                    spawnPosition = hit.point;
-                    spawnRotation = Quaternion.LookRotation(hit.normal, Vector3.up);
-                }
+                activeTargetDetector.Activate(flightDuration * detectorLifetimeMultiplier);
+            }
+        }
+
+        void ApplyTargetDetectorHits()
+        {
+            if (!activeTargetDetector)
+            {
+                return;
             }
 
-            activeTargetEffect = Instantiate(targetEffectPrefab, spawnPosition, spawnRotation);
-            float desiredLifetime = flightDuration * targetEffectLifetimeMultiplier;
-            ParticleSystem.MainModule main = activeTargetEffect.main;
-            main.startLifetime = desiredLifetime;
+            if (!activateDetectorOnLaunch)
+            {
+                activeTargetDetector.Activate(flightDuration * detectorLifetimeMultiplier);
+            }
+
+            HashSet<IDamageable> hits = new HashSet<IDamageable>();
+            activeTargetDetector.EvaluateHits(hits, false, OnDetectorHit);
+
+            Destroy(activeTargetDetector.gameObject);
+            activeTargetDetector = null;
+        }
+
+        void OnDetectorHit(IDamageable damageable, Collider collider)
+        {
+            if (damageable == null)
+            {
+                return;
+            }
+
+            Collider targetCollider = collider;
+            if (!targetCollider && damageable is Component component)
+            {
+                targetCollider = component.GetComponentInChildren<Collider>();
+            }
+
+            if (targetCollider)
+            {
+                onHit?.Invoke(targetCollider);
+            }
+
+            Vector3 hitPosition = targetCollider
+                ? targetCollider.bounds.ClosestPoint(activeTargetDetector.transform.position)
+                : activeTargetDetector.transform.position;
+
+            ApplyHitEffects(damageable, hitPosition);
+        }
+
+        void UpdateDetectorPosition(Vector3? hitPoint)
+        {
+            if (!activeTargetDetector || !hitPoint.HasValue)
+            {
+                return;
+            }
+
+            activeTargetDetector.transform.position = hitPoint.Value;
         }
     }
 }
