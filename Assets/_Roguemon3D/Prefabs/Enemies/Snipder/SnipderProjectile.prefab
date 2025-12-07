@@ -103,7 +103,7 @@ MonoBehaviour:
   maintainVelocityEveryFrame: 1
   collisionMask:
     serializedVersion: 2
-    m_Bits: 505
+    m_Bits: 473
   _allegianceType: 2
   destroyOnImpact: 1
   impactPrefab: {fileID: 2336955926572963415, guid: 30042e234964e5642a864a048db3e407, type: 3}

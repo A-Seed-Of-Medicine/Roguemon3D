@@ -8,7 +8,7 @@ namespace _PinBoy.Scripts.Gameplay.Effects
 {
     public enum AllegianceType
     {
-        Friendly,
+        Ally,
         Enemy,
         Neutral,
     }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Effects;
 using UnityEngine;
@@ -88,8 +89,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
         protected override void HandleHit(Collider other, Vector3? hitPoint = null)
         {
-            UpdateDetectorPosition(hitPoint);
-            ApplyTargetDetectorHits();
+            //ApplyTargetDetectorHits();
             base.HandleHit(other, hitPoint);
         }
 
@@ -181,12 +181,14 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
             if (activateDetectorOnLaunch)
             {
+                Debug.Log("Spawning target detector");
                 activeTargetDetector.Activate(flightDuration * detectorLifetimeMultiplier);
             }
         }
 
         void ApplyTargetDetectorHits()
         {
+            Debug.Log("Applying target detector hits");
             if (!activeTargetDetector)
             {
                 return;

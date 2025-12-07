@@ -17,6 +17,9 @@ MonoBehaviour:
   entrySteps:
   - input: 0
     stepId: step
+    longPress: 0
+    longPressMinThreshold: 0.35
+    longPressMaxThreshold: 1
     graphPosition: {x: 0, y: 0}
   steps:
   - id: step
@@ -26,19 +29,25 @@ MonoBehaviour:
     allowRepeatedHits: 0
     stunImmune: 0
     windup: 0.5
+    chargeWindup: 0
+    minimumChargeTime: 0.05
+    maximumChargeTime: 0
     active: 0.2
     recovery: 0.25
     comboResetDelay: 1.2
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
-    lockMovement: 1
+    lockMovementInWindup: 1
+    lockMovementInActive: 1
     lockMovementInRecovery: 1
-    lockAim: 1
+    lockAimInWindup: 1
+    lockAimInActive: 1
+    lockAimInRecovery: 1
     zeroVelocityOnStart: 1
     missNudgeImpulse: 50
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
+    hitDetectorPrefab: {fileID: 7327174902600369123, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -46,9 +55,13 @@ MonoBehaviour:
     graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
-      nextStepId: step2
+      nextStep:
+        stepIndex: 1
       queueUntilWindow: 0
       transitionDelay: 0
+      longPress: 0
+      longPressMinThreshold: 0.35
+      longPressMaxThreshold: 1
     vfx: {fileID: 0}
     hitStopOnExecute: 0
     hitStopOnHit: 0
@@ -128,14 +141,20 @@ MonoBehaviour:
     allowRepeatedHits: 0
     stunImmune: 0
     windup: 0.25
+    chargeWindup: 0
+    minimumChargeTime: 0.05
+    maximumChargeTime: 0
     active: 0.2
     recovery: 0.25
     comboResetDelay: 1.2
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
-    lockMovement: 1
+    lockMovementInWindup: 1
+    lockMovementInActive: 1
     lockMovementInRecovery: 1
-    lockAim: 1
+    lockAimInWindup: 1
+    lockAimInActive: 1
+    lockAimInRecovery: 1
     zeroVelocityOnStart: 1
     missNudgeImpulse: 50
     missNudgeDelay: 0
@@ -148,9 +167,13 @@ MonoBehaviour:
     graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
-      nextStepId: step3
+      nextStep:
+        stepIndex: 2
       queueUntilWindow: 0
       transitionDelay: 0
+      longPress: 0
+      longPressMinThreshold: 0.35
+      longPressMaxThreshold: 1
     vfx: {fileID: 0}
     hitStopOnExecute: 0
     hitStopOnHit: 0
@@ -230,19 +253,25 @@ MonoBehaviour:
     allowRepeatedHits: 0
     stunImmune: 0
     windup: 1.5
+    chargeWindup: 0
+    minimumChargeTime: 0.05
+    maximumChargeTime: 0
     active: 0.2
     recovery: 0.25
     comboResetDelay: 1.2
     transitionWindowOpen: 0.35
     transitionWindowClose: 0.9
-    lockMovement: 1
+    lockMovementInWindup: 1
+    lockMovementInActive: 1
     lockMovementInRecovery: 1
-    lockAim: 1
+    lockAimInWindup: 1
+    lockAimInActive: 1
+    lockAimInRecovery: 1
     zeroVelocityOnStart: 1
     missNudgeImpulse: 50
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
+    hitDetectorPrefab: {fileID: 0}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -250,9 +279,13 @@ MonoBehaviour:
     graphPosition: {x: 0, y: 0}
     transitions:
     - input: 0
-      nextStepId: 
+      nextStep:
+        stepIndex: -1
       queueUntilWindow: 0
       transitionDelay: 0
+      longPress: 0
+      longPressMinThreshold: 0.35
+      longPressMaxThreshold: 1
     vfx: {fileID: 0}
     hitStopOnExecute: 0
     hitStopOnHit: 0

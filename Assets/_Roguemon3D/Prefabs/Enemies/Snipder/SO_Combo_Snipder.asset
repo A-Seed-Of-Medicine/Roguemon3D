@@ -47,7 +47,7 @@ MonoBehaviour:
     missNudgeImpulse: 0
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 7d9a3379f4701bf4d976ae5cd6fd63b7, type: 3}
+    hitDetectorPrefab: {fileID: 7327174902600369123, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}

@@ -13,7 +13,7 @@ namespace _PinBoy.Scripts.Player
     {
         public PlayerInputReader PlayerInput;
         
-        public override AllegianceType allegiance => AllegianceType.Friendly;
+        public override AllegianceType allegiance => AllegianceType.Ally;
 
         public override InputReader inputReader => PlayerInput.inputReader;
         

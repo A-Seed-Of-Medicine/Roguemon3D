@@ -50,7 +50,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -5016,7 +5016,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -9878,11 +9878,11 @@ MonoBehaviour:
   - {fileID: 4199996093188118682}
   targetLayers:
     serializedVersion: 2
-    m_Bits: 507
+    m_Bits: 499
   includeTriggerColliders: 1
-  allegianceMask: 
+  allegianceMask: 01000000
   activeAnimation: {fileID: 0}
-  alignToGround: 1
+  alignToGround: 0
   groundRaycastDistance: 2
   groundLayerMask:
     serializedVersion: 2

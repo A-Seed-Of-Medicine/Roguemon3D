@@ -30,12 +30,41 @@ public class HitDetector : MonoBehaviour
     public virtual void Initialize(AgentController agentController)
     {
         owner = agentController;
+        List<AllegianceType> contextMask = new();
+        foreach (AllegianceType allegiance in allegianceMask)
+        {
+            switch (owner.allegiance)
+            {
+                case AllegianceType.Ally:
+                    break;
+                case AllegianceType.Enemy:
+                    if (allegiance == AllegianceType.Ally)
+                        contextMask.Add(AllegianceType.Enemy);
+                    if (allegiance == AllegianceType.Enemy)
+                        contextMask.Add(AllegianceType.Ally);
+                    break;
+                case AllegianceType.Neutral:
+                    if (allegiance != AllegianceType.Ally)
+                        contextMask.Add(AllegianceType.Neutral);
+                    else if (!allegianceMask.Contains(AllegianceType.Ally))
+                    {
+                        contextMask.Add(AllegianceType.Ally);
+                        contextMask.Add(AllegianceType.Enemy);
+                    }
+
+                    break;
+            }
+            
+        }
+        
+        allegianceMask = contextMask;
     }
 
     public virtual void Activate(float activeDuration)
     {
         detectionActive = true;
         AlignToGroundIfNeeded();
+        HandleWindupIndicator(activeDuration);
         PlayActiveAnimation(activeDuration);
     }
 
@@ -304,5 +333,17 @@ public class HitDetector : MonoBehaviour
     static float MaxAbsComponent(Vector3 vector)
     {
         return Mathf.Max(Mathf.Abs(vector.x), Mathf.Abs(vector.y), Mathf.Abs(vector.z));
+    }
+    
+    protected bool IsValidAllegiance(IDamageable target)
+    {
+        if (allegianceMask == null || allegianceMask.Count == 0)
+        {
+            return true;
+        }
+        
+        
+
+        return allegianceMask.Contains(target.allegiance);
     }
 }
