@@ -59,7 +59,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 7327174902600369123, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
+    hitDetectorPrefab: {fileID: 4414084094921264450, guid: 2a2154c2086bcaf4ea14cbf1795233d6, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -291,7 +291,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: -2281018567217524816, guid: 7d3d4188aef206f4093ec0a4b6e3f1e0, type: 3}
+    hitDetectorPrefab: {fileID: 4414084094921264450, guid: 2a2154c2086bcaf4ea14cbf1795233d6, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -411,12 +411,12 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 7327174902600369123, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
+    hitDetectorPrefab: {fileID: 4414084094921264450, guid: 2a2154c2086bcaf4ea14cbf1795233d6, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
-    graphPosition: {x: 0, y: 0}
+    graphPosition: {x: 1360, y: 80}
     transitions:
     - input: 0
       nextStep:

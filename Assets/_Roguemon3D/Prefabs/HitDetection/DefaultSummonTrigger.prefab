@@ -67,6 +67,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0237649f34d7d064cab872711e15805d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitComboDetector
+  windupIndicator: {fileID: 0}
+  scaleWindupDuration: 1
   triggerColliders:
   - {fileID: 2544722706627117229}
   targetLayers:
@@ -75,14 +77,12 @@ MonoBehaviour:
   includeTriggerColliders: 0
   allegianceMask: 01000000
   activeAnimation: {fileID: 0}
-  alignToGround: 0
+  alignToGround: 1
   groundRaycastDistance: 2
   groundLayerMask:
     serializedVersion: 2
-    m_Bits: 507
+    m_Bits: 8
   groundHeightOffset: 0.05
-  windupIndicator: {fileID: 0}
-  scaleWindupDuration: 1
   windupDeactivePhase: 2
   phaseParticleEffects: []
 --- !u!1001 &4749779758737307826

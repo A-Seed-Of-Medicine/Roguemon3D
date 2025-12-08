@@ -20,7 +20,7 @@ public class HitDetector : MonoBehaviour
     [SerializeField] protected bool alignToGround = true;
     [SerializeField, Min(0f)] protected float groundRaycastDistance = 2f;
     [SerializeField] protected LayerMask groundLayerMask = 1 << 3; // Default to "Ground" layer
-    [SerializeField, Min(0f)] protected float groundHeightOffset = 0.01f;
+    [SerializeField, Min(0f)] protected float groundOffset = 0f;
 
     protected readonly Collider[] colliderCache = new Collider[16];
 
@@ -58,12 +58,12 @@ public class HitDetector : MonoBehaviour
         }
         
         allegianceMask = contextMask;
+        AlignToGround();
     }
 
     public virtual void Activate(float activeDuration)
     {
         detectionActive = true;
-        AlignToGroundIfNeeded();
         HandleWindupIndicator(activeDuration);
         PlayActiveAnimation(activeDuration);
     }
@@ -195,7 +195,7 @@ public class HitDetector : MonoBehaviour
         animation.Play(clipName);
     }
 
-    protected bool AlignToGroundIfNeeded()
+    protected bool AlignToGround()
     {
         if (!alignToGround)
         {
@@ -206,19 +206,7 @@ public class HitDetector : MonoBehaviour
         if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, groundRaycastDistance * 2f, groundLayerMask,
                 QueryTriggerInteraction.Ignore))
         {
-            transform.position = hit.point + hit.normal * groundHeightOffset;
-            Vector3 projectedForward = Vector3.ProjectOnPlane(transform.forward, hit.normal);
-            if (projectedForward.sqrMagnitude <= 0.0001f)
-            {
-                projectedForward = Vector3.ProjectOnPlane(transform.up, hit.normal);
-            }
-
-            if (projectedForward.sqrMagnitude <= 0.0001f)
-            {
-                projectedForward = Vector3.forward;
-            }
-
-            transform.rotation = Quaternion.LookRotation(projectedForward, hit.normal);
+            transform.position = hit.point + hit.normal * groundOffset;
             return true;
         }
 

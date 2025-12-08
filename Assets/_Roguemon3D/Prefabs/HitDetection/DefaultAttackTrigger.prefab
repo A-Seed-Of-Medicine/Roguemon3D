@@ -57,7 +57,7 @@ MonoBehaviour:
   includeTriggerColliders: 0
   allegianceMask: 01000000
   activeAnimation: {fileID: 0}
-  alignToGround: 0
+  alignToGround: 1
   groundRaycastDistance: 2
   groundLayerMask:
     serializedVersion: 2

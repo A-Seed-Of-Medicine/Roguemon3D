@@ -19827,11 +19827,11 @@ MonoBehaviour:
   includeTriggerColliders: 0
   allegianceMask: 01000000
   activeAnimation: {fileID: 0}
-  alignToGround: 0
+  alignToGround: 1
   groundRaycastDistance: 2
   groundLayerMask:
     serializedVersion: 2
-    m_Bits: 507
+    m_Bits: 8
   groundHeightOffset: 0.05
   windupDeactivePhase: 2
   phaseParticleEffects:
