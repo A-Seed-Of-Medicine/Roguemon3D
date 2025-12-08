@@ -159,7 +159,7 @@ MonoBehaviour:
     missNudgeImpulse: 50
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 6643509938996099555, guid: 4eb1935c3ee07e04b9086415ab9e5b12, type: 3}
+    hitDetectorPrefab: {fileID: -2281018567217524816, guid: 7d3d4188aef206f4093ec0a4b6e3f1e0, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
@@ -271,7 +271,7 @@ MonoBehaviour:
     missNudgeImpulse: 50
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 0}
+    hitDetectorPrefab: {fileID: 7327174902600369123, guid: 22ba526e7585f8446becb85a6df77820, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}

@@ -11,7 +11,8 @@ public class HitDetector : MonoBehaviour
     [SerializeField] protected Collider[] triggerColliders = System.Array.Empty<Collider>();
     [SerializeField] protected LayerMask targetLayers = Physics.DefaultRaycastLayers;
     [SerializeField] protected bool includeTriggerColliders = true;
-    [SerializeField] protected AllegianceType allegianceMask;
+    [SerializeField] private AllegianceType allegianceMask;
+    private AllegianceType inverseMask;
 
     [Header("Animation")]
     [SerializeField] protected AnimationClip activeAnimation;
@@ -32,7 +33,7 @@ public class HitDetector : MonoBehaviour
         owner = agentController;
 
         if (owner != null)
-            allegianceMask = owner.GetAllegianceMask(allegianceMask);
+            inverseMask = owner.GetAllegianceMask(allegianceMask);
         AlignToGround();
     }
 
@@ -117,7 +118,7 @@ public class HitDetector : MonoBehaviour
                     continue;
                 }
 
-                if (allegianceMask != 0 && (allegianceMask & damageable.allegiance) == 0)
+                if (inverseMask != 0 && (inverseMask & damageable.allegiance) == 0)
                 {
                     continue;
                 }
@@ -316,13 +317,13 @@ public class HitDetector : MonoBehaviour
     
     protected bool IsValidAllegiance(IDamageable target)
     {
-        if (allegianceMask == 0)
+        if (inverseMask == 0)
         {
             return true;
         }
 
 
 
-        return (allegianceMask & target.allegiance) != 0;
+        return (inverseMask & target.allegiance) != 0;
     }
 }

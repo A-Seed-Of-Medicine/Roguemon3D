@@ -4989,12 +4989,13 @@ MonoBehaviour:
   generateTriggerVolume: 0
   triggerLayerMask: 2
   triggerHeight: 0.25
+  triggerCapsuleHeight: 1
   triggerSizeOffset: 0
   radialTriggerSegmentsOverride: 0
   cylinderTriggerSlicesOverride: 0
   alignTriggerVolumeToParticleRotation: 1
   triggerVolumeIsTrigger: 1
-  colliders: []
+  triggerCollider: {fileID: 0}
   particleSystem: {fileID: 4683562531078001350}
   subEmitterSystems:
   - {fileID: 1242328236624604469}
@@ -9880,7 +9881,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 499
   includeTriggerColliders: 1
-  allegianceMask: 0
+  allegianceMask: -1
   activeAnimation: {fileID: 0}
   alignToGround: 1
   groundRaycastDistance: 2

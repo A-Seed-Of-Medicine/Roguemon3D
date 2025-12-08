@@ -87,6 +87,7 @@ namespace _PinBoy.Scripts.CharacterMovement
             switch (allegiance)
             {
                 case AllegianceType.Ally:
+                    contextMask = mask;
                     break;
                 case AllegianceType.Enemy:
                     if (hasAlly)
