@@ -11,7 +11,7 @@ public class HitDetector : MonoBehaviour
     [SerializeField] protected Collider[] triggerColliders = System.Array.Empty<Collider>();
     [SerializeField] protected LayerMask targetLayers = Physics.DefaultRaycastLayers;
     [SerializeField] protected bool includeTriggerColliders = true;
-    [SerializeField] protected List<AllegianceType> allegianceMask = new();
+    [SerializeField] protected AllegianceType allegianceMask = AllegianceType.All;
 
     [Header("Animation")]
     [SerializeField] protected AnimationClip activeAnimation;
@@ -30,34 +30,7 @@ public class HitDetector : MonoBehaviour
     public virtual void Initialize(AgentController agentController)
     {
         owner = agentController;
-        List<AllegianceType> contextMask = new();
-        foreach (AllegianceType allegiance in allegianceMask)
-        {
-            switch (owner.allegiance)
-            {
-                case AllegianceType.Ally:
-                    break;
-                case AllegianceType.Enemy:
-                    if (allegiance == AllegianceType.Ally)
-                        contextMask.Add(AllegianceType.Enemy);
-                    if (allegiance == AllegianceType.Enemy)
-                        contextMask.Add(AllegianceType.Ally);
-                    break;
-                case AllegianceType.Neutral:
-                    if (allegiance != AllegianceType.Ally)
-                        contextMask.Add(AllegianceType.Neutral);
-                    else if (!allegianceMask.Contains(AllegianceType.Ally))
-                    {
-                        contextMask.Add(AllegianceType.Ally);
-                        contextMask.Add(AllegianceType.Enemy);
-                    }
-
-                    break;
-            }
-            
-        }
-        
-        allegianceMask = contextMask;
+        allegianceMask = ResolveContextualMask(allegianceMask, owner.allegiance);
         AlignToGround();
     }
 
@@ -134,7 +107,8 @@ public class HitDetector : MonoBehaviour
                     continue;
                 }
 
-                if (allegianceMask is { Count: > 0 } && !allegianceMask.Contains(damageable.allegiance))
+                if (allegianceMask != AllegianceType.None &&
+                    (allegianceMask & damageable.allegiance) == 0)
                 {
                     continue;
                 }
@@ -161,6 +135,43 @@ public class HitDetector : MonoBehaviour
         }
         
         return triggerColliders;
+    }
+
+    static AllegianceType ResolveContextualMask(AllegianceType mask, AllegianceType ownerAllegiance)
+    {
+        AllegianceType resolvedMask = AllegianceType.None;
+
+        bool includeAlly = (mask & AllegianceType.Ally) != 0;
+        bool includeEnemy = (mask & AllegianceType.Enemy) != 0;
+        bool includeNeutral = (mask & AllegianceType.Neutral) != 0;
+
+        switch (ownerAllegiance)
+        {
+            case AllegianceType.Enemy:
+                if (includeAlly)
+                    resolvedMask |= AllegianceType.Enemy;
+                if (includeEnemy)
+                    resolvedMask |= AllegianceType.Ally;
+                if (includeNeutral)
+                    resolvedMask |= AllegianceType.Neutral;
+                break;
+            case AllegianceType.Neutral:
+                if (includeAlly)
+                    resolvedMask |= AllegianceType.Ally | AllegianceType.Enemy;
+                if (includeEnemy || includeNeutral)
+                    resolvedMask |= AllegianceType.Neutral;
+                break;
+            default:
+                if (includeAlly)
+                    resolvedMask |= AllegianceType.Ally;
+                if (includeEnemy)
+                    resolvedMask |= AllegianceType.Enemy;
+                if (includeNeutral)
+                    resolvedMask |= AllegianceType.Neutral;
+                break;
+        }
+
+        return resolvedMask;
     }
 
     protected void PlayActiveAnimation(float activeDuration)
