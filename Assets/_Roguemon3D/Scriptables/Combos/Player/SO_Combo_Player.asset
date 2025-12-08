@@ -506,7 +506,7 @@ MonoBehaviour:
     stunImmune: 0
     windup: 0.5
     chargeWindup: 1
-    minimumChargeTime: 0.5
+    minimumChargeTime: 0.25
     maximumChargeTime: 0
     active: 0.1
     recovery: 0.1

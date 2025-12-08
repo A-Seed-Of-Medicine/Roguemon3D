@@ -19832,7 +19832,7 @@ MonoBehaviour:
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 8
-  groundHeightOffset: 0.05
+  groundOffset: 0
   windupDeactivePhase: 2
   phaseParticleEffects:
   - particleEffect: {fileID: 8755687311842327937}

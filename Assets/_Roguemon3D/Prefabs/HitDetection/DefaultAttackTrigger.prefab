@@ -62,7 +62,7 @@ MonoBehaviour:
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 8
-  groundHeightOffset: 0.05
+  groundOffset: 0
   windupDeactivePhase: 2
   phaseParticleEffects: []
 --- !u!1001 &2638343471001939951

@@ -9887,7 +9887,7 @@ MonoBehaviour:
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 8
-  groundHeightOffset: 0.05
+  groundOffset: 0
 --- !u!136 &4199996093188118682
 CapsuleCollider:
   m_ObjectHideFlags: 0
