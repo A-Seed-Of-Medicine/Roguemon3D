@@ -6,11 +6,12 @@ using UnityEngine.Events;
 
 namespace _PinBoy.Scripts.Gameplay.Effects
 {
+    [Flags]
     public enum AllegianceType
     {
-        Ally,
-        Enemy,
-        Neutral,
+        Ally = 1 << 0,
+        Enemy = 1 << 1,
+        Neutral = 1 << 2,
     }
     
     [Serializable]

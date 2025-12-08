@@ -11,7 +11,7 @@ public class HitDetector : MonoBehaviour
     [SerializeField] protected Collider[] triggerColliders = System.Array.Empty<Collider>();
     [SerializeField] protected LayerMask targetLayers = Physics.DefaultRaycastLayers;
     [SerializeField] protected bool includeTriggerColliders = true;
-    [SerializeField] protected List<AllegianceType> allegianceMask = new();
+    [SerializeField] protected AllegianceType allegianceMask;
 
     [Header("Animation")]
     [SerializeField] protected AnimationClip activeAnimation;
@@ -30,34 +30,9 @@ public class HitDetector : MonoBehaviour
     public virtual void Initialize(AgentController agentController)
     {
         owner = agentController;
-        List<AllegianceType> contextMask = new();
-        foreach (AllegianceType allegiance in allegianceMask)
-        {
-            switch (owner.allegiance)
-            {
-                case AllegianceType.Ally:
-                    break;
-                case AllegianceType.Enemy:
-                    if (allegiance == AllegianceType.Ally)
-                        contextMask.Add(AllegianceType.Enemy);
-                    if (allegiance == AllegianceType.Enemy)
-                        contextMask.Add(AllegianceType.Ally);
-                    break;
-                case AllegianceType.Neutral:
-                    if (allegiance != AllegianceType.Ally)
-                        contextMask.Add(AllegianceType.Neutral);
-                    else if (!allegianceMask.Contains(AllegianceType.Ally))
-                    {
-                        contextMask.Add(AllegianceType.Ally);
-                        contextMask.Add(AllegianceType.Enemy);
-                    }
 
-                    break;
-            }
-            
-        }
-        
-        allegianceMask = contextMask;
+        if (owner != null)
+            allegianceMask = owner.GetAllegianceMask(allegianceMask);
         AlignToGround();
     }
 
@@ -134,7 +109,7 @@ public class HitDetector : MonoBehaviour
                     continue;
                 }
 
-                if (allegianceMask is { Count: > 0 } && !allegianceMask.Contains(damageable.allegiance))
+                if (allegianceMask != 0 && (allegianceMask & damageable.allegiance) == 0)
                 {
                     continue;
                 }
@@ -325,13 +300,13 @@ public class HitDetector : MonoBehaviour
     
     protected bool IsValidAllegiance(IDamageable target)
     {
-        if (allegianceMask == null || allegianceMask.Count == 0)
+        if (allegianceMask == 0)
         {
             return true;
         }
-        
-        
 
-        return allegianceMask.Contains(target.allegiance);
+
+
+        return (allegianceMask & target.allegiance) != 0;
     }
 }

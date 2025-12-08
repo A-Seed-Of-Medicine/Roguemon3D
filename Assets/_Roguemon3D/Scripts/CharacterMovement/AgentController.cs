@@ -74,8 +74,35 @@ namespace _PinBoy.Scripts.CharacterMovement
         [SerializeField, Tooltip("Maximum downward speed reached while falling.")]
         private float terminalVelocity = -60f;
         
-        [field: SerializeField]
-        public virtual AllegianceType allegiance { get; set; }
+        [field: SerializeField, SingleSelect]
+        public virtual AllegianceType allegiance { get; set; } = AllegianceType.Ally;
+
+        public AllegianceType GetAllegianceMask(AllegianceType mask)
+        {
+            AllegianceType contextMask = 0;
+
+            bool hasAlly = mask.HasFlag(AllegianceType.Ally);
+            bool hasEnemy = mask.HasFlag(AllegianceType.Enemy);
+            bool hasNeutral = mask.HasFlag(AllegianceType.Neutral);
+
+            switch (allegiance)
+            {
+                case AllegianceType.Ally:
+                    break;
+                case AllegianceType.Enemy:
+                    if (hasAlly)
+                        contextMask |= AllegianceType.Enemy;
+                    if (hasEnemy)
+                        contextMask |= AllegianceType.Ally;
+                    break;
+                case AllegianceType.Neutral:
+                    if (hasEnemy || hasNeutral)
+                        contextMask |= AllegianceType.Neutral;
+                    break;
+            }
+
+            return contextMask;
+        }
 
         [HideInInspector] public CreatureSummonRuntime summonData;
         [HideInInspector] public CharacterAimAction aimData;
