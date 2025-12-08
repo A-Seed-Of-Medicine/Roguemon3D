@@ -56,6 +56,9 @@ public class ProceduralMeshGenerator : MonoBehaviour
     [Tooltip("Thickness used for planar shapes (Quad / NineSliceQuad / Radial).")]
     [Min(0.0001f)] public float triggerHeight = 0.25f;
 
+    [Tooltip("Height used for generated capsule trigger colliders (Radial / Cylinder).")]
+    [Min(0.0001f)] public float triggerCapsuleHeight = 1f;
+
     [Tooltip("Positive expands, negative shrinks. Applied to radii/width/height, and also expands thickness for planar shapes.")]
     public float triggerSizeOffset = 0f;
 
@@ -74,12 +77,11 @@ public class ProceduralMeshGenerator : MonoBehaviour
     [Tooltip("Name of the generated trigger volume child")]
     public string triggerVolumeName => gameObject.name + "_TriggerVolume";
     
-    public List<Collider> colliders;
+    public Collider triggerCollider;
     public ParticleSystem particleSystem;
     public ParticleSystem[] subEmitterSystems = Array.Empty<ParticleSystem>();
 
     private Mesh mesh;
-    private List<Mesh> triggerMeshes;
 
     /// <summary>Returns the generated trigger volume root (child Transform), or null if none exists.</summary>
     public Transform triggerVolumeRoot;
@@ -578,7 +580,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
         var colliders = root.GetComponents<Collider>();
         foreach (var c in colliders)
             DestroySafe(c, destroyImmediate);
-        this.colliders = new List<Collider>();
+        triggerCollider = null;
     }
 
     private void BuildPlanarBoxTrigger(Transform root, Vector2 planarSize, float height, float sizeOffset)
@@ -591,7 +593,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
         bc.isTrigger = triggerVolumeIsTrigger;
         bc.center = Vector3.zero;
         bc.size = new Vector3(width, depth, thickness);
-        colliders.Add(bc);
+        triggerCollider = bc;
     }
 
     private void BuildSphereTrigger(Transform root)
@@ -602,68 +604,45 @@ public class ProceduralMeshGenerator : MonoBehaviour
         sc.isTrigger = triggerVolumeIsTrigger;
         sc.center = Vector3.zero;
         sc.radius = r;
-        colliders.Add(sc);
+        triggerCollider = sc;
     }
 
     private void BuildRadialTrigger(Transform root)
     {
-        float angleRad = Mathf.Clamp(angle, 0.1f, 360f) * Mathf.Deg2Rad;
-
-        float r0 = Mathf.Min(innerRadius, outerRadius);
         float r1 = Mathf.Max(innerRadius, outerRadius);
 
-        // Expand outer radius outward, and pull inner radius inward (to enlarge the total area).
-        float inner = Mathf.Max(0f, r0 - triggerSizeOffset);
-        float outer = Mathf.Max(inner + 0.0001f, r1 + triggerSizeOffset);
+        float outer = Mathf.Max(0.0001f, r1 + triggerSizeOffset);
+        float height = Mathf.Max(triggerCapsuleHeight + triggerSizeOffset * 2f, triggerHeight + triggerSizeOffset * 2f);
 
-        float thickness = Mathf.Max(0.0001f, triggerHeight + triggerSizeOffset * 2f);
-
-        int seg = radialTriggerSegmentsOverride > 0 ? radialTriggerSegmentsOverride : Mathf.Max(3, segments);
-        seg = Mathf.Clamp(seg, 3, 256);
-
-        float delta = angleRad / seg;
-
-        for (int i = 0; i < seg; i++)
-        {
-            float a0 = delta * i;
-            float a1 = delta * (i + 1);
-
-            var prism = BuildRadialWedgePrism(inner, outer, a0, a1, thickness);
-            var mc = root.gameObject.AddComponent<MeshCollider>();
-            mc.sharedMesh = prism;
-            mc.convex = true;
-            mc.isTrigger = triggerVolumeIsTrigger;
-            colliders.Add(mc);
-        }
+        var capsule = root.gameObject.AddComponent<CapsuleCollider>();
+        capsule.isTrigger = triggerVolumeIsTrigger;
+        capsule.center = Vector3.zero;
+        capsule.direction = 2; // Z axis thickness
+        capsule.radius = outer;
+        capsule.height = Mathf.Max(height, capsule.radius * 2f);
+        triggerCollider = capsule;
     }
 
     private void BuildCylinderTrigger(Transform root)
     {
-        int seg = Mathf.Clamp(Mathf.Max(3, cylinderSegments), 3, 128);
-        int slices = cylinderTriggerSlicesOverride > 0 ? cylinderTriggerSlicesOverride : Mathf.Max(1, cylinderRings);
-        slices = Mathf.Clamp(slices, 1, 128);
-
-        float halfH = Mathf.Max(0.0001f, cylinderHeight * 0.5f + triggerSizeOffset);
-        triggerMeshes = new List<Mesh>();
-        for (int i = 0; i < slices; i++)
+        int sampleCount = Mathf.Clamp(cylinderTriggerSlicesOverride > 0 ? cylinderTriggerSlicesOverride : Mathf.Max(1, cylinderRings), 1, 128);
+        float maxRadius = 0.0001f;
+        for (int i = 0; i <= sampleCount; i++)
         {
-            float t0 = (float)i / slices;
-            float t1 = (float)(i + 1) / slices;
-
-            float z0 = Mathf.Lerp(-halfH, halfH, t0);
-            float z1 = Mathf.Lerp(-halfH, halfH, t1);
-
-            float r0 = Mathf.Max(0.0001f, cylinderProfile.Evaluate(t0) * cylinderRadius + triggerSizeOffset);
-            float r1 = Mathf.Max(0.0001f, cylinderProfile.Evaluate(t1) * cylinderRadius + triggerSizeOffset);
-
-            var sliceMesh = BuildFrustumPrism(r0, r1, z0, z1, seg);
-            triggerMeshes.Add(sliceMesh);
-            var mc = root.gameObject.AddComponent<MeshCollider>();
-            mc.sharedMesh = sliceMesh;
-            mc.convex = true;
-            mc.isTrigger = triggerVolumeIsTrigger;
-            colliders.Add(mc);
+            float t = (float)i / Mathf.Max(1, sampleCount);
+            maxRadius = Mathf.Max(maxRadius, cylinderProfile.Evaluate(t) * cylinderRadius);
         }
+
+        float radius = Mathf.Max(0.0001f, maxRadius + triggerSizeOffset);
+        float height = Mathf.Max(triggerCapsuleHeight + triggerSizeOffset * 2f, cylinderHeight + triggerSizeOffset * 2f);
+
+        var capsule = root.gameObject.AddComponent<CapsuleCollider>();
+        capsule.isTrigger = triggerVolumeIsTrigger;
+        capsule.center = Vector3.zero;
+        capsule.direction = 1; // Y axis height
+        capsule.radius = radius;
+        capsule.height = Mathf.Max(height, capsule.radius * 2f);
+        triggerCollider = capsule;
     }
 
     private Vector2 GetPlanarSizeFromMesh()

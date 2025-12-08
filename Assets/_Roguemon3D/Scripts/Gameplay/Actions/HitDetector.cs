@@ -76,21 +76,18 @@ public class HitDetector : MonoBehaviour
             return;
         }
 
-        Collider[] colliders = GetSourceColliders();
-
-        if (colliders == null || colliders.Length == 0)
-        {
-            return;
-        }
-
         StepOverlapSettings settings = GetOverlapSettings();
 
-        foreach (Collider source in colliders)
+        bool hasSource = false;
+
+        foreach (Collider source in GetSourceColliders())
         {
             if (!source)
             {
                 continue;
             }
+
+            hasSource = true;
 
             int hitCount = OverlapColliderNonAlloc(source, colliderCache, settings);
             for (int i = 0; i < hitCount; i++)
@@ -134,19 +131,27 @@ public class HitDetector : MonoBehaviour
                 onHit?.Invoke(damageable, other);
             }
         }
+
+        if (!hasSource)
+        {
+            return;
+        }
     }
 
-    protected virtual Collider[] GetSourceColliders()
+    protected virtual IEnumerable<Collider> GetSourceColliders()
     {
-        if (windupIndicator && windupIndicator.colliders != null)
+        if (windupIndicator && windupIndicator.triggerCollider)
         {
-            Collider[] colliders = new Collider[triggerColliders.Length + windupIndicator.colliders.Count];
-            triggerColliders.CopyTo(colliders, 0);
-            windupIndicator.colliders.CopyTo(colliders, triggerColliders.Length);
-            return colliders;
+            yield return windupIndicator.triggerCollider;
         }
-        
-        return triggerColliders;
+
+        foreach (Collider collider in triggerColliders)
+        {
+            if (collider)
+            {
+                yield return collider;
+            }
+        }
     }
 
     protected void PlayActiveAnimation(float activeDuration)

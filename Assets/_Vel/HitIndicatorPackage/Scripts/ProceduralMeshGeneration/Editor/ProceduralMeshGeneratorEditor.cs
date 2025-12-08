@@ -12,10 +12,10 @@ public class ProceduralMeshGeneratorEditor : Editor
     SerializedProperty sphereSegmentsProp, sphereRingsProp, sphereRadiusProp;
 
     // Trigger volume properties
-    SerializedProperty generateTriggerVolumeProp, triggerHeightProp, triggerSizeOffsetProp;
+    SerializedProperty generateTriggerVolumeProp, triggerHeightProp, triggerCapsuleHeightProp, triggerSizeOffsetProp;
     SerializedProperty radialTriggerSegmentsOverrideProp, cylinderTriggerSlicesOverrideProp;
     SerializedProperty alignTriggerVolumeToParticleRotationProp, triggerVolumeIsTriggerProp;
-    SerializedProperty triggerVolumeRootProp, triggerLayerMaskProp, triggerCollidersProp;
+    SerializedProperty triggerVolumeRootProp, triggerLayerMaskProp, triggerColliderProp;
     SerializedProperty particleSystemProp, subEmittersProp;
 
     static bool triggerFoldout = true;
@@ -48,6 +48,7 @@ public class ProceduralMeshGeneratorEditor : Editor
 
         generateTriggerVolumeProp = serializedObject.FindProperty("generateTriggerVolume");
         triggerHeightProp = serializedObject.FindProperty("triggerHeight");
+        triggerCapsuleHeightProp = serializedObject.FindProperty("triggerCapsuleHeight");
         triggerSizeOffsetProp = serializedObject.FindProperty("triggerSizeOffset");
         radialTriggerSegmentsOverrideProp = serializedObject.FindProperty("radialTriggerSegmentsOverride");
         cylinderTriggerSlicesOverrideProp = serializedObject.FindProperty("cylinderTriggerSlicesOverride");
@@ -55,7 +56,7 @@ public class ProceduralMeshGeneratorEditor : Editor
         triggerVolumeIsTriggerProp = serializedObject.FindProperty("triggerVolumeIsTrigger");
         triggerVolumeRootProp = serializedObject.FindProperty("triggerVolumeRoot");
         triggerLayerMaskProp = serializedObject.FindProperty("triggerLayerMask");
-        triggerCollidersProp = serializedObject.FindProperty("colliders");
+        triggerColliderProp = serializedObject.FindProperty("triggerCollider");
         particleSystemProp = serializedObject.FindProperty("particleSystem");
         subEmittersProp = serializedObject.FindProperty("subEmitterSystems");
     }
@@ -139,6 +140,7 @@ public class ProceduralMeshGeneratorEditor : Editor
             using (new EditorGUI.DisabledScope(!generateTriggerVolumeProp.boolValue))
             {
                 EditorGUILayout.PropertyField(triggerHeightProp, new GUIContent("Height (Planar)"));
+                EditorGUILayout.PropertyField(triggerCapsuleHeightProp, new GUIContent("Height (Capsule)"));
                 EditorGUILayout.PropertyField(triggerSizeOffsetProp, new GUIContent("Size Offset"));
                 EditorGUILayout.PropertyField(radialTriggerSegmentsOverrideProp, new GUIContent("Radial Segments Override"));
                 EditorGUILayout.PropertyField(cylinderTriggerSlicesOverrideProp, new GUIContent("Cylinder Slices Override"));
@@ -147,7 +149,7 @@ public class ProceduralMeshGeneratorEditor : Editor
                 EditorGUILayout.PropertyField(triggerVolumeIsTriggerProp);
                 EditorGUILayout.PropertyField(triggerVolumeRootProp);
                 EditorGUILayout.PropertyField(triggerLayerMaskProp);
-                EditorGUILayout.PropertyField(triggerCollidersProp);
+                EditorGUILayout.PropertyField(triggerColliderProp);
             }
 
             EditorGUILayout.Space(5);
