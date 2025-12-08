@@ -11,7 +11,6 @@ namespace _PinBoy.Scripts.Gameplay.Effects
     {
         Ally = 1 << 0,
         Enemy = 1 << 1,
-        Neutral = 1 << 2,
     }
     
     [Serializable]

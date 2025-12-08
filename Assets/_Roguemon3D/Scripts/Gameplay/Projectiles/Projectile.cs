@@ -36,7 +36,7 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
         [Header("Impact")]
         [SerializeField] protected LayerMask collisionMask = ~0;
-        [SerializeField] private AllegianceType _allegianceType = AllegianceType.Neutral;
+        [SerializeField] private AllegianceType _allegianceType = AllegianceType.Ally;
         [SerializeField] private bool destroyOnImpact = true;
         [SerializeField] private GameObject impactPrefab;
         [SerializeField, Min(0f)] private float impactPrefabLifetime = 2f;

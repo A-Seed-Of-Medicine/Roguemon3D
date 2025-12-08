@@ -73,16 +73,16 @@ MonoBehaviour:
   - {fileID: 2544722706627117229}
   targetLayers:
     serializedVersion: 2
-    m_Bits: 243
+    m_Bits: 499
   includeTriggerColliders: 0
-  allegianceMask: 01000000
+  allegianceMask: 2
   activeAnimation: {fileID: 0}
   alignToGround: 1
   groundRaycastDistance: 2
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 8
-  groundHeightOffset: 0.05
+  groundOffset: 0
   windupDeactivePhase: 2
   phaseParticleEffects: []
 --- !u!1001 &4749779758737307826

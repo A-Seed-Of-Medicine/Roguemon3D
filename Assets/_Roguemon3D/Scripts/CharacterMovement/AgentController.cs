@@ -83,7 +83,6 @@ namespace _PinBoy.Scripts.CharacterMovement
 
             bool hasAlly = mask.HasFlag(AllegianceType.Ally);
             bool hasEnemy = mask.HasFlag(AllegianceType.Enemy);
-            bool hasNeutral = mask.HasFlag(AllegianceType.Neutral);
 
             switch (allegiance)
             {
@@ -94,10 +93,6 @@ namespace _PinBoy.Scripts.CharacterMovement
                         contextMask |= AllegianceType.Enemy;
                     if (hasEnemy)
                         contextMask |= AllegianceType.Ally;
-                    break;
-                case AllegianceType.Neutral:
-                    if (hasEnemy || hasNeutral)
-                        contextMask |= AllegianceType.Neutral;
                     break;
             }
 

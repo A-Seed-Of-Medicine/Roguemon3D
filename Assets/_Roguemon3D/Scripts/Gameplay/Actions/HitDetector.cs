@@ -103,8 +103,19 @@ public class HitDetector : MonoBehaviour
                     continue;
                 }
 
-                IDamageable damageable = other.GetComponentInParent<IDamageable>();
-                if (damageable == null || (AgentController)damageable == owner)
+                if (other.TryGetComponent<IDamageable>(out IDamageable damageable))
+                {
+                    if (damageable == null)
+                    {
+                        continue;
+                    }
+
+                    if ((AgentController)damageable == owner)
+                    {
+                        continue;
+                    }
+                }
+                else
                 {
                     continue;
                 }

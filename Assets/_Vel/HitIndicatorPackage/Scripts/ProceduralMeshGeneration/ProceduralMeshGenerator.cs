@@ -79,6 +79,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
     public ParticleSystem[] subEmitterSystems = Array.Empty<ParticleSystem>();
 
     private Mesh mesh;
+    private List<Mesh> triggerMeshes;
 
     /// <summary>Returns the generated trigger volume root (child Transform), or null if none exists.</summary>
     public Transform triggerVolumeRoot;
@@ -643,7 +644,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
         slices = Mathf.Clamp(slices, 1, 128);
 
         float halfH = Mathf.Max(0.0001f, cylinderHeight * 0.5f + triggerSizeOffset);
-
+        triggerMeshes = new List<Mesh>();
         for (int i = 0; i < slices; i++)
         {
             float t0 = (float)i / slices;
@@ -656,6 +657,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
             float r1 = Mathf.Max(0.0001f, cylinderProfile.Evaluate(t1) * cylinderRadius + triggerSizeOffset);
 
             var sliceMesh = BuildFrustumPrism(r0, r1, z0, z1, seg);
+            triggerMeshes.Add(sliceMesh);
             var mc = root.gameObject.AddComponent<MeshCollider>();
             mc.sharedMesh = sliceMesh;
             mc.convex = true;

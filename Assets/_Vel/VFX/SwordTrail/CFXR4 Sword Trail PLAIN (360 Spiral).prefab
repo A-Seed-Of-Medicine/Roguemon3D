@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6396664134703494338}
-  - component: {fileID: 5225688919363016313}
-  - component: {fileID: 1361589683199156565}
-  - component: {fileID: 3965944875397293404}
+  - component: {fileID: 8537714842108218886}
+  - component: {fileID: 2419832425269595196}
+  - component: {fileID: 771204658536395043}
   m_Layer: 2
   m_Name: CFXR4 Sword Trail PLAIN (360 Spiral)_TriggerVolume
   m_TagString: Untagged
@@ -34,7 +34,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 6710139492206580329}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!64 &5225688919363016313
+--- !u!64 &8537714842108218886
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -56,7 +56,7 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
---- !u!64 &1361589683199156565
+--- !u!64 &2419832425269595196
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -78,7 +78,7 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
---- !u!64 &3965944875397293404
+--- !u!64 &771204658536395043
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -157,7 +157,7 @@ MonoBehaviour:
   innerRadius: 0.001
   outerRadius: 1.7947022
   angle: 180
-  segments: 11
+  segments: 12
   rings: 13
   cylinderHeight: 1
   cylinderSegments: 32
@@ -199,9 +199,9 @@ MonoBehaviour:
   alignTriggerVolumeToParticleRotation: 1
   triggerVolumeIsTrigger: 1
   colliders:
-  - {fileID: 5225688919363016313}
-  - {fileID: 1361589683199156565}
-  - {fileID: 3965944875397293404}
+  - {fileID: 8537714842108218886}
+  - {fileID: 2419832425269595196}
+  - {fileID: 771204658536395043}
   particleSystem: {fileID: 6710139492206580334}
   subEmitterSystems: []
   triggerVolumeRoot: {fileID: 6396664134703494338}

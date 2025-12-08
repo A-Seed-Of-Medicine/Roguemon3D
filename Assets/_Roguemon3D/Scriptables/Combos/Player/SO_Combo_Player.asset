@@ -64,7 +64,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
-    graphPosition: {x: 0, y: 0}
+    graphPosition: {x: 400, y: 82}
     transitions:
     - input: 0
       nextStep:
