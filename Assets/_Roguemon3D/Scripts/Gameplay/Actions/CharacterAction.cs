@@ -22,6 +22,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             AimPrimary,
             AimSecondary,
             Dash,
+            Jump,
             Sprint
         }
 
@@ -205,6 +206,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 case PressBinding.Dash:
                     reader.Dash += actionTrigger;
                     break;
+                case PressBinding.Jump:
+                    reader.Jump += actionTrigger;
+                    break;
                 case PressBinding.Sprint:
                     reader.Sprint += actionTrigger;
                     break;
@@ -237,6 +241,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     break;
                 case PressBinding.Dash:
                     reader.Dash -= actionTrigger;
+                    break;
+                case PressBinding.Jump:
+                    reader.Jump -= actionTrigger;
                     break;
                 case PressBinding.Sprint:
                     reader.Sprint -= actionTrigger;
