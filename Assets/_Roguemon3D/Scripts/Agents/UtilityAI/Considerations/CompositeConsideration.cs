@@ -11,7 +11,7 @@ namespace UtilityAI {
         [SerializeReference]
         public List<Consideration> considerations = new List<Consideration>();
 
-        public override float Evaluate(Context context, Transform target) {
+        public override float Evaluate(Context context, TargetContext target) {
             if (considerations == null || considerations.Count == 0) return 0f;
             
             float result = considerations[0].Evaluate(context, target);

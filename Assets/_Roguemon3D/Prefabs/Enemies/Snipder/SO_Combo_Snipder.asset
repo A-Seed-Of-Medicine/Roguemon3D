@@ -16,11 +16,12 @@ MonoBehaviour:
   queuedInputLifetime: 0.35
   entrySteps:
   - input: 0
-    stepId: shoot
+    nextStep:
+      stepIndex: 1
     longPress: 0
     longPressMinThreshold: 0.35
     longPressMaxThreshold: 1
-    graphPosition: {x: 0, y: 0}
+    graphPosition: {x: 54, y: 120}
   steps:
   - id: step
     action: {fileID: 11400000, guid: 3164d2070ae92b34c8d7c99506046c40, type: 2}
@@ -52,7 +53,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
-    graphPosition: {x: 660, y: 257}
+    graphPosition: {x: 469, y: 243}
     transitions:
     - input: 0
       nextStep:
@@ -164,11 +165,19 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: -0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
-    graphPosition: {x: 0, y: 0}
+    graphPosition: {x: 381, y: 120}
     transitions:
     - input: 0
       nextStep:
         stepIndex: -1
+      queueUntilWindow: 0
+      transitionDelay: 0
+      longPress: 0
+      longPressMinThreshold: 0.35
+      longPressMaxThreshold: 1
+    - input: 0
+      nextStep:
+        stepIndex: 0
       queueUntilWindow: 0
       transitionDelay: 0
       longPress: 0

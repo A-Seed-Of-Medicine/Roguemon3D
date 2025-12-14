@@ -85,6 +85,11 @@ namespace SingularityGroup.HotReload {
         /// </summary>
         public string buildMachineRequestOrigin;
 
+        /// <summary>
+        /// Used to define which language the package is translated to
+        /// </summary>
+        public string locale;
+
         [JsonIgnore]
         public HashSet<string> DefineSymbolsAsHashSet {
             get {

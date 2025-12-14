@@ -392,7 +392,6 @@ MonoBehaviour:
   detectionCollider: {fileID: 4195066330043565395}
   detectionRadius: 20
   controller: {fileID: 941551738761022137}
-  detectedTargets: []
   references:
     version: 2
     RefIds:
@@ -936,10 +935,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6678854277726707266, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: uiCamera
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8709146779534521399, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
-      propertyPath: m_Camera
       value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []

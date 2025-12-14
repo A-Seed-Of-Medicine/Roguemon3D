@@ -7,11 +7,14 @@ namespace SingularityGroup.HotReload {
         public static bool IsAssetStoreBuild => true;
 
         
-        public const string Version = "1.13.12";
+        public const string Version = "1.13.13";
         // Never higher than Version
         // Used for the download
         public const string ServerVersion = "1.13.11";
         public const string PackageName = "com.singularitygroup.hotreload";
+        public const string DefaultLocale = Localization.Locale.English;
+        // avoids unreachable code warnings from using const
+        public static string DefaultLocaleField = DefaultLocale;
         public const string LibraryCachePath = "Library/" + PackageName;
         public const string ConfigFileName = "hot-reload-config.json";
     }

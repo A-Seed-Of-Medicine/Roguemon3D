@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using SingularityGroup.HotReload.Localization;
 
 namespace SingularityGroup.HotReload {
     internal static class TaskExtensions {
@@ -9,7 +10,7 @@ namespace SingularityGroup.HotReload {
             try {
                 await task;
                 if(task.IsFaulted) {
-                    throw task.Exception ?? new Exception("unknown exception " + task);
+                    throw task.Exception ?? new Exception(Localization.Translations.Common.UnknownException + " " + task);
                 }
                 token.ThrowIfCancellationRequested();
             } 

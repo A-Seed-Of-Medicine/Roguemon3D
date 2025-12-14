@@ -52,7 +52,7 @@ SphereCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
@@ -110,6 +110,8 @@ MonoBehaviour:
   impactPrefabLifetime: 2
   onHitEffects:
   - rid: 4875902098164416600
+  - rid: 4875902228357185633
+  - rid: 4875902228357185634
   onHit:
     m_PersistentCalls:
       m_Calls: []
@@ -173,6 +175,19 @@ MonoBehaviour:
         forceMode: 1
         useContextDirection: 1
         customDirection: {x: 0, y: 0, z: 1}
+    - rid: 4875902228357185633
+      type: {class: DamageEffect, ns: _PinBoy.Scripts.Gameplay.Effects, asm: Assembly-CSharp}
+      data:
+        amount: 10
+        scaleWithMagnitude: 1
+    - rid: 4875902228357185634
+      type: {class: ApplyStatusEffect, ns: _PinBoy.Scripts.Gameplay.Effects, asm: Assembly-CSharp}
+      data:
+        statusType: 0
+        recipient: 0
+        duration: 1
+        minimumDuration: 0
+        scaleByMagnitude: 0
 --- !u!1 &3554005178233864175
 GameObject:
   m_ObjectHideFlags: 0

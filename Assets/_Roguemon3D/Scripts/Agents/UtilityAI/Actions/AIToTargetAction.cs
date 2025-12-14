@@ -38,7 +38,7 @@ namespace UtilityAI
 
         AgentController controller;
         InputReader inputReader;
-        Transform target;
+        TargetContext target;
 
         PathfindingManager.PathRequestOptions requestOptions;
         PathfindingManager.AgentTicket ticket;
@@ -67,7 +67,7 @@ namespace UtilityAI
             ticket = PathfindingManager.Instance.RegisterAgent(
                 controller,
                 () => controller.transform.position,
-                () => target ? target.position : controller.transform.position,
+                () => target != null ? target.position : controller.transform.position,
                 stoppingDistance,
                 waypointTolerance,
                 useEightDirectionalMovement,
@@ -140,7 +140,7 @@ namespace UtilityAI
             }
 
             target = context?.target;
-            if (!target && !string.IsNullOrEmpty(targetTag)) target = context?.GetClosestTarget(targetTag);
+            if (target == null && !string.IsNullOrEmpty(targetTag)) target = context?.GetClosestTarget(targetTag);
 
             if (ticket == null) TryBindTicket(context);
             if (ticket == null)
@@ -150,7 +150,7 @@ namespace UtilityAI
             }
 
             Vector3 agentPos3 = controller.transform.position;
-            Vector3 targetPos3 = target ? target.position : agentPos3;
+            Vector3 targetPos3 = target != null ? target.position : agentPos3;
             Vector3 planarDelta = targetPos3 - agentPos3;
             planarDelta.y = 0f;
             if (planarDelta.sqrMagnitude <= stoppingDistance * stoppingDistance)

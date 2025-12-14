@@ -16,19 +16,29 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         public SerializedProperty TransitionsProperty => stepProperty.FindPropertyRelative("transitions");
         public Port InputPort { get; }
         public Port OutputPort { get; }
-
         readonly System.Action<ComboStepNode> onSelected;
+        readonly System.Action<ComboStepNode> onDuplicate;
+        readonly System.Action<ComboStepNode> onDelete;
+        readonly System.Action<ComboStepNode, string, string> onRenamed;
 
-        public ComboStepNode(SerializedProperty stepProperty, System.Action<ComboStepNode> onSelected)
+        public ComboStepNode(
+            SerializedProperty stepProperty,
+            System.Action<ComboStepNode> onSelected,
+            System.Action<ComboStepNode> onDuplicate,
+            System.Action<ComboStepNode> onDelete,
+            System.Action<ComboStepNode, string, string> onRenamed)
         {
             this.stepProperty = stepProperty;
             positionProperty = stepProperty.FindPropertyRelative("graphPosition");
             this.onSelected = onSelected;
+            this.onDuplicate = onDuplicate;
+            this.onDelete = onDelete;
+            this.onRenamed = onRenamed;
 
             title = string.IsNullOrWhiteSpace(StepId) ? "Step" : StepId;
 
-            capabilities |= Capabilities.Movable | Capabilities.Selectable | Capabilities.Ascendable;
-            capabilities &= ~Capabilities.Deletable;
+            capabilities |= Capabilities.Movable | Capabilities.Selectable | Capabilities.Ascendable | Capabilities.Deletable;
+
 
             InputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(string));
             InputPort.portName = "Previous";
@@ -40,6 +50,19 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             RefreshExpandedState();
             RefreshPorts();
+        }
+        
+        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            evt.menu.AppendAction(
+                "Duplicate Step",
+                _ => onDuplicate?.Invoke(this),
+                DropdownMenuAction.Status.Normal);
+
+            evt.menu.AppendAction(
+                "Delete Step",
+                _ => onDelete?.Invoke(this),
+                DropdownMenuAction.Status.Normal);
         }
 
         public override void OnSelected()
@@ -65,8 +88,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
     {
         readonly SerializedProperty entryProperty;
         readonly SerializedProperty positionProperty;
-
-        public string StepId => entryProperty.FindPropertyRelative("stepId").stringValue;
+        // entryProperty is a SerializedProperty pointing at a ComboEntry element
+        SerializedProperty nextStepProp   => entryProperty.FindPropertyRelative("nextStep");
+        public SerializedProperty stepIndexProp  => nextStepProp.FindPropertyRelative("stepIndex");
         public SerializedProperty SerializedEntry => entryProperty;
         public Port OutputPort { get; }
 
@@ -81,7 +105,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             CharacterComboAction.ComboInput input = (CharacterComboAction.ComboInput)entryProperty.FindPropertyRelative("input").enumValueIndex;
             title = $"Entry: {input}";
             capabilities |= Capabilities.Movable | Capabilities.Selectable;
-            capabilities &= ~Capabilities.Deletable;
 
             OutputPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(string));
             OutputPort.portName = "Start";

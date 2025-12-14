@@ -60,9 +60,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.3
-  m_Height: 1
+  m_Height: 0.79
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.06, z: 0}
 --- !u!54 &4469347759229245001
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -514,7 +514,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 563576732, guid: bcd6772d4caa8b346943f090402a0f40, type: 3}
-  m_Color: {r: 0, g: 0.9477272, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -670,10 +670,6 @@ PrefabInstance:
       propertyPath: uiCamera
       value: 
       objectReference: {fileID: 0}
-    - target: {fileID: 8709146779534521399, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
-      propertyPath: m_Camera
-      value: 
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -710,11 +706,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3580841591206894228, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3580841591206894228, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6422491787983216458, guid: a996ccdc4dddf5840a3111b30ba3d8a2, type: 3}
       propertyPath: m_LocalRotation.w

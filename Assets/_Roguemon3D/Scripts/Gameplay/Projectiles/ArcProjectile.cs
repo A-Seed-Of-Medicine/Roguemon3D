@@ -95,7 +95,10 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
         protected override void Expire()
         {
+            Debug.Log("Expire called on ArcProjectile");
+            
             ApplyTargetDetectorHits();
+            ApplyImpactEffects(transform.position);
             base.Expire();
         }
 
@@ -181,7 +184,6 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
             if (activateDetectorOnLaunch)
             {
-                Debug.Log("Spawning target detector");
                 activeTargetDetector.Activate(flightDuration * detectorLifetimeMultiplier);
             }
         }

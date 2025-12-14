@@ -16,7 +16,7 @@ namespace UtilityAI
         [NonSerialized] private bool _pathCached;
         [NonSerialized] private PropertyPath _cachedPath;
 
-        public override float Evaluate(Context context, Transform target)
+        public override float Evaluate(Context context, TargetContext target)
         {
             if (source == null || string.IsNullOrEmpty(propertyPath))
                 return 0f;

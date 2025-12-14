@@ -7,7 +7,7 @@ namespace UtilityAI {
         public AnimationCurve curve;
         public string contextKey;
 
-        public override float Evaluate(Context context, Transform target) {
+        public override float Evaluate(Context context, TargetContext target) {
             //TODO: Utilize properties API for value references  float inputValue =
             //float utility = curve.Evaluate(inputValue);
             //return Mathf.Clamp01(utility);

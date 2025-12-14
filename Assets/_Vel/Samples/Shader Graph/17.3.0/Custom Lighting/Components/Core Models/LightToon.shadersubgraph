@@ -1750,6 +1750,10 @@
     "m_Value": 1.0,
     "m_FloatType": 0,
     "m_LiteralFloatMode": false,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    },
     "m_SliderType": 0,
     "m_SliderPower": 3.0,
     "m_EnumType": 0,
@@ -3062,6 +3066,10 @@
     "m_Value": 0.5,
     "m_FloatType": 0,
     "m_LiteralFloatMode": false,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    },
     "m_SliderType": 0,
     "m_SliderPower": 3.0,
     "m_EnumType": 0,
@@ -3303,6 +3311,10 @@
     "m_Value": 4.0,
     "m_FloatType": 0,
     "m_LiteralFloatMode": false,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    },
     "m_SliderType": 0,
     "m_SliderPower": 3.0,
     "m_EnumType": 0,
@@ -5186,7 +5198,7 @@
     "m_ObjectId": "b9ccc212a3424b888040789520e60bcf",
     "m_Title": "Ambient Posterization",
     "m_Position": {
-        "x": 103.00003051757813,
+        "x": 103.0,
         "y": 534.0
     }
 }
@@ -6801,7 +6813,7 @@
     "m_ObjectId": "faec2d2d5c3a4f7f80b552152de8fd8f",
     "m_Title": "Light Color Posterization",
     "m_Position": {
-        "x": 541.0000610351563,
+        "x": 541.0,
         "y": 128.0
     }
 }

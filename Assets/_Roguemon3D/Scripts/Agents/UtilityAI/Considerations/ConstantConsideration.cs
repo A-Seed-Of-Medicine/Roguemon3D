@@ -6,6 +6,6 @@ namespace UtilityAI {
     public class ConstantConsideration : Consideration {
         public float value;
         
-        public override float Evaluate(Context context, Transform target) => value;
+        public override float Evaluate(Context context, TargetContext target) => value;
     }
 }

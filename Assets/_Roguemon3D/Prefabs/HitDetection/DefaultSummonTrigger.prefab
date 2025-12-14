@@ -93,6 +93,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2143327111452036423}
     m_Modifications:
+    - target: {fileID: 1597121349232851011, guid: fa8e63e3e26d6a94f81d597c77dcafbc, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 2634280094313284943, guid: fa8e63e3e26d6a94f81d597c77dcafbc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -136,6 +140,10 @@ PrefabInstance:
     - target: {fileID: 4632347077273965757, guid: fa8e63e3e26d6a94f81d597c77dcafbc, type: 3}
       propertyPath: m_Name
       value: PS_Slam
+      objectReference: {fileID: 0}
+    - target: {fileID: 4632347077273965757, guid: fa8e63e3e26d6a94f81d597c77dcafbc, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

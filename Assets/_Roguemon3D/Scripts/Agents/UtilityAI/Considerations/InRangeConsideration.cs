@@ -12,8 +12,8 @@ namespace UtilityAI {
         public bool requireLOS = false;
         public LayerMask lineOfSightMask = ~0;
 
-        public override float Evaluate(Context context, Transform target) {
-            if (!target) return 0f;
+        public override float Evaluate(Context context, TargetContext target) {
+            if (target == null) return 0f;
 
             Transform agentTransform = context.brain.transform;
 
@@ -31,8 +31,8 @@ namespace UtilityAI {
     public class InRangeCurveConsideration : InRangeConsideration {
         public AnimationCurve curve;
         
-        public override float Evaluate(Context context, Transform target) {
-            if (!target) return 0f;
+        public override float Evaluate(Context context, TargetContext target) {
+            if (target == null) return 0f;
 
             Transform agentTransform = context.brain.transform;
 

@@ -52,19 +52,19 @@ namespace UtilityAI
                 return;
             }
 
-            Transform targetTransform = context.target;
-            if (!targetTransform && !string.IsNullOrEmpty(targetTag))
+            TargetContext targetTransform = context.target;
+            if (targetTransform == null && !string.IsNullOrEmpty(targetTag))
             {
                 targetTransform = context.GetClosestTarget(targetTag);
             }
 
-            if (requireTarget && !targetTransform)
+            if (requireTarget && targetTransform == null)
             {
                 return;
             }
             
             Vector3 direction = Vector3.zero;
-            if (targetTransform)
+            if (targetTransform != null)
             {
                 direction = targetTransform.position - controller.transform.position;
             }

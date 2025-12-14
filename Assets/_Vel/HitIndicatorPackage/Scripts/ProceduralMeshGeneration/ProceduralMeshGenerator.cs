@@ -485,16 +485,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
     [ContextMenu("Reassign Particle Mesh")]
     public void ReassignParticleMesh()
     {
-        var psr = GetComponent<ParticleSystemRenderer>();
-        if (psr != null && mesh != null)
-        {
-            psr.mesh = mesh;
-            Debug.Log($"Mesh reassigned to ParticleSystemRenderer on '{gameObject.name}'.");
-        }
-        else
-        {
-            Debug.LogWarning($"Could not reassign mesh on '{gameObject.name}'. Mesh or PSR missing.");
-        }
+        GenerateMesh();
     }
 #endif
 

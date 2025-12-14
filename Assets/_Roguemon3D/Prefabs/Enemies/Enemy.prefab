@@ -562,7 +562,6 @@ MonoBehaviour:
   detectionCollider: {fileID: 435177238226391425}
   detectionRadius: 20
   controller: {fileID: 5590122781720635312}
-  detectedTargets: []
   references:
     version: 2
     RefIds:

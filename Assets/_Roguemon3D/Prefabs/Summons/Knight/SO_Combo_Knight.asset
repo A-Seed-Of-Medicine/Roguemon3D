@@ -16,7 +16,8 @@ MonoBehaviour:
   queuedInputLifetime: 0.35
   entrySteps:
   - input: 0
-    stepId: step
+    nextStep:
+      stepIndex: 0
     longPress: 0
     longPressMinThreshold: 0.35
     longPressMaxThreshold: 1

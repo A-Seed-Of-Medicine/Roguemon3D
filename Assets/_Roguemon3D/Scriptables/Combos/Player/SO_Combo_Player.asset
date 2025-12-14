@@ -16,19 +16,22 @@ MonoBehaviour:
   queuedInputLifetime: 0.35
   entrySteps:
   - input: 0
-    stepId: step
+    nextStep:
+      stepIndex: 0
     longPress: 0
     longPressMinThreshold: 0.35
     longPressMaxThreshold: 1
     graphPosition: {x: 0, y: 0}
   - input: 3
-    stepId: Summon
+    nextStep:
+      stepIndex: -1
     longPress: 0
     longPressMinThreshold: 0.35
     longPressMaxThreshold: 1
     graphPosition: {x: 41, y: 661}
   - input: 0
-    stepId: stepLong
+    nextStep:
+      stepIndex: 4
     longPress: 1
     longPressMinThreshold: 0.2
     longPressMaxThreshold: 1
@@ -179,7 +182,7 @@ MonoBehaviour:
     missNudgeImpulse: 200
     missNudgeDelay: 0
     applyNudgeWhenHit: 0
-    hitDetectorPrefab: {fileID: 0}
+    hitDetectorPrefab: {fileID: 2395974928538876588, guid: d54c4ae9fa297d9498601193c5146b24, type: 3}
     parentHitDetectorToPivot: 1
     hitDetectorPositionOffset: {x: 0, y: 0, z: 4}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}

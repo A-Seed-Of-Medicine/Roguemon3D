@@ -249,20 +249,23 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
             onHit?.Invoke(other);
 
             ApplyHitEffects(other, hitPoint ?? transform.position);
-
-            if (impactPrefab)
-            {
-                Vector3 spawnPosition = hitPoint ?? transform.position;
-                GameObject impactInstance = Instantiate(impactPrefab, spawnPosition, transform.rotation);
-                if (impactPrefabLifetime > 0f)
-                {
-                    Destroy(impactInstance, impactPrefabLifetime);
-                }
-            }
+            ApplyImpactEffects(hitPoint ?? transform.position);
 
             if (destroyOnImpact)
             {
                 Destroy(gameObject);
+            }
+        }
+        
+        protected void ApplyImpactEffects(Vector3 hitPosition)
+        {
+            if (impactPrefab)
+            {
+                GameObject impactInstance = Instantiate(impactPrefab, hitPosition, transform.rotation);
+                if (impactPrefabLifetime > 0f)
+                {
+                    Destroy(impactInstance, impactPrefabLifetime);
+                }
             }
         }
 

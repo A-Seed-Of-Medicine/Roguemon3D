@@ -117,13 +117,20 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 stepProperty.FindPropertyRelative("graphPosition").vector2Value = position;
             }
 
-            ComboStepNode node = new(stepProperty, HandleStepSelected)
+            ComboStepNode node = new(
+                stepProperty,
+                HandleStepSelected,
+                HandleStepDuplicate,
+                HandleStepDelete,
+                HandleStepRenamed)
             {
                 userData = stepProperty
             };
+
             node.SetPosition(new Rect(position, new Vector2(DefaultNodeWidth, DefaultNodeHeight)));
             return node;
         }
+
 
         EntryNode CreateEntryNode(SerializedProperty entryProperty, int index)
         {
@@ -174,8 +181,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             foreach (EntryNode entryNode in entryNodes)
             {
-                string targetId = entryNode.StepId;
-                if (!string.IsNullOrWhiteSpace(targetId) && stepNodes.TryGetValue(targetId, out ComboStepNode stepNode))
+                int targetId = entryNode.stepIndexProp.intValue;
+                if (targetId >= 0 && stepNodes.Values.ElementAtOrDefault(targetId) is { } stepNode)
                 {
                     Edge edge = entryNode.OutputPort.ConnectTo(stepNode.InputPort);
                     edge.capabilities &= ~Capabilities.Deletable;
@@ -206,6 +213,38 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
         GraphViewChange OnGraphViewChanged(GraphViewChange change)
         {
+            // New edges (ports being connected)
+            if (change.edgesToCreate != null && change.edgesToCreate.Count > 0)
+            {
+                foreach (Edge edge in change.edgesToCreate)
+                {
+                    HandleEdgeConnected(edge);
+                }
+
+                // We fully rebuild edges ourselves, so prevent GraphView from creating raw edges
+                change.edgesToCreate.Clear();
+            }
+
+            // Deleted elements (ports being disconnected, nodes deleted, etc.)
+            if (change.elementsToRemove != null)
+            {
+                foreach (GraphElement element in change.elementsToRemove)
+                {
+                    switch (element)
+                    {
+                        case ComboTransitionEdge transitionEdge:
+                            HandleEdgeDisconnected(transitionEdge);
+                            break;
+
+                        // If you’ve implemented step deletion earlier:
+                        case ComboStepNode stepNode:
+                            HandleStepDelete(stepNode);
+                            break;
+                    }
+                }
+            }
+
+            // Keep your existing move-handling logic
             if (change.movedElements != null)
             {
                 foreach (GraphElement element in change.movedElements)
@@ -226,6 +265,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             return change;
         }
 
+
+
         void HandleStepSelected(ComboStepNode node)
         {
             StepSelected?.Invoke(node.SerializedStep);
@@ -234,6 +275,320 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         void HandleEntrySelected(EntryNode node)
         {
             EntrySelected?.Invoke(node.SerializedEntry);
+        }
+        
+        int FindStepIndex(SerializedProperty stepProperty)
+        {
+            if (stepsProperty == null) return -1;
+
+            for (int i = 0; i < stepsProperty.arraySize; i++)
+            {
+                SerializedProperty candidate = stepsProperty.GetArrayElementAtIndex(i);
+                if (candidate.propertyPath == stepProperty.propertyPath)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        string GetUniqueStepId(string baseId)
+        {
+            if (string.IsNullOrEmpty(baseId))
+                baseId = "Step";
+
+            HashSet<string> used = new();
+            if (stepsProperty != null)
+            {
+                for (int i = 0; i < stepsProperty.arraySize; i++)
+                {
+                    var p = stepsProperty.GetArrayElementAtIndex(i).FindPropertyRelative("id");
+                    used.Add(p.stringValue);
+                }
+            }
+
+            string candidate = baseId;
+            int counter = 1;
+            while (used.Contains(candidate))
+            {
+                candidate = $"{baseId}_{counter++}";
+            }
+
+            return candidate;
+        }
+        
+        void HandleStepDuplicate(ComboStepNode node)
+        {
+            if (serializedDefinition == null || stepsProperty == null)
+                return;
+
+            serializedDefinition.Update();
+
+            SerializedProperty sourceStep = node.SerializedStep;
+
+            // Add new element to the steps array
+            int newIndex = stepsProperty.arraySize;
+            stepsProperty.InsertArrayElementAtIndex(newIndex);
+            SerializedProperty newStep = stepsProperty.GetArrayElementAtIndex(newIndex);
+
+            // Copy all fields from source
+            //newStep.CopyFromSerializedProperty(sourceStep); TODO: Duplicate step method
+
+            // Give it a unique id
+            SerializedProperty idProp = newStep.FindPropertyRelative("id");
+            idProp.stringValue = GetUniqueStepId(idProp.stringValue);
+
+            // Offset position so it doesn't overlap the original
+            SerializedProperty posProp = newStep.FindPropertyRelative("graphPosition");
+            Vector2 newPos = node.GetPosition().position + new Vector2(40f, 40f);
+            posProp.vector2Value = newPos;
+
+            serializedDefinition.ApplyModifiedProperties();
+
+            // Rebuild graph so the new node appears and edges are rebuilt
+            RefreshGraph();
+        }
+
+        public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
+        {
+            var compatible = new List<Port>();
+
+            ports.ForEach(port =>
+            {
+                // Same port: never connect
+                if (port == startPort)
+                    return;
+
+                // Do not connect ports on the same node
+                if (port.node == startPort.node)
+                    return;
+
+                // Only opposite directions can connect
+                if (port.direction == startPort.direction)
+                    return;
+
+                // Port types must match (you are using typeof(string) everywhere)
+                if (port.portType != startPort.portType)
+                    return;
+
+                // Optional: restrict to only the combos you actually want.
+                // Entry output -> Step input, Step output -> Step input, etc.
+                bool startIsEntry = startPort.node is EntryNode;
+                bool startIsStep  = startPort.node is ComboStepNode;
+                bool endIsEntry   = port.node     is EntryNode;
+                bool endIsStep    = port.node     is ComboStepNode;
+
+                // Disallow Entry <-> Entry and Step input <-> Entry input, etc.
+                if (!(startIsEntry && endIsStep) &&
+                    !(startIsStep  && endIsStep))
+                {
+                    return;
+                }
+
+                compatible.Add(port);
+            });
+
+            return compatible;
+        }
+
+
+        void HandleStepDelete(ComboStepNode node)
+        {
+            if (serializedDefinition == null || stepsProperty == null)
+                return;
+
+            serializedDefinition.Update();
+
+            SerializedProperty stepProp = node.SerializedStep;
+            int removedIndex = FindStepIndex(stepProp);
+            if (removedIndex < 0)
+                return;
+
+            // 1. Remove transitions that point to this step and fix indices above it
+            for (int i = 0; i < stepsProperty.arraySize; i++)
+            {
+                SerializedProperty step = stepsProperty.GetArrayElementAtIndex(i);
+                SerializedProperty transitions = step.FindPropertyRelative("transitions");
+                if (transitions == null) continue;
+
+                for (int t = transitions.arraySize - 1; t >= 0; t--)
+                {
+                    SerializedProperty transition = transitions.GetArrayElementAtIndex(t);
+                    SerializedProperty nextStep = transition.FindPropertyRelative("nextStep");
+                    if (nextStep == null) continue;
+
+                    SerializedProperty stepIndexProp = nextStep.FindPropertyRelative("stepIndex");
+                    int idx = stepIndexProp != null ? stepIndexProp.intValue : -1;
+                    if (idx == removedIndex)
+                    {
+                        // Remove this transition entirely
+                        transitions.DeleteArrayElementAtIndex(t);
+                    }
+                    else if (idx > removedIndex)
+                    {
+                        // Shift indices down because we are removing a step before it
+                        stepIndexProp.intValue = idx - 1;
+                    }
+                }
+            }
+
+            // 2. Remove entry steps pointing at this stepId
+            if (entryStepsProperty != null)
+            {
+                for (int i = entryStepsProperty.arraySize - 1; i >= 0; i--)
+                {
+                    SerializedProperty entry = entryStepsProperty.GetArrayElementAtIndex(i);
+                    string stepId = entry.FindPropertyRelative("stepId").stringValue;
+                    if (stepId == node.StepId)
+                    {
+                        entryStepsProperty.DeleteArrayElementAtIndex(i);
+                    }
+                }
+            }
+
+            // 3. Remove the step itself
+            stepsProperty.DeleteArrayElementAtIndex(removedIndex);
+
+            serializedDefinition.ApplyModifiedProperties();
+            RefreshGraph();
+        }
+
+        void HandleStepRenamed(ComboStepNode node, string oldId, string newId)
+        {
+            if (entryStepsProperty == null || string.IsNullOrEmpty(oldId))
+                return;
+
+            serializedDefinition.Update();
+
+            for (int i = 0; i < entryStepsProperty.arraySize; i++)
+            {
+                SerializedProperty entry = entryStepsProperty.GetArrayElementAtIndex(i);
+                SerializedProperty stepIdProp = entry.FindPropertyRelative("stepId");
+                if (stepIdProp.stringValue == oldId)
+                {
+                    stepIdProp.stringValue = newId;
+                }
+            }
+
+            serializedDefinition.ApplyModifiedProperties();
+
+            // Rebuild connections to reflect changed IDs
+            RefreshGraph();
+        }
+
+        void DeleteTransition(ComboTransitionEdge edge)
+        {
+            if (edge.userData is not SerializedProperty transitionProperty)
+                return;
+
+            SerializedProperty transitionsArray = transitionProperty.serializedObject.FindProperty(transitionProperty.propertyPath.Substring(0, transitionProperty.propertyPath.LastIndexOf(".Array")));
+            if (transitionsArray == null)
+                return;
+
+            // Find index
+            for (int i = transitionsArray.arraySize - 1; i >= 0; i--)
+            {
+                if (transitionsArray.GetArrayElementAtIndex(i).propertyPath == transitionProperty.propertyPath)
+                {
+                    transitionsArray.DeleteArrayElementAtIndex(i);
+                    transitionProperty.serializedObject.ApplyModifiedProperties();
+                    break;
+                }
+            }
+        }
+        
+        void HandleEdgeConnected(Edge edge)
+        {
+            if (serializedDefinition == null || stepsProperty == null)
+                return;
+
+            ComboStepNode targetNode = edge.input?.node as ComboStepNode;
+            int targetIndex = FindStepIndex(targetNode.SerializedStep);
+            if (edge.output?.node is ComboStepNode stepNode)
+            {
+                SerializedProperty transitions = stepNode.TransitionsProperty;
+                SerializedProperty sourceProperty = stepNode.SerializedStep;
+
+                
+
+                serializedDefinition.Update();
+
+                if (transitions == null)
+                    return;
+
+                int sourceIndex = FindStepIndex(sourceProperty);
+                if (sourceIndex < 0 || targetIndex < 0)
+                    return;
+
+                // Optional: avoid duplicate transitions to the same step
+                for (int i = 0; i < transitions.arraySize; i++)
+                {
+                    SerializedProperty t = transitions.GetArrayElementAtIndex(i);
+                    int existingTarget = t.FindPropertyRelative("nextStep")
+                        ?.FindPropertyRelative("stepIndex")
+                        ?.intValue ?? -1;
+                    if (existingTarget == targetIndex)
+                    {
+                        return;
+                    }
+                }
+
+                int newIndex = transitions.arraySize;
+                transitions.InsertArrayElementAtIndex(newIndex);
+                SerializedProperty newTransition = transitions.GetArrayElementAtIndex(newIndex);
+
+                // Set the next step index
+                SerializedProperty nextStep = newTransition.FindPropertyRelative("nextStep");
+                if (nextStep != null)
+                {
+                    SerializedProperty stepIndexProp = nextStep.FindPropertyRelative("stepIndex");
+                    if (stepIndexProp != null)
+                    {
+                        stepIndexProp.intValue = targetIndex;
+                    }
+                }
+            }
+            else if (edge.output?.node is EntryNode entryNode)
+            {
+                entryNode.stepIndexProp.intValue = targetIndex;
+            }
+
+            serializedDefinition.ApplyModifiedProperties();
+
+            RefreshGraph();
+        }
+        
+        void HandleEdgeDisconnected(ComboTransitionEdge edge)
+        {
+            if (serializedDefinition == null || stepsProperty == null)
+                return;
+
+            if (edge.userData is not SerializedProperty transitionProp)
+                return;
+
+            serializedDefinition.Update();
+
+            // Find and delete that transition from whichever step owns it
+            for (int i = 0; i < stepsProperty.arraySize; i++)
+            {
+                SerializedProperty step = stepsProperty.GetArrayElementAtIndex(i);
+                SerializedProperty transitions = step.FindPropertyRelative("transitions");
+                if (transitions == null)
+                    continue;
+
+                for (int t = transitions.arraySize - 1; t >= 0; t--)
+                {
+                    SerializedProperty candidate = transitions.GetArrayElementAtIndex(t);
+                    if (candidate.propertyPath == transitionProp.propertyPath)
+                    {
+                        transitions.DeleteArrayElementAtIndex(t);
+                        serializedDefinition.ApplyModifiedProperties();
+                        RefreshGraph();
+                        return;
+                    }
+                }
+            }
         }
     }
 }

@@ -28,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 1, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 455283069943382310}
@@ -4925,7 +4925,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 7.21, y: 1, z: 0.43}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 1, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5991578860747207786}
@@ -9832,13 +9832,13 @@ ParticleSystemRenderer:
   m_MaskInteraction: 0
   m_RenderMode: 4
   m_MeshDistribution: 0
-  m_SortMode: 0
+  m_SortMode: 3
   m_MinParticleSize: 0
   m_MaxParticleSize: 0.5
   m_CameraVelocityScale: 0
   m_VelocityScale: 0
   m_LengthScale: 2
-  m_SortingFudge: 0
+  m_SortingFudge: -1
   m_NormalDirection: 1
   m_ShadowBias: 0
   m_RenderAlignment: 2

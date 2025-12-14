@@ -40,7 +40,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             public ComboInput input = ComboInput.SameAsBinding;
             [Tooltip("Identifier of the combo step that should be triggered by this input when no combo is active.")]
-            public string stepId;
+            public ComboStepReference nextStep = new ComboStepReference();
             [Tooltip("If true this entry is only taken on a long press using the configured thresholds.")]
             public bool longPress;
             [Tooltip("Minimum time (seconds) a button must be held to trigger this long press entry.")]
@@ -165,7 +165,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [Serializable]
         public class ComboStepReference
         {
-            [SerializeField, FormerlySerializedAs("nextStepId")]
+            [SerializeField]
             int stepIndex = -1;
 
             public int StepIndex => stepIndex;
@@ -598,7 +598,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
-            ComboStep step = ResolveStep(entry.stepId);
+            ComboStep step = entry.nextStep.Resolve(Steps);
             if (step == null)
             {
                 return;

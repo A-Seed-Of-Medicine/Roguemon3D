@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using _PinBoy.Scripts.CharacterMovement;
 using AdvancedController;
 using UnityEngine;
+using UtilityAI;
 
 namespace UtilityAI {
     public class Brain : MonoBehaviour {
@@ -15,8 +16,8 @@ namespace UtilityAI {
         public Context context;
 
         [SerializeField]
-        List<Transform> detectedTargets = new(10);
-        readonly List<Transform> orderedTargetsBuffer = new(10);
+        List<TargetContext> detectedTargets = new(10);
+        readonly List<TargetContext> orderedTargetsBuffer = new(10);
         readonly HashSet<string> registeredTags = new();
         
         private AIAction currentAction;
@@ -124,8 +125,13 @@ namespace UtilityAI {
             }
 
             Transform candidate = other.transform;
-            if (candidate && !detectedTargets.Contains(candidate)) {
-                detectedTargets.Add(candidate);
+            TargetContext targetContext = new TargetContext {
+                transform = candidate,
+                agentController = other.GetComponent<AgentController>()
+            };
+            
+            if (candidate && !detectedTargets.Contains(targetContext)) {
+                detectedTargets.Add(targetContext);
             }
         }
 
@@ -138,7 +144,7 @@ namespace UtilityAI {
         }
 
         bool IsValidTarget(Collider other) {
-            if (!other || other.CompareTag("Untagged") || other.gameObject.layer == 2) {
+            if (!other || other.CompareTag("Untagged") || other.gameObject.layer == 2 || other.gameObject == controller.gameObject) {
                 return false;
             }
 
@@ -163,17 +169,17 @@ namespace UtilityAI {
             }
         }
 
-        public IReadOnlyList<Transform> GetPerceivedTargets() {
+        public IReadOnlyList<TargetContext> GetPerceivedTargets() {
             orderedTargetsBuffer.Clear();
 
             for (int i = detectedTargets.Count - 1; i >= 0; i--) {
-                Transform target = detectedTargets[i];
-                if (!target) {
+                TargetContext target = detectedTargets[i];
+                if (target == null) {
                     detectedTargets.RemoveAt(i);
                     continue;
                 }
 
-                if (!registeredTags.Contains(target.tag)) {
+                if (!registeredTags.Contains(target.transform.tag)) {
                     detectedTargets.RemoveAt(i);
                     continue;
                 }
@@ -182,8 +188,8 @@ namespace UtilityAI {
             }
 
             orderedTargetsBuffer.Sort((a, b) => {
-                float distA = (a.position - transform.position).sqrMagnitude;
-                float distB = (b.position - transform.position).sqrMagnitude;
+                float distA = (a.transform.position - transform.position).sqrMagnitude;
+                float distB = (b.transform.position - transform.position).sqrMagnitude;
                 return distA.CompareTo(distB);
             });
 
@@ -200,17 +206,17 @@ namespace UtilityAI {
             Vector3 currentPosition = transform.position;
 
             for (int i = detectedTargets.Count - 1; i >= 0; i--) {
-                Transform potentialTarget = detectedTargets[i];
-                if (!potentialTarget) {
+                TargetContext potentialTarget = detectedTargets[i];
+                if (potentialTarget == null) {
                     detectedTargets.RemoveAt(i);
                     continue;
                 }
 
-                if (!potentialTarget.CompareTag(tag)) {
+                if (!potentialTarget.transform.CompareTag(tag)) {
                     continue;
                 }
 
-                Vector3 directionToTarget = potentialTarget.position - currentPosition;
+                Vector3 directionToTarget = potentialTarget.transform.position - currentPosition;
                 float dSqrToTarget = directionToTarget.sqrMagnitude;
                 if (dSqrToTarget < closestDistanceSqr) {
                     closestDistanceSqr = dSqrToTarget;
