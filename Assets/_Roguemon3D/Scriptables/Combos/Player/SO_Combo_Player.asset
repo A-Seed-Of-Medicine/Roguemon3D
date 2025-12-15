@@ -24,7 +24,7 @@ MonoBehaviour:
     graphPosition: {x: 0, y: 0}
   - input: 3
     nextStep:
-      stepIndex: -1
+      stepIndex: 1
     longPress: 0
     longPressMinThreshold: 0.35
     longPressMaxThreshold: 1
