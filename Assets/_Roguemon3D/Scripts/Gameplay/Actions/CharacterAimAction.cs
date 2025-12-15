@@ -90,6 +90,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (pressed)
             {
                 actionHeld = true;
+                ApplyPhaseAnimation(ExecutionPhase.Windup, 0f);
                 if (!fireOnRelease)
                 {
                     TryFire(ResolveConfiguration(null), GetCurrentAimWorldPosition(), null, null, null);
@@ -156,9 +157,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             if (Time.time < nextFireTime)
-            {
-                return false;
-            }
+                {
+                    return false;
+                }
 
             Vector3 origin = GetSpawnPosition(configuration);
             Vector3 direction = directionOverride ?? ResolveAimDirection(origin, worldPosition);
@@ -182,6 +183,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (!projectileInstance)
                 return false;
 
+            ApplyPhaseAnimation(ExecutionPhase.Active, 0f);
+            actionStarted?.Invoke();
             Projectile.LaunchData launchData = BuildLaunchData(direction, origin, worldPosition, configuration,
                 sourceOverride, effectMagnitudeOverride);
             projectileInstance.Launch(launchData);
@@ -190,6 +193,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             ExecuteConfiguredAction();
 
             nextFireTime = Time.time + fireCooldown;
+            ApplyPhaseAnimation(ExecutionPhase.Recovery, fireCooldown);
+            actionComplete?.Invoke();
             return true;
         }
 

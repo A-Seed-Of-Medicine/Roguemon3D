@@ -896,7 +896,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             AgentAnimationRequest request = PrepareAnimationRequest(step, animation, targetDuration, scaleToDuration);
             ResetAnimationRequest();
-            SetAnimationRequest(request);
+            ApplyPhaseAnimation(ConvertToActionPhase(phase), request, targetDuration, scaleToDuration);
         }
 
         bool TryGetAnimationRequestForPhase(ComboStep step, HitComboDetector.ExecutionPhase phase, out AgentAnimationRequest request,
@@ -988,6 +988,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             animationRequest.crossFade = step.animationCrossFade;
             return animationRequest;
+        }
+
+        CharacterAction.ExecutionPhase ConvertToActionPhase(HitComboDetector.ExecutionPhase phase)
+        {
+            return phase switch
+            {
+                HitComboDetector.ExecutionPhase.Windup => ExecutionPhase.Windup,
+                HitComboDetector.ExecutionPhase.Active => ExecutionPhase.Active,
+                HitComboDetector.ExecutionPhase.Recovery => ExecutionPhase.Recovery,
+                _ => ExecutionPhase.None
+            };
         }
 
         void ApplyStepHitStopOnExecute(ComboStep step)

@@ -26,6 +26,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Sprint
         }
 
+        public enum ExecutionPhase
+        {
+            None,
+            Windup,
+            Active,
+            Recovery
+        }
+
         [Header("Action")]
         public PressBinding binding;
         public UnityAction<bool> actionTrigger;
@@ -34,6 +42,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField] protected bool skipIfActionInProgress = true;
         [Header("Animation")]
         [SerializeField] private AgentAnimationRequest defaultAnimationRequest;
+        [SerializeField] private bool usePhaseAnimationRequests = true;
+        [SerializeField] private AgentAnimationRequest windupAnimationRequest;
+        [SerializeField] private bool scaleWindupAnimationToPhaseDuration;
+        [SerializeField] private AgentAnimationRequest activeAnimationRequest;
+        [SerializeField] private bool scaleActiveAnimationToPhaseDuration;
+        [SerializeField] private AgentAnimationRequest recoveryAnimationRequest;
+        [SerializeField] private bool scaleRecoveryAnimationToPhaseDuration;
+        [SerializeField] private bool scaleDefaultAnimationToPhaseDuration;
 
         [field: SerializeField, HideInInspector]
         public AgentController Controller { get; private set; }
@@ -50,6 +66,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         public Rigidbody body => Controller?.rb;
         ActionState _actionState;
         private AgentAnimationRequest runtimeAnimationRequest;
+        protected ExecutionPhase CurrentPhase { get; private set; } = ExecutionPhase.None;
         private event Action<AgentAnimationRequest> animationRequestChanged;
 
         public virtual void OnValidate()
@@ -68,6 +85,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             actionTrigger ??= DefaultActionTrigger;
             runtimeAnimationRequest = NormalizeAnimationRequest(defaultAnimationRequest);
             defaultAnimationRequest = runtimeAnimationRequest;
+            windupAnimationRequest = NormalizeAnimationRequest(windupAnimationRequest);
+            activeAnimationRequest = NormalizeAnimationRequest(activeAnimationRequest);
+            recoveryAnimationRequest = NormalizeAnimationRequest(recoveryAnimationRequest);
         }
 
         protected virtual void Start()
@@ -120,6 +140,34 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return runtimeAnimationRequest;
         }
 
+        protected AgentAnimationRequest PreparePhaseAnimation(AgentAnimationRequest request, float targetDuration,
+            bool scaleToDuration)
+        {
+            AgentAnimationRequest animationRequest = request;
+            if (!scaleToDuration || Controller == null)
+            {
+                return animationRequest;
+            }
+
+            AnimationClip resolvedClip = Controller.AnimationController.GetClip(animationRequest);
+            if (!resolvedClip)
+            {
+                return animationRequest;
+            }
+
+            float duration = Mathf.Max(0.0001f, targetDuration);
+            float clipLength = resolvedClip.length;
+            if (clipLength <= 0f)
+            {
+                return animationRequest;
+            }
+
+            animationRequest.overrideSpeed = true;
+            float speed = animationRequest.playbackSpeed > 0f ? animationRequest.playbackSpeed : 1f;
+            animationRequest.playbackSpeed = speed * (clipLength / duration);
+            return animationRequest;
+        }
+
         internal void RegisterAnimationListener(Action<AgentAnimationRequest> listener)
         {
             animationRequestChanged += listener;
@@ -132,12 +180,86 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         internal void ResetAnimationRequest()
         {
+            CurrentPhase = ExecutionPhase.None;
             UpdateAnimationRequest(defaultAnimationRequest);
         }
 
         internal void ApplyAnimationRequest(AgentAnimationRequest request)
         {
             UpdateAnimationRequest(request);
+        }
+
+        protected void ApplyPhaseAnimation(ExecutionPhase phase, float phaseDuration = 0f)
+        {
+            CurrentPhase = phase;
+            if (!TryGetPhaseAnimation(phase, out AgentAnimationRequest request, out bool scaleToDuration))
+            {
+                ResetAnimationRequest();
+                return;
+            }
+
+            AgentAnimationRequest prepared = PreparePhaseAnimation(request, phaseDuration,
+                scaleToDuration && phaseDuration > 0f);
+            ApplyAnimationRequest(prepared);
+        }
+
+        protected void ApplyPhaseAnimation(ExecutionPhase phase, AgentAnimationRequest request, float phaseDuration,
+            bool scaleToDuration)
+        {
+            CurrentPhase = phase;
+            if (!request.IsValid)
+            {
+                ResetAnimationRequest();
+                return;
+            }
+
+            AgentAnimationRequest prepared = PreparePhaseAnimation(request, phaseDuration,
+                scaleToDuration && phaseDuration > 0f);
+            ApplyAnimationRequest(prepared);
+        }
+
+        protected virtual bool TryGetPhaseAnimation(ExecutionPhase phase, out AgentAnimationRequest request,
+            out bool scaleToDuration)
+        {
+            request = AgentAnimationRequest.None;
+            scaleToDuration = false;
+
+            AgentAnimationRequest candidate = defaultAnimationRequest;
+            bool candidateScale = scaleDefaultAnimationToPhaseDuration;
+
+            if (usePhaseAnimationRequests)
+            {
+                candidate = phase switch
+                {
+                    ExecutionPhase.Windup => windupAnimationRequest,
+                    ExecutionPhase.Active => activeAnimationRequest,
+                    ExecutionPhase.Recovery => recoveryAnimationRequest,
+                    _ => defaultAnimationRequest
+                };
+
+                candidateScale = phase switch
+                {
+                    ExecutionPhase.Windup => scaleWindupAnimationToPhaseDuration,
+                    ExecutionPhase.Active => scaleActiveAnimationToPhaseDuration,
+                    ExecutionPhase.Recovery => scaleRecoveryAnimationToPhaseDuration,
+                    _ => scaleDefaultAnimationToPhaseDuration
+                };
+
+                if (!candidate.IsValid)
+                {
+                    candidate = defaultAnimationRequest;
+                    candidateScale = scaleDefaultAnimationToPhaseDuration;
+                }
+            }
+
+            if (!candidate.IsValid)
+            {
+                return false;
+            }
+
+            request = candidate;
+            scaleToDuration = candidateScale;
+            return true;
         }
 
         protected void SetAnimationRequest(AgentAnimationRequest request)

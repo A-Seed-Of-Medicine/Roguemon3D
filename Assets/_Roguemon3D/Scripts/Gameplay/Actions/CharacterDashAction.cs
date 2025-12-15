@@ -203,6 +203,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             dashDirection = resolvedDirection.normalized;
 
+            ApplyPhaseAnimation(ExecutionPhase.Windup, 0f);
+
             dashChainPostTimer?.Cancel();
             dashCooldownTimer?.Cancel();
             dashQueueTimer?.Cancel();
@@ -223,7 +225,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 Controller.LockMovement(duration, zeroVelocityOnStart);
             }
-            
+
+            ApplyPhaseAnimation(ExecutionPhase.Active, duration);
             actionStarted?.Invoke();
             dashBaseSpeed = dashDistance > 0f && duration > 0f
                 ? dashDistance / Mathf.Max(0.0001f, duration)
@@ -308,6 +311,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 dashCooldownTimer.Cancel();
             }
 
+            ApplyPhaseAnimation(ExecutionPhase.Recovery, dashCooldown);
             actionComplete?.Invoke();
 
             if (queuedDash)

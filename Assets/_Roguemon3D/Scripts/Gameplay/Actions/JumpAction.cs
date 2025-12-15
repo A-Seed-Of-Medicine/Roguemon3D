@@ -72,6 +72,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
             Debug.Log("Jump Action Pressed");
+            ApplyPhaseAnimation(ExecutionPhase.Windup, 0f);
             BeginJumpArc().Forget();
         }
 
@@ -100,7 +101,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Vector3 endOffset = transform.TransformVector(localEndOffset);
             Vector3 planarOffset = jumpDirection.normalized * Mathf.Max(0f, arcDistance);
 
-        SuspensionState suspension = SuspendController();
+            SuspensionState suspension = SuspendController();
+            ApplyPhaseAnimation(ExecutionPhase.Active, arcDuration);
             actionStarted?.Invoke();
             ExecuteConfiguredAction();
 
@@ -132,8 +134,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             finally
             {
                 RestoreController(suspension);
-                actionComplete?.Invoke();
                 isJumping = false;
+                ApplyPhaseAnimation(ExecutionPhase.Recovery, 0f);
+                actionComplete?.Invoke();
                 jumpCancellation?.Dispose();
                 jumpCancellation = null;
             }
