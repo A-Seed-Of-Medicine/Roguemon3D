@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using _PinBoy.Scripts.CharacterMovement;
 using Cysharp.Threading.Tasks;
@@ -46,6 +47,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField, Tooltip("Reapply the stored planar velocity after the arc completes.")]
         private bool restoreVelocityOnComplete = true;
 
+        public float maxDirectionOffset = 45f;
+        public float directionalOffset = 0;
+
         CancellationTokenSource jumpCancellation;
         bool isJumping;
 
@@ -67,7 +71,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 return;
             }
-
+            Debug.Log("Jump Action Pressed");
             BeginJumpArc().Forget();
         }
 
@@ -82,6 +86,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 jumpDirection = Vector3.forward;
             }
+            
+            // Apply any fixed directional offset first
+            if (directionalOffset > 0f)
+                jumpDirection = Quaternion.Euler(0f, directionalOffset, 0f) * jumpDirection;
+            
+            // Randomize the direction within the allowed  on the horizontal plane
+            if (maxDirectionOffset > 0f)
+                jumpDirection = Quaternion.Euler(0f, UnityEngine.Random.Range(-maxDirectionOffset, maxDirectionOffset), 0f) * jumpDirection;
 
             Vector3 startPosition = transform.position;
             Vector3 startOffset = transform.TransformVector(localStartOffset);
