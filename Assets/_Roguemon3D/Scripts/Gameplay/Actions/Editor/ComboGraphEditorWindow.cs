@@ -241,7 +241,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             entries.InsertArrayElementAtIndex(entries.arraySize);
             SerializedProperty entry = entries.GetArrayElementAtIndex(entries.arraySize - 1);
             entry.FindPropertyRelative("input").enumValueIndex = 0;
-            entry.FindPropertyRelative("stepId").stringValue = string.Empty;
             entry.FindPropertyRelative("graphPosition").vector2Value = new Vector2(60f, entries.arraySize * 120f);
             serializedDefinition.ApplyModifiedProperties();
             graphView.RefreshGraph();

@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using _PinBoy.Scripts.Gameplay.Actions;
+using Codice.CM.Client.Differences;
 
 namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 {
@@ -141,7 +142,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 entryProperty.FindPropertyRelative("graphPosition").vector2Value = position;
             }
 
-            EntryNode node = new(entryProperty, HandleEntrySelected)
+            EntryNode node = new(entryProperty, HandleEntrySelected, HandleEntryDelete)
             {
                 userData = entryProperty
             };
@@ -235,10 +236,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                         case ComboTransitionEdge transitionEdge:
                             HandleEdgeDisconnected(transitionEdge);
                             break;
-
-                        // If you’ve implemented step deletion earlier:
                         case ComboStepNode stepNode:
                             HandleStepDelete(stepNode);
+                            break;
+                        case EntryNode entryNode:
+                            HandleEntryDelete(entryNode);
                             break;
                     }
                 }
@@ -432,23 +434,45 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                     }
                 }
             }
-
+            
             // 2. Remove entry steps pointing at this stepId
             if (entryStepsProperty != null)
             {
                 for (int i = entryStepsProperty.arraySize - 1; i >= 0; i--)
                 {
                     SerializedProperty entry = entryStepsProperty.GetArrayElementAtIndex(i);
-                    string stepId = entry.FindPropertyRelative("stepId").stringValue;
-                    if (stepId == node.StepId)
-                    {
-                        entryStepsProperty.DeleteArrayElementAtIndex(i);
-                    }
+                    SerializedProperty nextStepProp = entry.FindPropertyRelative("nextStep");
+                    SerializedProperty stepIndexProp = nextStepProp.FindPropertyRelative("stepIndex");
+                    if (stepIndexProp.intValue == removedIndex)
+                        stepIndexProp.intValue = -1;
                 }
             }
 
             // 3. Remove the step itself
             stepsProperty.DeleteArrayElementAtIndex(removedIndex);
+
+            serializedDefinition.ApplyModifiedProperties();
+            RefreshGraph();
+        }
+        
+         void HandleEntryDelete(EntryNode node)
+        {
+            if (serializedDefinition == null || stepsProperty == null)
+                return;
+
+            serializedDefinition.Update();
+
+            SerializedProperty entryProp = node.SerializedEntry;
+            // 2. Remove entry steps
+            for (int i = entryStepsProperty.arraySize - 1; i >= 0; i--)
+            {
+                SerializedProperty entry = entryStepsProperty.GetArrayElementAtIndex(i);
+                if (entry.propertyPath == entryProp.propertyPath)
+                {
+                    entryStepsProperty.DeleteArrayElementAtIndex(i);
+                    break;
+                }
+            }
 
             serializedDefinition.ApplyModifiedProperties();
             RefreshGraph();
@@ -464,7 +488,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             for (int i = 0; i < entryStepsProperty.arraySize; i++)
             {
                 SerializedProperty entry = entryStepsProperty.GetArrayElementAtIndex(i);
-                SerializedProperty stepIdProp = entry.FindPropertyRelative("stepId");
+                SerializedProperty stepIdProp = entry.FindPropertyRelative("stepIndexProp");
                 if (stepIdProp.stringValue == oldId)
                 {
                     stepIdProp.stringValue = newId;

@@ -54,6 +54,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
+            evt.menu.ClearItems();
             evt.menu.AppendAction(
                 "Duplicate Step",
                 _ => onDuplicate?.Invoke(this),
@@ -95,12 +96,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
         public Port OutputPort { get; }
 
         readonly System.Action<EntryNode> onSelected;
+        readonly System.Action<EntryNode> onDelete;
 
-        public EntryNode(SerializedProperty entryProperty, System.Action<EntryNode> onSelected)
+        public EntryNode(SerializedProperty entryProperty, System.Action<EntryNode> onSelected, System.Action<EntryNode> onDelete)
         {
             this.entryProperty = entryProperty;
             positionProperty = entryProperty.FindPropertyRelative("graphPosition");
             this.onSelected = onSelected;
+            this.onDelete = onDelete;
 
             CharacterComboAction.ComboInput input = (CharacterComboAction.ComboInput)entryProperty.FindPropertyRelative("input").enumValueIndex;
             title = $"Entry: {input}";
@@ -112,6 +115,15 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
 
             RefreshExpandedState();
             RefreshPorts();
+        }
+        
+        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            evt.menu.ClearItems();
+            evt.menu.AppendAction(
+                "Delete Step",
+                _ => onDelete?.Invoke(this),
+                DropdownMenuAction.Status.Normal);
         }
 
         public override void OnSelected()
