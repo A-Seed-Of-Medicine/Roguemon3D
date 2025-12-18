@@ -2,6 +2,7 @@
   "dependencies": {
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.gitamend.improvedtimers": "https://github.com/adammyhre/Unity-Improved-Timers.git",
+    "com.kyrylokuzyk.primetween": "file:../Assets/Plugins/PrimeTween/internal/com.kyrylokuzyk.primetween.tgz",
     "com.unity.2d.animation": "13.0.2",
     "com.unity.2d.psdimporter": "12.0.1",
     "com.unity.2d.sprite": "1.0.0",
