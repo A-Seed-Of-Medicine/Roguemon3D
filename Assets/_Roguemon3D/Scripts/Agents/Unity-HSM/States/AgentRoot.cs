@@ -117,8 +117,6 @@ namespace HSM {
     public class Grounded : AgentState {
         public readonly Idle Idle;
         public readonly Moving Moving;
-        public ComboState ComboExecuting;
-        public DashState DashExecuting;
 
         public Grounded(AgentController controller, StateMachine m, State parent) : base(controller, m, parent) {
             Idle = new Idle(controller, m, this);

@@ -1996,7 +1996,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return null;
 
             ComboState state = new ComboState(Controller, root.Machine, root, this, root.Grounded);
-            root.Grounded.ComboExecuting = state;
             return state;
         }
 

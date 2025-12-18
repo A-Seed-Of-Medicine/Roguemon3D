@@ -16,7 +16,7 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
     public class AgentStateMachineGraphWindow : EditorWindow
     {
         const double AgentRefreshInterval = 1.0f;
-        static readonly GUIContent WindowTitle = new("Agent State Graph (GraphToolkit)");
+        static readonly GUIContent WindowTitle = new("Agent State Graph");
 
         readonly List<AgentController> cachedAgents = new();
         ObjectField agentField;
@@ -27,7 +27,7 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
         double nextAgentRefresh;
         AgentController selectedAgent;
 
-        [MenuItem("Tools/Gameplay/Agent State Graph (GraphToolkit)")]
+        [MenuItem("Tools/Gameplay/Agent State Graph")]
         public static void Open()
         {
             var window = GetWindow<AgentStateMachineGraphWindow>();

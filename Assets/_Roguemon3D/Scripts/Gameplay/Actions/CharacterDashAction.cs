@@ -392,7 +392,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             DashState controller = new DashState(Controller, root.Machine, root, this, root.Grounded);
-            root.Grounded.DashExecuting = controller;
             return controller;
         }
     }
