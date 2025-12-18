@@ -12,6 +12,14 @@ using UtilityAI;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
 {
+    public enum ExecutionPhase
+    {
+        None = -1,
+        Windup,
+        Active,
+        Recovery
+    }
+    
     [RequireComponent(typeof(AgentController))]
     public abstract class CharacterAction : MonoBehaviour
     {
@@ -27,22 +35,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Sprint
         }
 
-        public enum ExecutionPhase
-        {
-            None,
-            Windup,
-            Active,
-            Recovery
-        }
-
         [Serializable]
         public struct PhaseExecution
         {
-            [Min(0f)] public float duration;
+            [Min(0f)] public float Duration;
             [Tooltip("Actions that are allowed to interrupt during this phase.")]
             public CharacterAction[] ActionInterrupts;
-
-            public float Duration => Mathf.Max(0f, duration);
+            
             public CharacterAction[] Interrupts => ActionInterrupts ?? Array.Empty<CharacterAction>();
         }
 
@@ -54,19 +53,20 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField] protected bool skipIfActionInProgress = true;
         [Header("Animation")]
         [SerializeField] private AgentAnimationRequest defaultAnimationRequest;
+        [SerializeField] private bool scaleDefaultAnimationToPhaseDuration;
+        [Header("Phase Animations")]
         [SerializeField] private bool usePhaseAnimationRequests = true;
         [SerializeField] private AgentAnimationRequest windupAnimationRequest;
-        [SerializeField] private bool scaleWindupAnimationToPhaseDuration;
+        [SerializeField] private bool scaleWindupAnimationToPhaseDuration = true;
         [SerializeField] private AgentAnimationRequest activeAnimationRequest;
-        [SerializeField] private bool scaleActiveAnimationToPhaseDuration;
+        [SerializeField] private bool scaleActiveAnimationToPhaseDuration = true;
         [SerializeField] private AgentAnimationRequest recoveryAnimationRequest;
-        [SerializeField] private bool scaleRecoveryAnimationToPhaseDuration;
-        [SerializeField] private bool scaleDefaultAnimationToPhaseDuration;
+        [SerializeField] private bool scaleRecoveryAnimationToPhaseDuration = true;
 
         [Header("Phase Execution")]
-        [SerializeField] private PhaseExecution windupPhaseExecution;
-        [SerializeField] private PhaseExecution activePhaseExecution;
-        [SerializeField] private PhaseExecution recoveryPhaseExecution;
+        [SerializeField] protected PhaseExecution windupPhaseExecution;
+        [SerializeField] protected PhaseExecution activePhaseExecution;
+        [SerializeField] protected PhaseExecution recoveryPhaseExecution;
 
         [field: SerializeField, HideInInspector]
         public AgentController Controller { get; private set; }
@@ -272,8 +272,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             EnqueuePhaseRequest(phase, request, phaseDuration, scaleToDuration);
         }
 
-        protected void ApplyPhaseAnimation(ExecutionPhase phase, AgentAnimationRequest request, float phaseDuration,
-            bool scaleToDuration)
+        protected void ApplyPhaseAnimation(ExecutionPhase phase, AgentAnimationRequest request, float phaseDuration, bool scaleToDuration)
         {
             if (!request.IsValid)
             {
@@ -285,8 +284,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             EnqueuePhaseRequest(phase, request, phaseDuration, scaleToDuration);
         }
 
-        protected virtual bool TryGetPhaseAnimation(ExecutionPhase phase, out AgentAnimationRequest request,
-            out bool scaleToDuration)
+        protected virtual bool TryGetPhaseAnimation(ExecutionPhase phase, out AgentAnimationRequest request, out bool scaleToDuration)
         {
             request = AgentAnimationRequest.None;
             scaleToDuration = false;
@@ -341,8 +339,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return execution.Duration > 0f ? execution.Duration : 0f;
         }
 
-        void EnqueuePhaseRequest(ExecutionPhase phase, AgentAnimationRequest request, float phaseDuration,
-            bool scaleToDuration)
+        void EnqueuePhaseRequest(ExecutionPhase phase, AgentAnimationRequest request, float phaseDuration, bool scaleToDuration)
         {
             float resolvedDuration = ResolvePhaseDuration(phase, phaseDuration);
             AgentAnimationRequest sanitized = NormalizeAnimationRequest(request);
@@ -372,7 +369,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             phaseSequenceCancellation =
                 CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
-            phaseSequenceCompletion = UniTaskCompletionSource.Create();
+            phaseSequenceCompletion = new UniTaskCompletionSource();
             ProcessPhaseQueue(phaseSequenceCancellation.Token).Forget();
         }
 

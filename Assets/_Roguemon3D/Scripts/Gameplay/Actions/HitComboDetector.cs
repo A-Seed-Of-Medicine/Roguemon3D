@@ -149,14 +149,6 @@ public class HitComboDetector : HitDetector
         }
     }
 
-    public enum ExecutionPhase
-    {
-        None = -1,
-        Windup,
-        Active,
-        Recovery
-    }
-
     [Header("Phase Effects")]
     [SerializeField] ExecutionPhase windupDeactivePhase = ExecutionPhase.Recovery;
     [SerializeField] PhaseParticleEffect[] phaseParticleEffects = System.Array.Empty<PhaseParticleEffect>();

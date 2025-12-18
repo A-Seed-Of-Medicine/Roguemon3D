@@ -16,8 +16,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
     public sealed class JumpAction : CharacterAction
     {
         [Header("Arc Shape")]
-        [SerializeField, Tooltip("Time in seconds to complete the jump arc."), Min(0f)]
-        private float arcDuration = 0.6f;
+        [field: SerializeField, Tooltip("Time in seconds to complete the jump arc."), Min(0f)]
+        private float arcDuration
+        {
+            get => activePhaseExecution.Duration;
+            set => activePhaseExecution.Duration = Mathf.Max(0f, value);
+        }
         [SerializeField, Tooltip("Planar distance travelled during the jump."), Min(0f)]
         private float arcDistance = 4f;
         [SerializeField, Tooltip("Maximum height reached above the starting point."), Min(0f)]

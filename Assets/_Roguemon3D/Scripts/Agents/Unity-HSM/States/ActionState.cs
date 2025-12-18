@@ -10,7 +10,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
     {
         protected readonly CharacterAction action;
         bool isActive;
-        public CharacterAction.ExecutionPhase ActivePhase { get; private set; } = CharacterAction.ExecutionPhase.None;
+        public ExecutionPhase ActivePhase { get; private set; } = ExecutionPhase.None;
 
         public CharacterAction Action => action;
 
@@ -49,7 +49,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             isActive = false;
-            ActivePhase = CharacterAction.ExecutionPhase.None;
+            ActivePhase = ExecutionPhase.None;
             base.OnExit();
         }
 
@@ -120,12 +120,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return null;
         }
 
-        void HandlePhaseStarted(CharacterAction.ExecutionPhase phase)
+        void HandlePhaseStarted(ExecutionPhase phase)
         {
             ActivePhase = phase;
         }
 
-        void HandlePhaseCompleted(CharacterAction.ExecutionPhase phase)
+        void HandlePhaseCompleted(ExecutionPhase phase)
         {
             ActivePhase = phase;
         }
