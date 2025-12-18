@@ -232,6 +232,18 @@ namespace _PinBoy.Scripts.CharacterMovement
             return false;
         }
 
+        internal bool TryPeekActionState(State expectedParent, out ActionState state)
+        {
+            if (pendingActionState != null && (expectedParent == null || pendingActionState.Parent == expectedParent))
+            {
+                state = pendingActionState;
+                return true;
+            }
+
+            state = null;
+            return false;
+        }
+
         internal void CancelPendingActionState(ActionState state)
         {
             if (pendingActionState == state)

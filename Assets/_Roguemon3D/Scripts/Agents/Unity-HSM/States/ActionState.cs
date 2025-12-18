@@ -10,6 +10,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
     {
         protected readonly CharacterAction action;
         bool isActive;
+        public CharacterAction.ExecutionPhase ActivePhase { get; private set; } = CharacterAction.ExecutionPhase.None;
+
+        public CharacterAction Action => action;
 
         public ActionState(AgentController controller, StateMachine machine, AgentRoot root, CharacterAction action, State parent = null) : base(controller,
             machine, parent)
@@ -30,7 +33,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (action != null)
             {
                 action.RegisterAnimationListener(HandleAnimationRequestChanged);
+                action.RegisterPhaseListeners(HandlePhaseStarted, HandlePhaseCompleted);
                 HandleAnimationRequestChanged(action.GetAnimationRequest());
+                ActivePhase = action.ActivePhase;
             }
         }
 
@@ -40,9 +45,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 action.UnregisterAnimationListener(HandleAnimationRequestChanged);
                 action.ResetAnimationRequest();
+                action.UnregisterPhaseListeners(HandlePhaseStarted, HandlePhaseCompleted);
             }
 
             isActive = false;
+            ActivePhase = CharacterAction.ExecutionPhase.None;
             base.OnExit();
         }
 
@@ -81,6 +88,47 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 controller.AnimationController.Unregister(this);
             }
         }
+
+        protected ActionState CheckForRequestedActionInterrupt()
+        {
+            if (controller == null || action == null)
+            {
+                return null;
+            }
+
+            if (!controller.TryPeekActionState(Parent, out ActionState requested))
+            {
+                return null;
+            }
+
+            CharacterAction.PhaseExecution execution = action.GetPhaseExecution(ActivePhase);
+            CharacterAction[] interrupts = execution.Interrupts;
+            if (interrupts == null || interrupts.Length == 0)
+            {
+                return null;
+            }
+
+            foreach (CharacterAction interrupt in interrupts)
+            {
+                if (interrupt == requested.Action)
+                {
+                    controller.TryConsumeActionState(Parent, out _);
+                    return requested;
+                }
+            }
+
+            return null;
+        }
+
+        void HandlePhaseStarted(CharacterAction.ExecutionPhase phase)
+        {
+            ActivePhase = phase;
+        }
+
+        void HandlePhaseCompleted(CharacterAction.ExecutionPhase phase)
+        {
+            ActivePhase = phase;
+        }
     }
     
     public sealed class ComboState : ActionState
@@ -97,6 +145,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
             {
                 return AgentRoot.Stunned;
+            }
+
+            ActionState interrupt = CheckForRequestedActionInterrupt();
+            if (interrupt != null)
+            {
+                return interrupt;
             }
 
             if (!comboAction.IsCurrentStepRunning)
@@ -130,6 +184,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             if (controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
                 return AgentRoot.Stunned;
+
+            ActionState interrupt = CheckForRequestedActionInterrupt();
+            if (interrupt != null)
+            {
+                return interrupt;
+            }
             
             if (!dashAction.isDashing)
             {

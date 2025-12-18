@@ -194,7 +194,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             nextFireTime = Time.time + fireCooldown;
             ApplyPhaseAnimation(ExecutionPhase.Recovery, fireCooldown);
-            actionComplete?.Invoke();
+            InvokeActionCompleteAfterPhases();
             return true;
         }
 
@@ -312,4 +312,3 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         }
     }
 }
-

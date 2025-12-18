@@ -312,7 +312,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             ApplyPhaseAnimation(ExecutionPhase.Recovery, dashCooldown);
-            actionComplete?.Invoke();
+            InvokeActionCompleteAfterPhases();
 
             if (queuedDash)
             {
