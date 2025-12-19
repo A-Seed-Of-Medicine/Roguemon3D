@@ -84,6 +84,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         ActionState _actionState;
         private AgentAnimationRequest runtimeAnimationRequest;
         protected ExecutionPhase CurrentPhase { get; private set; } = ExecutionPhase.None;
+        protected float CurrentPhaseDuration { get; private set; }
         private event Action<AgentAnimationRequest> animationRequestChanged;
         private event Action<ExecutionPhase> phaseStarted;
         private event Action<ExecutionPhase> phaseCompleted;
@@ -195,6 +196,33 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         internal UniTask WaitForPhaseSequenceAsync()
         {
             return phaseSequenceCompletion != null ? phaseSequenceCompletion.Task : UniTask.CompletedTask;
+        }
+
+        protected void BeginPhaseSequence(bool includeWindup = true, bool includeActive = true,
+            bool includeRecovery = true, float windupDurationOverride = 0f, float activeDurationOverride = 0f,
+            float recoveryDurationOverride = 0f, bool invokeCompleteOnFinish = true)
+        {
+            CancelPhaseSequence();
+
+            if (includeWindup)
+            {
+                ApplyPhaseAnimation(ExecutionPhase.Windup, windupDurationOverride);
+            }
+
+            if (includeActive)
+            {
+                ApplyPhaseAnimation(ExecutionPhase.Active, activeDurationOverride);
+            }
+
+            if (includeRecovery)
+            {
+                ApplyPhaseAnimation(ExecutionPhase.Recovery, recoveryDurationOverride);
+            }
+
+            if (invokeCompleteOnFinish)
+            {
+                InvokeActionCompleteAfterPhases();
+            }
         }
 
         protected AgentAnimationRequest PreparePhaseAnimation(AgentAnimationRequest request, float targetDuration,
@@ -392,6 +420,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 while (phaseQueue.Count > 0)
                 {
                     PhaseRequest request = phaseQueue.Dequeue();
+                    CurrentPhaseDuration = request.Duration;
                     BroadcastPhaseStarted(request.Phase);
 
                     if (request.HasAnimation)
@@ -414,6 +443,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
             finally
             {
+                CurrentPhaseDuration = 0f;
                 BroadcastPhaseStarted(ExecutionPhase.None);
                 BroadcastPhaseCompleted(ExecutionPhase.None);
                 phaseQueue.Clear();
@@ -433,14 +463,24 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             CurrentPhase = phase;
             phaseStarted?.Invoke(phase);
+            OnPhaseStarted(phase);
         }
 
         void BroadcastPhaseCompleted(ExecutionPhase phase)
         {
             phaseCompleted?.Invoke(phase);
+            OnPhaseCompleted(phase);
         }
 
-        void CancelPhaseSequence()
+        protected virtual void OnPhaseStarted(ExecutionPhase phase)
+        {
+        }
+
+        protected virtual void OnPhaseCompleted(ExecutionPhase phase)
+        {
+        }
+
+        protected void CancelPhaseSequence()
         {
             bool hadSequence = phaseSequenceCancellation != null;
             if (hadSequence)

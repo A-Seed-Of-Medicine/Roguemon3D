@@ -78,11 +78,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
             Debug.Log("Jump Action Pressed");
-            ApplyPhaseAnimation(ExecutionPhase.Windup, 0f);
-            BeginJumpArc().Forget();
+            BeginPhaseSequence(true, true, true, windupPhaseExecution.Duration, arcDuration,
+                recoveryPhaseExecution.Duration);
         }
 
-        async UniTaskVoid BeginJumpArc()
+        async UniTaskVoid BeginJumpArc(float duration)
         {
             isJumping = true;
             jumpCancellation = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
@@ -107,25 +107,24 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Vector3 endOffset = transform.TransformVector(localEndOffset);
             Vector3 planarOffset = jumpDirection.normalized * Mathf.Max(0f, arcDistance);
 
-            SuspensionState suspension = SuspendController();
-            ApplyPhaseAnimation(ExecutionPhase.Active, arcDuration);
+            SuspensionState suspension = SuspendController(duration);
             actionStarted?.Invoke();
             ExecuteConfiguredAction();
 
             try
             {
-                float duration = Mathf.Max(0f, arcDuration);
-                if (duration <= 0f)
+                float resolvedDuration = Mathf.Max(0f, duration);
+                if (resolvedDuration <= 0f)
                 {
                     ApplyJumpPosition(startPosition, startOffset, endOffset, planarOffset, 1f);
                     return;
                 }
 
                 float elapsed = 0f;
-                while (elapsed < duration)
+                while (elapsed < resolvedDuration)
                 {
                     token.ThrowIfCancellationRequested();
-                    float normalizedTime = Mathf.Clamp01(elapsed / Mathf.Max(0.0001f, duration));
+                    float normalizedTime = Mathf.Clamp01(elapsed / Mathf.Max(0.0001f, resolvedDuration));
                     ApplyJumpPosition(startPosition, startOffset, endOffset, planarOffset, normalizedTime);
                     await UniTask.Yield(PlayerLoopTiming.FixedUpdate, token);
                     elapsed += Time.fixedDeltaTime;
@@ -141,8 +140,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 RestoreController(suspension);
                 isJumping = false;
-                ApplyPhaseAnimation(ExecutionPhase.Recovery, 0f);
-                actionComplete?.Invoke();
                 jumpCancellation?.Dispose();
                 jumpCancellation = null;
             }
@@ -212,7 +209,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return new JumpState(Controller, root.Machine, root, this, parent);
         }
 
-        SuspensionState SuspendController()
+        protected override void OnPhaseStarted(ExecutionPhase phase)
+        {
+            base.OnPhaseStarted(phase);
+
+            if (phase == ExecutionPhase.Active)
+            {
+                BeginJumpArc(CurrentPhaseDuration > 0f ? CurrentPhaseDuration : arcDuration).Forget();
+            }
+        }
+
+        protected override void OnPhaseCompleted(ExecutionPhase phase)
+        {
+            base.OnPhaseCompleted(phase);
+
+            if (phase == ExecutionPhase.Active)
+            {
+                CancelJump();
+            }
+        }
+
+        SuspensionState SuspendController(float activeDuration)
         {
             SuspensionState state = new SuspensionState
             {
@@ -229,7 +246,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (suspendControllerWhileJumping && Controller != null && !Controller.IsMovementLocked)
             {
-                Controller.LockMovement(Mathf.Max(arcDuration, 0f), true);
+                Controller.LockMovement(Mathf.Max(activeDuration, 0f), true);
             }
 
             if (body != null)
