@@ -139,23 +139,35 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         internal void ConfigureActionState(AgentRoot root)
         {
-            if (_actionState != null)
-            {
-                return;
-            }
-
             Controller ??= GetComponent<AgentController>();
             if (Controller == null || root == null)
             {
                 return;
             }
 
-            _actionState = CreateActionExecuteState(root);
+            if (_actionState == null)
+            {
+                _actionState = CreateActionState(root);
+            }
+
+            RegisterActionStateWithParent(_actionState);
         }
 
-        protected virtual ActionState CreateActionExecuteState(AgentRoot root)
+        protected abstract ActionState CreateActionState(AgentRoot root);
+
+        protected virtual AgentState GetDefaultActionParent(AgentRoot root)
         {
-            return null;
+            return root != null ? root.Grounded : null;
+        }
+
+        void RegisterActionStateWithParent(ActionState state)
+        {
+            if (state?.Parent == null)
+            {
+                return;
+            }
+
+            state.Parent.RegisterDynamicChild(state);
         }
 
         internal ActionState ActionState => _actionState;

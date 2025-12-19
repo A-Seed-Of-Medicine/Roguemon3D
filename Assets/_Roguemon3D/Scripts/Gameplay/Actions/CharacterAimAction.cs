@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Effects;
 using _PinBoy.Scripts.Gameplay.Projectiles;
+using HSM;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -198,6 +199,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return true;
         }
 
+        protected override ActionState CreateActionState(AgentRoot root)
+        {
+            if (Controller == null || root == null)
+            {
+                return null;
+            }
+
+            AgentState parent = GetDefaultActionParent(root);
+            return new AimActionState(Controller, root.Machine, root, this, parent);
+        }
+
         Vector3 GetCurrentAimWorldPosition()
         {
             if (InputReader != null)
@@ -309,6 +321,39 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 if (ownerCollider)
                     cachedOwnerColliders.Add(ownerCollider);
             }
+        }
+    }
+
+    sealed class AimActionState : ActionState
+    {
+        readonly CharacterAimAction aimAction;
+
+        public AimActionState(AgentController controller, StateMachine machine, AgentRoot root, CharacterAimAction aimAction, AgentState parent)
+            : base(controller, machine, root, aimAction, parent)
+        {
+            this.aimAction = aimAction;
+        }
+
+        protected override State GetTransition()
+        {
+            if (IsStunned)
+            {
+                return AgentRoot.Stunned;
+            }
+
+            ActionState interrupt = CheckForRequestedActionInterrupt();
+            if (interrupt != null)
+            {
+                return interrupt;
+            }
+
+            bool isRunning = aimAction.IsPhaseSequenceActive || IsControllerPerformingAction;
+            if (!isRunning)
+            {
+                return GetLocomotionState();
+            }
+
+            return null;
         }
     }
 }

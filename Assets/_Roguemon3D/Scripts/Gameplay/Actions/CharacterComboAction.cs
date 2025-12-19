@@ -1990,13 +1990,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             };
         }
 
-        protected override ActionState CreateActionExecuteState(AgentRoot root)
+        protected override ActionState CreateActionState(AgentRoot root)
         {
             if (Controller == null || root == null)
                 return null;
 
-            ComboState state = new ComboState(Controller, root.Machine, root, this, root.Grounded);
-            return state;
+            AgentState parent = GetDefaultActionParent(root);
+            return new ComboState(Controller, root.Machine, root, this, parent);
         }
 
         void BuildLookups()
@@ -2024,6 +2024,38 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     stepLookup[step.id] = step;
                 }
             }
+        }
+    }
+
+    sealed class ComboState : ActionState
+    {
+        readonly CharacterComboAction comboAction;
+
+        public ComboState(AgentController controller, StateMachine machine, AgentRoot root, CharacterComboAction comboAction, AgentState parent)
+            : base(controller, machine, root, comboAction, parent)
+        {
+            this.comboAction = comboAction;
+        }
+
+        protected override State GetTransition()
+        {
+            if (IsStunned)
+            {
+                return AgentRoot.Stunned;
+            }
+
+            ActionState interrupt = CheckForRequestedActionInterrupt();
+            if (interrupt != null)
+            {
+                return interrupt;
+            }
+
+            if (!comboAction.IsCurrentStepRunning)
+            {
+                return GetLocomotionState();
+            }
+
+            return null;
         }
     }
 }

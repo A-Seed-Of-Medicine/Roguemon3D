@@ -129,82 +129,24 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             ActivePhase = phase;
         }
-    }
-    
-    public sealed class ComboState : ActionState
-    {
-        CharacterComboAction comboAction => action as CharacterComboAction;
-        public ComboState(AgentController controller, StateMachine machine, AgentRoot root, CharacterComboAction comboAction, AgentState parent)
-            : base(controller, machine, root, comboAction, parent)
+        
+        protected bool IsStunned => controller?.statusHandler?.StunnedStatus?.IsActive ?? false;
+
+        protected bool IsControllerPerformingAction => controller?.IsPerformingAction ?? false;
+
+        protected State GetLocomotionState()
         {
-            
-        }
-
-        protected override State GetTransition()
-        {
-            if (controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
+            if (controller == null)
             {
-                return AgentRoot.Stunned;
+                return null;
             }
 
-            ActionState interrupt = CheckForRequestedActionInterrupt();
-            if (interrupt != null)
+            if (controller.grounded)
             {
-                return interrupt;
+                return controller.IsMoving ? AgentRoot.Grounded.Moving : AgentRoot.Grounded.Idle;
             }
 
-            if (!comboAction.IsCurrentStepRunning)
-            {
-                if (!controller)
-                    return null;
-                if (controller.grounded)
-                {
-                    if (controller.IsMoving) 
-                        return AgentRoot.Grounded.Moving;
-                    return AgentRoot.Grounded.Idle;
-                }
-                return AgentRoot.Airborne;
-            }
-
-            return null;
-        }
-    }
-    
-    public sealed class DashState : ActionState
-    {
-        readonly CharacterDashAction dashAction;
-
-        public DashState(AgentController controller, StateMachine machine, AgentRoot root, CharacterDashAction dashAction, AgentState parent)
-            : base(controller, machine, root, dashAction, parent)
-        {
-            this.dashAction = dashAction;
-        }
-
-        protected override State GetTransition()
-        {
-            if (controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
-                return AgentRoot.Stunned;
-
-            ActionState interrupt = CheckForRequestedActionInterrupt();
-            if (interrupt != null)
-            {
-                return interrupt;
-            }
-            
-            if (!dashAction.isDashing)
-            {
-                if (!controller)
-                    return null;
-                if (controller.grounded)
-                {
-                    if (controller.IsMoving) 
-                        return AgentRoot.Grounded.Moving;
-                    return AgentRoot.Grounded.Idle;
-                }
-                return AgentRoot.Airborne;
-            }
-
-            return null;
+            return AgentRoot.Airborne;
         }
     }
 }

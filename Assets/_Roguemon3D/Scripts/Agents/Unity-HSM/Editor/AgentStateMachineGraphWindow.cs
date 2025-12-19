@@ -543,6 +543,19 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
                     yield return child;
                 }
             }
+
+            IReadOnlyList<State> dynamicChildren = state.DynamicChildren;
+            if (dynamicChildren != null)
+            {
+                foreach (State child in dynamicChildren)
+                {
+                    if (child != null && ReferenceEquals(child.Parent, state))
+                    {
+                        CachedSiblingIndex[child] = index++;
+                        yield return child;
+                    }
+                }
+            }
         }
 
         public static int GetDepth(State state)

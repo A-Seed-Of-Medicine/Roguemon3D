@@ -384,15 +384,47 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return Vector3.forward;
         }
 
-        protected override ActionState CreateActionExecuteState(AgentRoot root)
+        protected override ActionState CreateActionState(AgentRoot root)
         {
             if (Controller == null || root == null)
             {
                 return null;
             }
 
-            DashState controller = new DashState(Controller, root.Machine, root, this, root.Grounded);
-            return controller;
+            AgentState parent = GetDefaultActionParent(root);
+            return new DashState(Controller, root.Machine, root, this, parent);
+        }
+    }
+
+    sealed class DashState : ActionState
+    {
+        readonly CharacterDashAction dashAction;
+
+        public DashState(AgentController controller, StateMachine machine, AgentRoot root, CharacterDashAction dashAction, AgentState parent)
+            : base(controller, machine, root, dashAction, parent)
+        {
+            this.dashAction = dashAction;
+        }
+
+        protected override State GetTransition()
+        {
+            if (IsStunned)
+            {
+                return AgentRoot.Stunned;
+            }
+
+            ActionState interrupt = CheckForRequestedActionInterrupt();
+            if (interrupt != null)
+            {
+                return interrupt;
+            }
+
+            if (!dashAction.isDashing)
+            {
+                return GetLocomotionState();
+            }
+
+            return null;
         }
     }
 }

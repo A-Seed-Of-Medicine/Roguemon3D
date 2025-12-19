@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using _PinBoy.Scripts.CharacterMovement;
 using Cysharp.Threading.Tasks;
+using HSM;
 using UnityEngine;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
@@ -56,6 +57,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         CancellationTokenSource jumpCancellation;
         bool isJumping;
+        internal bool IsJumping => isJumping;
 
         protected override void OnDisable()
         {
@@ -199,6 +201,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return Vector3.forward;
         }
 
+        protected override ActionState CreateActionState(AgentRoot root)
+        {
+            if (Controller == null || root == null)
+            {
+                return null;
+            }
+
+            AgentState parent = GetDefaultActionParent(root);
+            return new JumpState(Controller, root.Machine, root, this, parent);
+        }
+
         SuspensionState SuspendController()
         {
             SuspensionState state = new SuspensionState
@@ -273,6 +286,38 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool BodyKinematic;
             public bool MovementLocked;
             public Vector3 StoredVelocity;
+        }
+    }
+
+    sealed class JumpState : ActionState
+    {
+        readonly JumpAction jumpAction;
+
+        public JumpState(AgentController controller, StateMachine machine, AgentRoot root, JumpAction jumpAction, AgentState parent)
+            : base(controller, machine, root, jumpAction, parent)
+        {
+            this.jumpAction = jumpAction;
+        }
+
+        protected override State GetTransition()
+        {
+            if (IsStunned)
+            {
+                return AgentRoot.Stunned;
+            }
+
+            ActionState interrupt = CheckForRequestedActionInterrupt();
+            if (interrupt != null)
+            {
+                return interrupt;
+            }
+
+            if (!jumpAction.IsJumping)
+            {
+                return GetLocomotionState();
+            }
+
+            return null;
         }
     }
 }
