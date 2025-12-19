@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Effects;
 using AdvancedController;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 using HSM;
 using ImprovedTimers;
@@ -250,27 +249,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool stepHitStopAppliedOnHit;
         bool movementLockedByStep;
         bool aimLockedByStep;
+        bool inActivePhase;
+        bool inRecoveryPhase;
 
         internal bool IsComboExecuting => comboActive || IsCurrentStepRunning || pendingDelayActive;
 
-        internal bool IsCurrentStepRunning => currentStep != null &&
-                                      (awaitingChargeRelease ||
-                                       (windupTimer?.IsRunning ?? false) ||
-                                       (activeTimer?.IsRunning ?? false) ||
-                                       (recoveryTimer?.IsRunning ?? false) ||
-                                       (stepTimer?.IsRunning ?? false));
+        internal bool IsCurrentStepRunning => currentStep != null && (awaitingChargeRelease || IsPhaseSequenceActive);
 
         bool currentStepExpired => currentStep == null || !IsCurrentStepRunning;
 
-        MyCountTimer windupTimer;
-        MyCountTimer activeTimer;
-        MyCountTimer recoveryTimer;
-        MyCountTimer stepTimer;
         MyCountTimer transitionDelayTimer;
         MyCountTimer comboResetTimer;
-
-        bool inActivePhase;
-        bool inRecoveryPhase;
 
         protected override bool UsesAimInput => comboDefinition ? comboDefinition.RequiresAimInput : true;
 
@@ -314,17 +303,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             actionTrigger = HandleBindingInput;
             base.Awake();
-            windupTimer = new MyCountTimer(0f);
-            windupTimer.OnTimerFinish += HandleWindupTimerFinished;
-
-            activeTimer = new MyCountTimer(0f);
-            activeTimer.OnTimerFinish += HandleActiveTimerFinished;
-
-            recoveryTimer = new MyCountTimer(0f);
-            recoveryTimer.OnTimerFinish += HandleRecoveryTimerFinished;
-
-            stepTimer = new MyCountTimer(0f);
-
             transitionDelayTimer = new MyCountTimer(0f);
             transitionDelayTimer.OnTimerFinish += HandleTransitionDelayTimerFinished;
 
@@ -352,12 +330,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void FixedUpdate()
         {
             EvaluateLongPressStates();
-
-            if (IsCurrentStepRunning)
-            {
-                AdvanceCurrentStep(Time.fixedDeltaTime);
-            }
-
             HandlePendingTransition();
         }
 
@@ -371,21 +343,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected override void OnDestroy()
         {
             UnsubscribeStatusEvents();
-            if (windupTimer != null)
-            {
-                windupTimer.OnTimerFinish -= HandleWindupTimerFinished;
-            }
-
-            if (activeTimer != null)
-            {
-                activeTimer.OnTimerFinish -= HandleActiveTimerFinished;
-            }
-
-            if (recoveryTimer != null)
-            {
-                recoveryTimer.OnTimerFinish -= HandleRecoveryTimerFinished;
-            }
-
             if (transitionDelayTimer != null)
             {
                 transitionDelayTimer.OnTimerFinish -= HandleTransitionDelayTimerFinished;
@@ -686,16 +643,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
         }
 
-        void AdvanceCurrentStep(float delta)
+        void UpdateStepProgress(float delta)
         {
             if (!IsCurrentStepRunning)
             {
                 return;
-            }
-
-            if (currentStep?.chargeWindup == true)
-            {
-                UpdateChargeWindup(delta);
             }
 
             currentStepElapsed = GetCurrentStepElapsed();
@@ -836,21 +788,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             pendingComboResetDelay = 0f;
             stepHitStopAppliedOnHit = false;
             stepStartTime = Time.time;
-
-            inActivePhase = false;
-            inRecoveryPhase = false;
-
-            windupTimer.Cancel();
-            activeTimer.Cancel();
-            recoveryTimer.Cancel();
-            stepTimer.Cancel();
             transitionDelayTimer.Cancel();
-
-            float totalDuration = Mathf.Max(0f, GetPlannedStepDuration(currentStep));
-            if (totalDuration > 0f)
-            {
-                stepTimer.Start(totalDuration);
-            }
 
             actionStarted?.Invoke();
 
@@ -871,7 +809,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             Controller.ApplyMovementModifier(overrideMovementProfile, -1f);
 
-            StartWindupPhase(step);
+            BeginStepPhases(step);
         }
 
         void ApplyStepPressMetadata(ComboStep step, bool isLongPress, float holdDuration, float holdNormalized)
@@ -1000,80 +938,124 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             CameraManager.Instance?.TryAddHitStopForAgent(Controller, step.hitStopOnExecute);
         }
 
-        void StartWindupPhase(ComboStep step)
+        void BeginStepPhases(ComboStep step)
         {
             if (step == null)
             {
                 return;
             }
 
-            windupTimer.Cancel();
-            ResetAnimationRequest();
-            ApplyStepAnimation(step, ExecutionPhase.Windup);
+            float windupDuration = step.chargeWindup
+                ? (step.maximumChargeTime > 0f ? Mathf.Max(0f, step.maximumChargeTime) : InfinitePhaseLockDuration)
+                : Mathf.Max(0f, step.windup);
 
-            activeHitDetector?.HandlePhaseStart(ExecutionPhase.Windup, step);
+            float activeDuration = Mathf.Max(0f, step.active);
+            float recoveryDuration = Mathf.Max(0f, step.recovery);
 
-            windupPhaseComplete = false;
-            awaitingChargeRelease = step.chargeWindup;
-            chargeReleaseRequested = false;
-            chargeWindupElapsed = 0f;
-
-            ApplyPhaseLocks(step, ExecutionPhase.Windup);
-
-            if (step.windup > 0f)
-            {
-                if (step.chargeWindup)
-                {
-                    float maxCharge = Mathf.Max(0f, step.maximumChargeTime);
-                    if (maxCharge > 0f)
-                    {
-                        windupTimer.Start(maxCharge);
-                    }
-                }
-                else
-                {
-                    windupTimer.Start(step.windup);
-                }
-            }
-            else
-            {
-                HandleWindupTimerFinished();
-            }
+            BeginPhaseSequence(true, true, true, windupDuration, activeDuration, recoveryDuration, false);
         }
 
-        void HandleWindupTimerFinished()
+        protected override void OnPhaseStarted(ExecutionPhase phase)
         {
+            base.OnPhaseStarted(phase);
+
             if (currentStep == null)
             {
                 return;
             }
 
-            if (currentStep.chargeWindup && awaitingChargeRelease && !HasReachedMinimumCharge(currentStep))
+            switch (phase)
             {
-                chargeReleaseRequested = true;
+                case ExecutionPhase.Windup:
+                    StartWindupPhase();
+                    break;
+                case ExecutionPhase.Active:
+                    StartActivePhase();
+                    break;
+                case ExecutionPhase.Recovery:
+                    StartRecoveryPhase();
+                    break;
+            }
+        }
+
+        protected override void OnPhaseTick(ExecutionPhase phase, float elapsed, float deltaTime)
+        {
+            base.OnPhaseTick(phase, elapsed, deltaTime);
+
+            if (currentStep == null)
+            {
                 return;
             }
 
-            CompleteWindupPhase();
+            if (phase == ExecutionPhase.Windup && currentStep.chargeWindup)
+            {
+                UpdateChargeWindup(deltaTime);
+            }
+
+            UpdateStepProgress(deltaTime);
+        }
+
+        protected override void OnPhaseCompleted(ExecutionPhase phase)
+        {
+            base.OnPhaseCompleted(phase);
+
+            if (currentStep == null)
+            {
+                return;
+            }
+
+            switch (phase)
+            {
+                case ExecutionPhase.Windup:
+                    CompleteWindupPhase();
+                    break;
+                case ExecutionPhase.Active:
+                    if (stepWasActive)
+                    {
+                        OnStepActiveWindowEnded();
+                    }
+                    EndActivePhase();
+                    break;
+                case ExecutionPhase.Recovery:
+                    FinishRecoveryPhase();
+                    break;
+            }
+        }
+
+        void StartWindupPhase()
+        {
+            windupPhaseComplete = false;
+            awaitingChargeRelease = currentStep.chargeWindup;
+            chargeReleaseRequested = false;
+            chargeWindupElapsed = 0f;
+
+            ResetAnimationRequest();
+            ApplyStepAnimation(currentStep, ExecutionPhase.Windup);
+            activeHitDetector?.HandlePhaseStart(ExecutionPhase.Windup, currentStep);
+
+            ApplyPhaseLocks(currentStep, ExecutionPhase.Windup);
+
+            if (!awaitingChargeRelease && Mathf.Approximately(CurrentPhaseDuration, 0f))
+            {
+                CompleteCurrentPhase();
+            }
         }
 
         void CompleteWindupPhase()
         {
-            if (currentStep == null || windupPhaseComplete)
+            if (windupPhaseComplete)
             {
                 return;
             }
 
             awaitingChargeRelease = false;
             windupPhaseComplete = true;
-            windupTimer.Cancel();
             activeHitDetector?.HandlePhaseEnd(ExecutionPhase.Windup);
-            StartActivePhase();
         }
 
         void UpdateChargeWindup(float delta)
         {
-            if (currentStep == null || windupPhaseComplete || !awaitingChargeRelease)
+            if (windupPhaseComplete || !awaitingChargeRelease)
             {
                 return;
             }
@@ -1083,12 +1065,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (currentStep.maximumChargeTime > 0f && chargeWindupElapsed >= currentStep.maximumChargeTime)
             {
                 CompleteWindupPhase();
+                CompleteCurrentPhase();
                 return;
             }
 
             if (chargeReleaseRequested && HasReachedMinimumCharge(currentStep))
             {
                 CompleteWindupPhase();
+                CompleteCurrentPhase();
             }
         }
 
@@ -1122,6 +1106,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 if (HasReachedMinimumCharge(currentStep))
                 {
                     CompleteWindupPhase();
+                    CompleteCurrentPhase();
                 }
             }
         }
@@ -1239,8 +1224,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
-            inActivePhase = currentStep.active > 0f;
-            activeTimer.Cancel();
+            inActivePhase = true;
 
             activeHitDetector?.HandlePhaseStart(ExecutionPhase.Active, currentStep);
             ApplyStepAnimation(currentStep, ExecutionPhase.Active);
@@ -1253,7 +1237,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 currentStep.vfx.Play();
             }
 
-            activeHitDetector?.Activate(currentStep, currentStep.active);
+            float activeDuration = CurrentPhaseDuration > 0f ? CurrentPhaseDuration : currentStep.active;
+            activeHitDetector?.Activate(currentStep, activeDuration);
 
             if ((currentStep.applyNudgeWhenHit || !stepRegisteredHit) && currentStep.missNudgeImpulse > 0f)
             {
@@ -1268,27 +1253,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 }
             }
 
-            if (inActivePhase)
-            {
-                activeTimer.Start(currentStep.active);
-                EvaluateStepHits(currentStep);
-            }
-            else
-            {
-                HandleActiveTimerFinished();
-            }
+            EvaluateStepHits(currentStep);
         }
 
         void HandleActiveTimerFinished()
         {
-            inActivePhase = false;
-
-            if (currentStep == null)
-            {
-                return;
-            }
-
-            activeHitDetector?.HandlePhaseEnd(ExecutionPhase.Active);
+            EndActivePhase();
             StartRecoveryPhase();
         }
 
@@ -1299,25 +1269,33 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
 
-            inRecoveryPhase = currentStep.recovery > 0f;
-            recoveryTimer.Cancel();
+            inRecoveryPhase = true;
 
             activeHitDetector?.HandlePhaseStart(ExecutionPhase.Recovery, currentStep);
             ApplyStepAnimation(currentStep, ExecutionPhase.Recovery);
 
             ApplyPhaseLocks(currentStep, ExecutionPhase.Recovery);
-
-            if (inRecoveryPhase)
-            {
-                recoveryTimer.Start(currentStep.recovery);
-            }
-            else
-            {
-                HandleRecoveryTimerFinished();
-            }
         }
 
         void HandleRecoveryTimerFinished()
+        {
+            FinishRecoveryPhase();
+        }
+
+        void EndActivePhase()
+        {
+            inActivePhase = false;
+            stepWasActive = false;
+
+            if (currentStep == null)
+            {
+                return;
+            }
+
+            activeHitDetector?.HandlePhaseEnd(ExecutionPhase.Active);
+        }
+
+        void FinishRecoveryPhase()
         {
             inRecoveryPhase = false;
 
@@ -1328,6 +1306,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             activeHitDetector?.HandlePhaseEnd(ExecutionPhase.Recovery);
             CompleteCurrentStep();
+            ReleasePhaseLocks();
         }
 
         void HandleTransitionDelayTimerFinished()
@@ -1712,10 +1691,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             nudgeTimer = 0f;
             inActivePhase = false;
             inRecoveryPhase = false;
-            windupTimer.Cancel();
-            activeTimer.Cancel();
-            recoveryTimer.Cancel();
-            stepTimer.Cancel();
+            CancelPhaseSequence();
             pendingComboResetDelay = 0f;
             awaitingChargeRelease = false;
             chargeReleaseRequested = false;
