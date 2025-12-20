@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Effects;
 using AdvancedController;
 using Cysharp.Threading.Tasks;
+using PrimeTween;
 using UnityEngine;
 using UnityEngine.Events;
 using HSM;
@@ -113,6 +115,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             defaultAnimation = AgentAnimationRequest.None
         };
 
+        [Header("Phase FX")]
+        [SerializeField] PhaseFX[] windupPhaseFX;
+        [SerializeField] PhaseFX[] activePhaseFX;
+        [SerializeField] PhaseFX[] recoveryPhaseFX;
+
         [field: SerializeField, HideInInspector]
         public AgentController Controller { get; private set; }
         protected InputReader InputReader => Controller != null ? Controller.inputReader : null;
@@ -141,6 +148,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         PhaseAnimationSettings currentPhaseAnimations;
         bool autoCompleteWindupWithoutDuration = true;
         CharacterAction.ActionPhase _activeActionPhase = CharacterAction.ActionPhase.None;
+        readonly List<Tween> runningPhaseFx = new List<Tween>();
 
         public virtual void OnValidate()
         {
@@ -294,6 +302,55 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return settings;
         }
 
+        void PlayPhaseFX(ActionPhase phase, float duration)
+        {
+            StopRunningPhaseFX();
+
+            PhaseFX[] phaseFx = GetPhaseFXFor(phase);
+            if (phaseFx == null || phaseFx.Length == 0)
+            {
+                return;
+            }
+
+            foreach (PhaseFX fx in phaseFx)
+            {
+                Tween tween = fx.Play(Controller, duration);
+                if (tween.isAlive)
+                {
+                    runningPhaseFx.Add(tween);
+                }
+            }
+        }
+
+        PhaseFX[] GetPhaseFXFor(ActionPhase phase)
+        {
+            return phase switch
+            {
+                ActionPhase.Windup => windupPhaseFX,
+                ActionPhase.Active => activePhaseFX,
+                ActionPhase.Recovery => recoveryPhaseFX,
+                _ => null
+            };
+        }
+
+        void StopRunningPhaseFX()
+        {
+            if (runningPhaseFx.Count == 0)
+            {
+                return;
+            }
+
+            foreach (Tween tween in runningPhaseFx)
+            {
+                if (tween.isAlive)
+                {
+                    tween.Stop();
+                }
+            }
+
+            runningPhaseFx.Clear();
+        }
+
         protected void StartActionPhases(bool completeWindupWhenDurationMissing = true)
         {
             StartActionPhases(defaultPhaseDurations, GetDefaultPhaseAnimations(), completeWindupWhenDurationMissing);
@@ -320,6 +377,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             windupTimer?.Cancel();
             activeTimer?.Cancel();
             recoveryTimer?.Cancel();
+
+            StopRunningPhaseFX();
 
             if (notify && currentPhase != ActionPhase.None)
             {
@@ -451,11 +510,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             CharacterAction.ActionPhase mapped = MapPhase(phase);
             SetActiveExecutionPhase(mapped);
             phaseStarted?.Invoke(mapped, duration);
+            PlayPhaseFX(phase, duration);
             OnPhaseStarted(phase, duration);
         }
 
         void NotifyPhaseEnded(ActionPhase phase)
         {
+            StopRunningPhaseFX();
             OnPhaseEnded(phase);
             CharacterAction.ActionPhase mapped = MapPhase(phase);
             phaseEnded?.Invoke(mapped);
