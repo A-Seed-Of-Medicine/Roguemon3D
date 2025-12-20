@@ -25,7 +25,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         private float dashDistance = 5f;
 
         [field: SerializeField, Tooltip("How long the dash lasts in seconds."), Min(0f)]
-        public float dashDuration { get; private set; } = 0.2f;
+        public float dashDuration => defaultPhaseDurations.Active;
         [SerializeField, Tooltip("How long before the dash can consecutively execute"), Min(0f)]
         private float dashCooldown = 0.5f;
         
@@ -209,17 +209,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return cooldownReady || inChainPostWindow;
         }
 
-        ActionPhaseDurations ResolvePhaseDurations()
-        {
-            ActionPhaseDurations durations = GetDefaultPhaseDurations();
-            if (durations.Active <= 0f)
-            {
-                durations.Active = dashDuration;
-            }
-
-            return durations;
-        }
-
         void StartDashMovement(float duration)
         {
             currentDashDuration = duration > 0f ? duration : dashDuration;
@@ -270,12 +259,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             dashChainPostTimer?.Cancel();
             dashCooldownTimer?.Cancel();
             dashQueueTimer?.Cancel();
-
-            ActionPhaseDurations durations = ResolvePhaseDurations();
-            currentDashDuration = durations.Active > 0f ? durations.Active : dashDuration;
+            
+            currentDashDuration = dashDuration;
 
             actionStarted?.Invoke();
-            StartActionPhases(durations, GetDefaultPhaseAnimations());
+            StartActionPhases(defaultPhaseDurations, GetDefaultPhaseAnimations());
         }
 
         void ApplyDashVelocity(float normalizedTime)

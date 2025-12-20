@@ -982,7 +982,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
         }
 
-        void ApplyPhaseLocks(ComboStep step, HitComboDetector.ExecutionPhase phase)
+        void ApplyPhaseLocks(ComboStep step, ActionPhase phase)
         {
             if (Controller == null || step == null)
             {
@@ -990,7 +990,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             float duration = GetPhaseLockDuration(step, phase);
-            bool zeroVelocity = phase == HitComboDetector.ExecutionPhase.Windup && step.zeroVelocityOnStart;
+            bool zeroVelocity = phase == ActionPhase.Windup && step.zeroVelocityOnStart;
 
             SetMovementLockForPhase(ShouldLockMovement(step, phase), duration, zeroVelocity);
             SetAimLockForPhase(ShouldLockAim(step, phase), duration);
@@ -1034,37 +1034,37 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
         }
 
-        float GetPhaseLockDuration(ComboStep step, HitComboDetector.ExecutionPhase phase)
+        float GetPhaseLockDuration(ComboStep step, ActionPhase phase)
         {
             return phase switch
             {
-                HitComboDetector.ExecutionPhase.Windup => step.chargeWindup
+                ActionPhase.Windup => step.chargeWindup
                     ? (step.maximumChargeTime > 0f ? step.maximumChargeTime : InfinitePhaseLockDuration)
                     : step.windup,
-                HitComboDetector.ExecutionPhase.Active => step.active,
-                HitComboDetector.ExecutionPhase.Recovery => step.recovery,
+                ActionPhase.Active => step.active,
+                ActionPhase.Recovery => step.recovery,
                 _ => 0f
             };
         }
 
-        bool ShouldLockMovement(ComboStep step, HitComboDetector.ExecutionPhase phase)
+        bool ShouldLockMovement(ComboStep step, ActionPhase phase)
         {
             return phase switch
             {
-                HitComboDetector.ExecutionPhase.Windup => step.lockMovementInWindup,
-                HitComboDetector.ExecutionPhase.Active => step.lockMovementInActive,
-                HitComboDetector.ExecutionPhase.Recovery => step.lockMovementInRecovery,
+                ActionPhase.Windup => step.lockMovementInWindup,
+                ActionPhase.Active => step.lockMovementInActive,
+                ActionPhase.Recovery => step.lockMovementInRecovery,
                 _ => false
             };
         }
 
-        bool ShouldLockAim(ComboStep step, HitComboDetector.ExecutionPhase phase)
+        bool ShouldLockAim(ComboStep step, ActionPhase phase)
         {
             return phase switch
             {
-                HitComboDetector.ExecutionPhase.Windup => step.lockAimInWindup,
-                HitComboDetector.ExecutionPhase.Active => step.lockAimInActive,
-                HitComboDetector.ExecutionPhase.Recovery => step.lockAimInRecovery,
+                ActionPhase.Windup => step.lockAimInWindup,
+                ActionPhase.Active => step.lockAimInActive,
+                ActionPhase.Recovery => step.lockAimInRecovery,
                 _ => false
             };
         }
@@ -1097,13 +1097,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     awaitingChargeRelease = currentStep?.chargeWindup ?? false;
                     chargeReleaseRequested = false;
                     chargeWindupElapsed = 0f;
-                    activeHitDetector?.HandlePhaseStart(HitComboDetector.ExecutionPhase.Windup, currentStep);
-                    ApplyPhaseLocks(currentStep, HitComboDetector.ExecutionPhase.Windup);
+                    activeHitDetector?.HandlePhaseStart(ActionPhase.Windup, currentStep);
+                    ApplyPhaseLocks(currentStep, ActionPhase.Windup);
                     break;
                 case ActionPhase.Active:
                     inActivePhase = duration > 0f;
-                    activeHitDetector?.HandlePhaseStart(HitComboDetector.ExecutionPhase.Active, currentStep);
-                    ApplyPhaseLocks(currentStep, HitComboDetector.ExecutionPhase.Active);
+                    activeHitDetector?.HandlePhaseStart(ActionPhase.Active, currentStep);
+                    ApplyPhaseLocks(currentStep, ActionPhase.Active);
 
                     if (currentStep?.vfx)
                     {
@@ -1137,8 +1137,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     break;
                 case ActionPhase.Recovery:
                     inRecoveryPhase = duration > 0f;
-                    activeHitDetector?.HandlePhaseStart(HitComboDetector.ExecutionPhase.Recovery, currentStep);
-                    ApplyPhaseLocks(currentStep, HitComboDetector.ExecutionPhase.Recovery);
+                    activeHitDetector?.HandlePhaseStart(ActionPhase.Recovery, currentStep);
+                    ApplyPhaseLocks(currentStep, ActionPhase.Recovery);
                     break;
             }
         }
@@ -1197,21 +1197,21 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void HandlePhaseEndForDetector(ActionPhase phase)
         {
-            HitComboDetector.ExecutionPhase mapped = MapPhase(phase);
-            if (mapped != HitComboDetector.ExecutionPhase.None)
+            ActionPhase mapped = MapPhase(phase);
+            if (mapped != ActionPhase.None)
             {
                 activeHitDetector?.HandlePhaseEnd(mapped);
             }
         }
 
-        HitComboDetector.ExecutionPhase MapPhase(ActionPhase phase)
+        ActionPhase MapPhase(ActionPhase phase)
         {
             return phase switch
             {
-                ActionPhase.Windup => HitComboDetector.ExecutionPhase.Windup,
-                ActionPhase.Active => HitComboDetector.ExecutionPhase.Active,
-                ActionPhase.Recovery => HitComboDetector.ExecutionPhase.Recovery,
-                _ => HitComboDetector.ExecutionPhase.None
+                ActionPhase.Windup => ActionPhase.Windup,
+                ActionPhase.Active => ActionPhase.Active,
+                ActionPhase.Recovery => ActionPhase.Recovery,
+                _ => ActionPhase.None
             };
         }
 

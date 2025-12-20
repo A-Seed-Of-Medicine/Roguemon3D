@@ -6,24 +6,16 @@ using UnityEngine;
 
 public class HitComboDetector : HitDetector
 {
-    public enum ExecutionPhase
-    {
-        None = -1,
-        Windup = 0,
-        Active = 1,
-        Recovery = 2
-    }
-    
     [System.Serializable]
     public class PhaseParticleEffect
     {
         public ParticleSystem particleEffect;
-        public ExecutionPhase startPhase = ExecutionPhase.Active;
-        public ExecutionPhase endPhase = ExecutionPhase.None;
+        public CharacterAction.ActionPhase startPhase = CharacterAction.ActionPhase.Active;
+        public CharacterAction.ActionPhase endPhase = CharacterAction.ActionPhase.None;
 
         float? baseSimulationSpeed;
 
-        public void HandlePhaseStart(ExecutionPhase phase, CharacterComboAction.ComboStep step)
+        public void HandlePhaseStart(CharacterAction.ActionPhase phase, CharacterComboAction.ComboStep step)
         {
             if (particleEffect == null)
             {
@@ -41,14 +33,14 @@ public class HitComboDetector : HitDetector
             particleEffect.Play();
         }
 
-        public void HandlePhaseEnd(ExecutionPhase phase)
+        public void HandlePhaseEnd(CharacterAction.ActionPhase phase)
         {
             if (particleEffect == null)
             {
                 return;
             }
 
-            if (endPhase == ExecutionPhase.None || phase != endPhase)
+            if (endPhase == CharacterAction.ActionPhase.None || phase != endPhase)
             {
                 return;
             }
@@ -85,7 +77,7 @@ public class HitComboDetector : HitDetector
                 return;
             }
 
-            if (endPhase == ExecutionPhase.None || step == null)
+            if (endPhase == CharacterAction.ActionPhase.None || step == null)
             {
                 RestoreBaseSimulationSpeed();
                 return;
@@ -109,7 +101,7 @@ public class HitComboDetector : HitDetector
             main.simulationSpeed = baseSimulationSpeed.Value;
         }
 
-        static float CalculatePhaseDuration(CharacterComboAction.ComboStep step, ExecutionPhase start, ExecutionPhase end)
+        static float CalculatePhaseDuration(CharacterComboAction.ComboStep step, CharacterAction.ActionPhase start, CharacterAction.ActionPhase end)
         {
             int startIndex = PhaseIndex(start);
             int endIndex = PhaseIndex(end);
@@ -127,38 +119,38 @@ public class HitComboDetector : HitDetector
             float duration = 0f;
             for (int i = startIndex; i <= endIndex; i++)
             {
-                ExecutionPhase phase = (ExecutionPhase)i;
+                CharacterAction.ActionPhase phase = (CharacterAction.ActionPhase)i;
                 duration += GetPhaseDuration(step, phase);
             }
 
             return Mathf.Max(0.0001f, duration);
         }
 
-        static int PhaseIndex(ExecutionPhase phase)
+        static int PhaseIndex(CharacterAction.ActionPhase phase)
         {
             return phase switch
             {
-                ExecutionPhase.Windup => 0,
-                ExecutionPhase.Active => 1,
-                ExecutionPhase.Recovery => 2,
+                CharacterAction.ActionPhase.Windup => 0,
+                CharacterAction.ActionPhase.Active => 1,
+                CharacterAction.ActionPhase.Recovery => 2,
                 _ => -1
             };
         }
 
-        static float GetPhaseDuration(CharacterComboAction.ComboStep step, ExecutionPhase phase)
+        static float GetPhaseDuration(CharacterComboAction.ComboStep step, CharacterAction.ActionPhase phase)
         {
             return phase switch
             {
-                ExecutionPhase.Windup => step.windup,
-                ExecutionPhase.Active => step.active,
-                ExecutionPhase.Recovery => step.recovery,
+                CharacterAction.ActionPhase.Windup => step.windup,
+                CharacterAction.ActionPhase.Active => step.active,
+                CharacterAction.ActionPhase.Recovery => step.recovery,
                 _ => 0f
             };
         }
     }
 
     [Header("Phase Effects")]
-    [SerializeField] ExecutionPhase windupDeactivePhase = ExecutionPhase.Recovery;
+    [SerializeField] CharacterAction.ActionPhase windupDeactivePhase = CharacterAction.ActionPhase.Recovery;
     [SerializeField] PhaseParticleEffect[] phaseParticleEffects = System.Array.Empty<PhaseParticleEffect>();
 
     CharacterComboAction.ComboStep activeStep;
@@ -176,9 +168,9 @@ public class HitComboDetector : HitDetector
         ResetPhaseParticleEffects();
     }
 
-    public void HandlePhaseStart(ExecutionPhase phase, CharacterComboAction.ComboStep step)
+    public void HandlePhaseStart(CharacterAction.ActionPhase phase, CharacterComboAction.ComboStep step)
     {
-        if (phase == ExecutionPhase.Windup)
+        if (phase == CharacterAction.ActionPhase.Windup)
             HandleWindupIndicator(step.windup);
 
         if (phaseParticleEffects == null || phaseParticleEffects.Length == 0)
@@ -192,7 +184,7 @@ public class HitComboDetector : HitDetector
         }
     }
 
-    public void HandlePhaseEnd(ExecutionPhase phase)
+    public void HandlePhaseEnd(CharacterAction.ActionPhase phase)
     {
         if (phaseParticleEffects == null || phaseParticleEffects.Length == 0)
         {

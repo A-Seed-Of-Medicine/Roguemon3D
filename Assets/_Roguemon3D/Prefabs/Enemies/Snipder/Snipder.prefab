@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 941551738761022137}
   - component: {fileID: 2370446947996782915}
   - component: {fileID: 1900401294623219668}
+  - component: {fileID: 3626789424898377726}
   m_Layer: 7
   m_Name: Snipder
   m_TagString: Enemy
@@ -160,7 +161,7 @@ MonoBehaviour:
   fallGravityMultiplier: 2
   jumpReleaseGravityMultiplier: 2
   terminalVelocity: -60
-  <allegiance>k__BackingField: 1
+  <allegiance>k__BackingField: 2
   summonData: {fileID: 0}
   aimData: {fileID: 1900401294623219668}
   <health>k__BackingField:
@@ -285,6 +286,83 @@ MonoBehaviour:
     crossFade: 0
     playbackSpeed: 1
     overrideSpeed: 0
+  defaultPhaseDurations:
+    Windup: 0
+    Active: 0
+    Recovery: 0
+  defaultPhaseAnimations:
+    usePhaseAnimations: 0
+    defaultAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 1
+      overrideSpeed: 0
+    windupAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    activeAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    recoveryAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    animationCrossFade: 0.1
+    animationSpeedMultiplier: 1
+    scaleAnimationSpeedToDuration: 0
+    scaleWindupAnimationToDuration: 0
+    scaleActiveAnimationToDuration: 0
+    scaleRecoveryAnimationToDuration: 0
+    overrideAnimationSpeed: 0
+    windupDuration: 0
+    activeDuration: 0
+    recoveryDuration: 0
+    totalDuration: 0
   <Controller>k__BackingField: {fileID: 941551738761022137}
   comboDefinition: {fileID: 11400000, guid: 719759d9b8ac0964ba9e4c8f066cfcb8, type: 2}
   overrideMovementProfile: {fileID: 0}
@@ -300,7 +378,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71a9e03ebf5bffe4a98595a204a2e9e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Actions.ProjectileCharacterAimAction
-  binding: 0
+  binding: 3
   actionDefinition: {fileID: 0}
   actionMagnitude: 1
   skipIfActionInProgress: 1
@@ -319,6 +397,83 @@ MonoBehaviour:
     crossFade: 0
     playbackSpeed: 0
     overrideSpeed: 0
+  defaultPhaseDurations:
+    Windup: 0
+    Active: 0
+    Recovery: 0
+  defaultPhaseAnimations:
+    usePhaseAnimations: 0
+    defaultAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 1
+      overrideSpeed: 0
+    windupAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    activeAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    recoveryAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    animationCrossFade: 0.1
+    animationSpeedMultiplier: 1
+    scaleAnimationSpeedToDuration: 0
+    scaleWindupAnimationToDuration: 0
+    scaleActiveAnimationToDuration: 0
+    scaleRecoveryAnimationToDuration: 0
+    overrideAnimationSpeed: 0
+    windupDuration: 0
+    activeDuration: 0
+    recoveryDuration: 0
+    totalDuration: 0
   <Controller>k__BackingField: {fileID: 941551738761022137}
   defaultSpawnPoint: {fileID: 0}
   defaultPositionOffset: {x: 0, y: 0, z: 0}
@@ -341,6 +496,184 @@ MonoBehaviour:
       m_Calls: []
   aimDistance: 0
   aimLineRenderer: {fileID: 0}
+--- !u!114 &3626789424898377726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1184610474814715527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b35f7742ced11384db91a8ed2f99e3bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Actions.JumpAction
+  binding: 6
+  actionDefinition: {fileID: 0}
+  actionMagnitude: 1
+  skipIfActionInProgress: 1
+  defaultAnimationRequest:
+    directionMode: 0
+    mirrorLeftRight: 0
+    singleClip: {fileID: 0}
+    northClip: {fileID: 0}
+    southClip: {fileID: 0}
+    eastClip: {fileID: 0}
+    westClip: {fileID: 0}
+    northEastClip: {fileID: 0}
+    southEastClip: {fileID: 0}
+    northWestClip: {fileID: 0}
+    southWestClip: {fileID: 0}
+    crossFade: 0
+    playbackSpeed: 0
+    overrideSpeed: 0
+  defaultPhaseDurations:
+    Windup: 0.5
+    Active: 0.5
+    Recovery: 0
+  defaultPhaseAnimations:
+    usePhaseAnimations: 0
+    defaultAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 1
+      overrideSpeed: 0
+    windupAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    activeAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    recoveryAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    animationCrossFade: 0.1
+    animationSpeedMultiplier: 1
+    scaleAnimationSpeedToDuration: 0
+    scaleWindupAnimationToDuration: 0
+    scaleActiveAnimationToDuration: 0
+    scaleRecoveryAnimationToDuration: 0
+    overrideAnimationSpeed: 0
+    windupDuration: 0
+    activeDuration: 0
+    recoveryDuration: 0
+    totalDuration: 0
+  <Controller>k__BackingField: {fileID: 941551738761022137}
+  arcDistance: 4
+  arcHeight: 2
+  distanceCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  heightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5067414
+      value: 1
+      inSlope: -0
+      outSlope: -0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.16571996
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -3.6740246
+      outSlope: -3.6740246
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.09065319
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  localStartOffset: {x: 0, y: 0, z: 0}
+  localEndOffset: {x: 0, y: 0, z: 0}
+  preferAimDirection: 1
+  defaultToFacingDirection: 1
+  suspendControllerWhileJumping: 1
+  disableInputDuringJump: 1
+  resetVelocityOnStart: 1
+  restoreVelocityOnComplete: 0
+  maxDirectionOffset: 45
+  directionalOffset: 180
 --- !u!1 &2582759698366746051
 GameObject:
   m_ObjectHideFlags: 0
@@ -389,12 +722,59 @@ MonoBehaviour:
   actions:
   - rid: 8319330709940469852
   - rid: 8319330709940469854
+  - rid: 4875902305272856658
   detectionCollider: {fileID: 4195066330043565395}
   detectionRadius: 20
   controller: {fileID: 941551738761022137}
   references:
     version: 2
     RefIds:
+    - rid: 4875902305272856658
+      type: {class: AICharacterAction, ns: UtilityAI, asm: Assembly-CSharp}
+      data:
+        targetTag: 
+        maxTargets: 3
+        consideration:
+          rid: 4875902305272856660
+        characterAction: {fileID: 3626789424898377726}
+        requireTarget: 0
+        aimDelay: 0
+        followTargetWhileAiming: 1
+    - rid: 4875902305272856660
+      type: {class: InRangeCurveConsideration, ns: UtilityAI, asm: Assembly-CSharp}
+      data:
+        minDistance: 0
+        maxDistance: 4
+        maxAngle: 360
+        utilityScale: 2
+        requireLOS: 1
+        lineOfSightMask:
+          serializedVersion: 2
+          m_Bits: 4294967295
+        curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 1
+            inSlope: -1
+            outSlope: -1
+            tangentMode: 34
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0.33333334
+          - serializedVersion: 3
+            time: 1
+            value: 0
+            inSlope: -1
+            outSlope: -1
+            tangentMode: 34
+            weightedMode: 0
+            inWeight: 0.33333334
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
     - rid: 8319330709940469852
       type: {class: AIToTargetAction, ns: UtilityAI, asm: Assembly-CSharp}
       data:
@@ -424,14 +804,14 @@ MonoBehaviour:
         consideration:
           rid: 8319330709940469855
         characterAction: {fileID: 2370446947996782915}
-        requireTarget: 0
+        requireTarget: 1
         aimDelay: 0
         followTargetWhileAiming: 1
     - rid: 8319330709940469855
       type: {class: InRangeConsideration, ns: UtilityAI, asm: Assembly-CSharp}
       data:
-        minDistance: 0.5
-        maxDistance: 1.5
+        minDistance: 2
+        maxDistance: 5
         maxAngle: 360
         utilityScale: 1
         requireLOS: 0
@@ -775,6 +1155,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 7058355208463427446}
   m_SourcePrefab: {fileID: 100100000, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
+--- !u!137 &3468954191165293722 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5870143459890527668, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
+  m_PrefabInstance: {fileID: 7012882065701599534}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5666692913894943466 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3456196311252440004, guid: 054f0dbea5ad85043887629c42c39d9e, type: 3}
@@ -828,6 +1213,8 @@ MonoBehaviour:
   playOnAwake: 1
   speedMultiplier: 1
   agentController: {fileID: 941551738761022137}
+  spriteRenderer: {fileID: 0}
+  skinnedMeshRenderer: {fileID: 3468954191165293722}
   cameraXOffsetMax: 20
 --- !u!1001 &8841030043467510285
 PrefabInstance:
@@ -895,11 +1282,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.000000004537135
+      value: 0.0000000030459901
       objectReference: {fileID: 0}
     - target: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.00000002189377
+      value: -0.000000025493712
       objectReference: {fileID: 0}
     - target: {fileID: 3168626464043955584, guid: 147856b2856db7a4fb7ff3cb74773971, type: 3}
       propertyPath: m_AnchoredPosition.x

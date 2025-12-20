@@ -12,7 +12,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool isActive;
 
         public CharacterAction Action => action;
-        public ExecutionPhase ActivePhase { get; private set; } = ExecutionPhase.None;
+        public CharacterAction.ActionPhase ActivePhase { get; private set; } = CharacterAction.ActionPhase.None;
         public bool IsActionRunning => action != null && action.IsActionInProgress;
 
         public ActionState(AgentController controller, StateMachine machine, AgentRoot root, CharacterAction action, State parent = null) : base(controller,
@@ -37,7 +37,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 action.phaseStarted += HandlePhaseStarted;
                 action.phaseEnded += HandlePhaseEnded;
                 HandleAnimationRequestChanged(action.GetAnimationRequest());
-                ActivePhase = action.ActiveExecutionPhase;
+                ActivePhase = action.ActiveActionPhase;
             }
         }
 
@@ -52,7 +52,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             isActive = false;
-            ActivePhase = ExecutionPhase.None;
+            ActivePhase = CharacterAction.ActionPhase.None;
             base.OnExit();
         }
 
@@ -72,20 +72,20 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 action?.ResetAnimationRequest();
             }
-            ActivePhase = ExecutionPhase.None;
+            ActivePhase = CharacterAction.ActionPhase.None;
             controller?.CancelPendingActionState(this);
         }
 
-        void HandlePhaseStarted(ExecutionPhase phase, float _)
+        void HandlePhaseStarted(CharacterAction.ActionPhase phase, float _)
         {
             ActivePhase = phase;
         }
 
-        void HandlePhaseEnded(ExecutionPhase phase)
+        void HandlePhaseEnded(CharacterAction.ActionPhase phase)
         {
             if (ActivePhase == phase)
             {
-                ActivePhase = ExecutionPhase.None;
+                ActivePhase = CharacterAction.ActionPhase.None;
             }
         }
 

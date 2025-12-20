@@ -151,6 +151,83 @@ MonoBehaviour:
     crossFade: 0
     playbackSpeed: 1
     overrideSpeed: 0
+  defaultPhaseDurations:
+    Windup: 0
+    Active: 0
+    Recovery: 0
+  defaultPhaseAnimations:
+    usePhaseAnimations: 0
+    defaultAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 1
+      overrideSpeed: 0
+    windupAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    activeAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    recoveryAnimation:
+      directionMode: 0
+      mirrorLeftRight: 0
+      singleClip: {fileID: 0}
+      northClip: {fileID: 0}
+      southClip: {fileID: 0}
+      eastClip: {fileID: 0}
+      westClip: {fileID: 0}
+      northEastClip: {fileID: 0}
+      southEastClip: {fileID: 0}
+      northWestClip: {fileID: 0}
+      southWestClip: {fileID: 0}
+      crossFade: 0
+      playbackSpeed: 0
+      overrideSpeed: 0
+    animationCrossFade: 0.1
+    animationSpeedMultiplier: 1
+    scaleAnimationSpeedToDuration: 0
+    scaleWindupAnimationToDuration: 0
+    scaleActiveAnimationToDuration: 0
+    scaleRecoveryAnimationToDuration: 0
+    overrideAnimationSpeed: 0
+    windupDuration: 0
+    activeDuration: 0
+    recoveryDuration: 0
+    totalDuration: 0
   <Controller>k__BackingField: {fileID: 1926462323346943907}
   comboDefinition: {fileID: 11400000, guid: f5a8fcabb714c0248a4da3fb994bd65a, type: 2}
   overrideMovementProfile: {fileID: 0}
@@ -339,7 +416,6 @@ MonoBehaviour:
   detectionCollider: {fileID: 7834966771597171}
   detectionRadius: 20
   controller: {fileID: 1926462323346943907}
-  detectedTargets: []
   references:
     version: 2
     RefIds:
@@ -633,6 +709,8 @@ MonoBehaviour:
   playOnAwake: 1
   speedMultiplier: 1
   agentController: {fileID: 0}
+  spriteRenderer: {fileID: 4187907538872260395}
+  skinnedMeshRenderer: {fileID: 0}
   cameraXOffsetMax: 20
 --- !u!1001 &1370443396508374971
 PrefabInstance:

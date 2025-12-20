@@ -18,6 +18,8 @@ namespace _PinBoy.Scripts.Animation
         public AgentController agentController;
         
         [Header("Rendering")]
+        public SpriteRenderer spriteRenderer;
+        public SkinnedMeshRenderer skinnedMeshRenderer;
         [Min(0)] public float cameraXOffsetMax = 17f;
 
         Animator animator;
@@ -32,6 +34,24 @@ namespace _PinBoy.Scripts.Animation
         public float SpeedMultiplier => speedMultiplier;
 
         public bool IsFlipped => animator && animator.transform.localScale.x < 0;
+        public Material Material
+        {
+            get
+            {
+                if (spriteRenderer)
+                    return spriteRenderer.material;
+                if (skinnedMeshRenderer)
+                    return skinnedMeshRenderer.material;
+                return null;
+            }
+            set
+            {
+                if (spriteRenderer)
+                    spriteRenderer.material = value;
+                if (skinnedMeshRenderer)
+                    skinnedMeshRenderer.material = value;
+            }
+        }
         
         public void SetFlipX(bool flipped)
         {
@@ -73,7 +93,14 @@ namespace _PinBoy.Scripts.Animation
 
         void Awake()
         {
-            animator = GetComponent<Animator>();
+            if (!animator)
+                animator = GetComponent<Animator>();
+            if (!spriteRenderer && !skinnedMeshRenderer)
+            {
+                spriteRenderer = GetComponent<SpriteRenderer>();
+                skinnedMeshRenderer = GetComponent<SkinnedMeshRenderer>();
+            }
+
             speedMultiplier = Mathf.Max(0f, speedMultiplier);
             EnsureGraph();
 

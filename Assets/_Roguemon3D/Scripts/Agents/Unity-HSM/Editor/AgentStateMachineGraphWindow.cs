@@ -422,7 +422,7 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
                 bool isLeaf = state == activeLeaf;
                 ActionState actionState = state as ActionState;
                 bool actionRunning = actionState != null && actionState.IsActionRunning;
-                ExecutionPhase activePhase = actionRunning ? actionState.ActivePhase : ExecutionPhase.None;
+                CharacterAction.ActionPhase activePhase = actionRunning ? actionState.ActivePhase : CharacterAction.ActionPhase.None;
                 node.SetRuntimeState(isActive, isLeaf, actionRunning, activePhase);
             }
         }
@@ -479,13 +479,13 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
             ApplyInactiveStyle();
         }
 
-        public void SetRuntimeState(bool isActive, bool isLeaf, bool isActionRunning, ExecutionPhase activePhase)
+        public void SetRuntimeState(bool isActive, bool isLeaf, bool isActionRunning, CharacterAction.ActionPhase activePhase)
         {
             Color background = isLeaf ? leafColor : (isActive ? activeColor : inactiveColor);
             titleContainer.style.backgroundColor = new StyleColor(background);
             descriptionLabel.style.unityFontStyleAndWeight = isActionRunning ? FontStyle.Bold : FontStyle.Normal;
             activityLabel.style.display = isActive ? DisplayStyle.Flex : DisplayStyle.None;
-            bool showPhase = isActionRunning && isActive && activePhase != ExecutionPhase.None;
+            bool showPhase = isActionRunning && isActive && activePhase != CharacterAction.ActionPhase.None;
             phaseLabel.style.display = showPhase ? DisplayStyle.Flex : DisplayStyle.None;
             if (showPhase)
             {

@@ -111,6 +111,10 @@ namespace _PinBoy.Scripts.CharacterMovement
 
         [Header("Animation (optional)")]
         public SpriteAnimator spriteAnimator;
+
+        public Transform animationTransform => spriteAnimator.transform;
+        public Material animationMaterial => spriteAnimator.Material;
+        
         [Header("State Animations")]
         [SerializeField] private AgentAnimationRequest idleAnimation;
         [SerializeField] private AgentAnimationRequest movingAnimation;

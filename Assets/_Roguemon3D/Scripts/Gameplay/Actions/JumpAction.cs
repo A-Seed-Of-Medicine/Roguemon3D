@@ -16,8 +16,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
     public sealed class JumpAction : CharacterAction
     {
         [Header("Arc Shape")]
-        [SerializeField, Tooltip("Time in seconds to complete the jump arc."), Min(0f)]
-        private float arcDuration = 0.6f;
         [SerializeField, Tooltip("Planar distance travelled during the jump."), Min(0f)]
         private float arcDistance = 4f;
         [SerializeField, Tooltip("Maximum height reached above the starting point."), Min(0f)]
@@ -73,7 +71,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             actionStarted?.Invoke();
-            StartActionPhases(BuildPhaseDurations(), GetDefaultPhaseAnimations());
+            StartActionPhases(defaultPhaseDurations, GetDefaultPhaseAnimations());
         }
 
         protected override void OnPhaseStarted(ActionPhase phase, float duration)
@@ -82,7 +80,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (phase == ActionPhase.Active)
             {
-                BeginJumpArc(Mathf.Max(duration, arcDuration)).Forget();
+                BeginJumpArc(Mathf.Max(duration, defaultPhaseDurations.Active)).Forget();
             }
         }
 
@@ -90,17 +88,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             base.OnPhaseCancelled(phase);
             CancelJump();
-        }
-
-        ActionPhaseDurations BuildPhaseDurations()
-        {
-            ActionPhaseDurations durations = GetDefaultPhaseDurations();
-            if (durations.Active <= 0f)
-            {
-                durations.Active = arcDuration;
-            }
-
-            return durations;
         }
 
         async UniTaskVoid BeginJumpArc(float duration)

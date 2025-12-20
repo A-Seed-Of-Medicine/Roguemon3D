@@ -36,7 +36,7 @@ namespace UtilityAI {
 
             Transform agentTransform = context.brain.transform;
 
-            bool isInRange = agentTransform.InRangeOf(target, maxDistance, maxAngle);
+            bool isInRange = agentTransform.InRangeOf(target,minDistance, maxDistance, maxAngle);
             if (!isInRange) return 0f;
             if (!requireLOS) return utilityScale;
             bool hasLOS = agentTransform.HasLineOfSightTo(target, lineOfSightMask);

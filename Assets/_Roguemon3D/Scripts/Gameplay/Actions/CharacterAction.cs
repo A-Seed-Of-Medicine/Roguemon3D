@@ -27,12 +27,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Sprint
         }
 
-        protected enum ActionPhase
+        public enum ActionPhase
         {
-            None,
-            Windup,
-            Active,
-            Recovery
+            None = -1,
+            Windup = 0,
+            Active = 1,
+            Recovery = 2
         }
 
         [Serializable]
@@ -105,8 +105,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField] private AgentAnimationRequest defaultAnimationRequest;
 
         [Header("Phase Defaults")]
-        [SerializeField] ActionPhaseDurations defaultPhaseDurations = new ActionPhaseDurations(0f, 0f, 0f);
-        [SerializeField] PhaseAnimationSettings defaultPhaseAnimations = new PhaseAnimationSettings
+        [SerializeField] protected ActionPhaseDurations defaultPhaseDurations = new ActionPhaseDurations(0f, 0f, 0f);
+        [SerializeField] protected PhaseAnimationSettings defaultPhaseAnimations = new PhaseAnimationSettings
         {
             animationCrossFade = 0.1f,
             animationSpeedMultiplier = 1f,
@@ -131,8 +131,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         ActionState _actionState;
         private AgentAnimationRequest runtimeAnimationRequest;
         private event Action<AgentAnimationRequest> animationRequestChanged;
-        internal event Action<HitComboDetector.ExecutionPhase, float> phaseStarted;
-        internal event Action<HitComboDetector.ExecutionPhase> phaseEnded;
+        internal event Action<ActionPhase, float> phaseStarted;
+        internal event Action<ActionPhase> phaseEnded;
         protected MyFixedTimer windupTimer;
         protected MyFixedTimer activeTimer;
         protected MyFixedTimer recoveryTimer;
@@ -140,7 +140,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         ActionPhaseDurations currentPhaseDurations;
         PhaseAnimationSettings currentPhaseAnimations;
         bool autoCompleteWindupWithoutDuration = true;
-        HitComboDetector.ExecutionPhase activeExecutionPhase = HitComboDetector.ExecutionPhase.None;
+        CharacterAction.ActionPhase _activeActionPhase = CharacterAction.ActionPhase.None;
 
         public virtual void OnValidate()
         {
@@ -278,14 +278,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             animationRequestChanged?.Invoke(runtimeAnimationRequest);
         }
 
-        protected ActionPhaseDurations GetDefaultPhaseDurations()
-        {
-            return new ActionPhaseDurations(
-                Mathf.Max(0f, defaultPhaseDurations.Windup),
-                Mathf.Max(0f, defaultPhaseDurations.Active),
-                Mathf.Max(0f, defaultPhaseDurations.Recovery));
-        }
-
         protected PhaseAnimationSettings GetDefaultPhaseAnimations()
         {
             PhaseAnimationSettings settings = defaultPhaseAnimations;
@@ -304,7 +296,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected void StartActionPhases(bool completeWindupWhenDurationMissing = true)
         {
-            StartActionPhases(GetDefaultPhaseDurations(), GetDefaultPhaseAnimations(), completeWindupWhenDurationMissing);
+            StartActionPhases(defaultPhaseDurations, GetDefaultPhaseAnimations(), completeWindupWhenDurationMissing);
         }
 
         protected void StartActionPhases(ActionPhaseDurations durations, PhaseAnimationSettings animations,
@@ -319,7 +311,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             BeginWindupPhase();
         }
 
-        internal HitComboDetector.ExecutionPhase ActiveExecutionPhase => activeExecutionPhase;
+        internal CharacterAction.ActionPhase ActiveActionPhase => _activeActionPhase;
 
         internal bool IsActionInProgress => IsAnyPhaseRunning;
 
@@ -334,13 +326,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 OnPhaseCancelled(currentPhase);
             }
 
-            if (activeExecutionPhase != HitComboDetector.ExecutionPhase.None)
+            if (_activeActionPhase != CharacterAction.ActionPhase.None)
             {
-                phaseEnded?.Invoke(activeExecutionPhase);
+                phaseEnded?.Invoke(_activeActionPhase);
             }
 
             currentPhase = ActionPhase.None;
-            SetActiveExecutionPhase(HitComboDetector.ExecutionPhase.None);
+            SetActiveExecutionPhase(CharacterAction.ActionPhase.None);
         }
 
         void BeginWindupPhase()
@@ -450,13 +442,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void FinishPhaseSequence()
         {
             currentPhase = ActionPhase.None;
-            SetActiveExecutionPhase(HitComboDetector.ExecutionPhase.None);
+            SetActiveExecutionPhase(CharacterAction.ActionPhase.None);
             OnPhasesCompleted();
         }
 
         void NotifyPhaseStarted(ActionPhase phase, float duration)
         {
-            HitComboDetector.ExecutionPhase mapped = MapPhase(phase);
+            CharacterAction.ActionPhase mapped = MapPhase(phase);
             SetActiveExecutionPhase(mapped);
             phaseStarted?.Invoke(mapped, duration);
             OnPhaseStarted(phase, duration);
@@ -465,27 +457,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void NotifyPhaseEnded(ActionPhase phase)
         {
             OnPhaseEnded(phase);
-            HitComboDetector.ExecutionPhase mapped = MapPhase(phase);
+            CharacterAction.ActionPhase mapped = MapPhase(phase);
             phaseEnded?.Invoke(mapped);
-            if (mapped == activeExecutionPhase)
+            if (mapped == _activeActionPhase)
             {
-                SetActiveExecutionPhase(HitComboDetector.ExecutionPhase.None);
+                SetActiveExecutionPhase(CharacterAction.ActionPhase.None);
             }
         }
 
-        void SetActiveExecutionPhase(HitComboDetector.ExecutionPhase phase)
+        void SetActiveExecutionPhase(CharacterAction.ActionPhase phase)
         {
-            activeExecutionPhase = phase;
+            _activeActionPhase = phase;
         }
 
-        static HitComboDetector.ExecutionPhase MapPhase(ActionPhase phase)
+        static CharacterAction.ActionPhase MapPhase(ActionPhase phase)
         {
             return phase switch
             {
-                ActionPhase.Windup => HitComboDetector.ExecutionPhase.Windup,
-                ActionPhase.Active => HitComboDetector.ExecutionPhase.Active,
-                ActionPhase.Recovery => HitComboDetector.ExecutionPhase.Recovery,
-                _ => HitComboDetector.ExecutionPhase.None
+                ActionPhase.Windup => CharacterAction.ActionPhase.Windup,
+                ActionPhase.Active => CharacterAction.ActionPhase.Active,
+                ActionPhase.Recovery => CharacterAction.ActionPhase.Recovery,
+                _ => CharacterAction.ActionPhase.None
             };
         }
 
