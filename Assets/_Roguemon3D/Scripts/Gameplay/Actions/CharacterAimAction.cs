@@ -47,6 +47,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         float nextFireTime;
         bool actionHeld;
         readonly List<Collider> cachedOwnerColliders = new List<Collider>();
+        PendingShot pendingShot;
 
         protected override bool UsesAimInput => true;
 
@@ -81,7 +82,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return false;
             }
 
-            return TryFire(configuration, GetCurrentAimWorldPosition(), direction, sourceOverride,
+            return TryScheduleFire(configuration, GetCurrentAimWorldPosition(), direction, sourceOverride,
                 effectMagnitudeOverride);
         }
 
@@ -92,7 +93,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 actionHeld = true;
                 if (!fireOnRelease)
                 {
-                    TryFire(ResolveConfiguration(null), GetCurrentAimWorldPosition(), null, null, null);
+                    TryScheduleFire(ResolveConfiguration(null), GetCurrentAimWorldPosition(), null, null, null);
                 }
             }
             else
@@ -105,9 +106,25 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 actionHeld = false;
                 if (fireOnRelease)
                 {
-                    TryFire(ResolveConfiguration(null), GetCurrentAimWorldPosition(), null, null, null);
+                    TryScheduleFire(ResolveConfiguration(null), GetCurrentAimWorldPosition(), null, null, null);
                 }
             }
+        }
+
+        protected override void OnPhaseStarted(ActionPhase phase, float duration)
+        {
+            base.OnPhaseStarted(phase, duration);
+
+            if (phase == ActionPhase.Active)
+            {
+                FirePendingShot();
+            }
+        }
+
+        protected override void OnPhaseCancelled(ActionPhase phase)
+        {
+            base.OnPhaseCancelled(phase);
+            pendingShot = default;
         }
 
         private void UpdateAimLine()
@@ -146,7 +163,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return null;
         }
 
-        bool TryFire(ProjectileConfiguration configuration, Vector3 worldPosition, Vector3? directionOverride,
+        bool TryScheduleFire(ProjectileConfiguration configuration, Vector3 worldPosition, Vector3? directionOverride,
             IDamager sourceOverride, float? effectMagnitudeOverride)
         {
             if (configuration == null || !configuration.projectilePrefab)
@@ -157,6 +174,47 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (Time.time < nextFireTime)
             {
+                return false;
+            }
+
+            pendingShot = new PendingShot
+            {
+                Configuration = configuration,
+                WorldPosition = worldPosition,
+                DirectionOverride = directionOverride,
+                SourceOverride = sourceOverride,
+                EffectMagnitudeOverride = effectMagnitudeOverride,
+                HasValue = true
+            };
+
+            actionStarted?.Invoke();
+            StartActionPhases();
+            return true;
+        }
+
+        void FirePendingShot()
+        {
+            if (!pendingShot.HasValue)
+            {
+                return;
+            }
+
+            PendingShot shot = pendingShot;
+            pendingShot = default;
+
+            if (!TryFire(shot.Configuration, shot.WorldPosition, shot.DirectionOverride, shot.SourceOverride,
+                    shot.EffectMagnitudeOverride))
+            {
+                CancelActionPhases();
+            }
+        }
+
+        bool TryFire(ProjectileConfiguration configuration, Vector3 worldPosition, Vector3? directionOverride,
+            IDamager sourceOverride, float? effectMagnitudeOverride)
+        {
+            if (configuration == null || !configuration.projectilePrefab)
+            {
+                Debug.LogWarning($"{nameof(CharacterAimAction)} on {name} requires a projectile prefab.", this);
                 return false;
             }
 
@@ -304,6 +362,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 if (ownerCollider)
                     cachedOwnerColliders.Add(ownerCollider);
             }
+        }
+
+        struct PendingShot
+        {
+            public ProjectileConfiguration Configuration;
+            public Vector3 WorldPosition;
+            public Vector3? DirectionOverride;
+            public IDamager SourceOverride;
+            public float? EffectMagnitudeOverride;
+            public bool HasValue;
         }
     }
 }

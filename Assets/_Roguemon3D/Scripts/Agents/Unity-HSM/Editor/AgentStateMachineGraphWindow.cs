@@ -421,8 +421,9 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
                 bool isActive = activePath.Contains(state);
                 bool isLeaf = state == activeLeaf;
                 ActionState actionState = state as ActionState;
-                /*node.SetRuntimeState(isActive, isLeaf, agent.IsPerformingAction && actionState != null,
-                    actionState?.ActivePhase ?? ExecutionPhase.None);*/
+                bool actionRunning = actionState != null && actionState.IsActionRunning;
+                ExecutionPhase activePhase = actionRunning ? actionState.ActivePhase : ExecutionPhase.None;
+                node.SetRuntimeState(isActive, isLeaf, actionRunning, activePhase);
             }
         }
     }
@@ -478,20 +479,23 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
             ApplyInactiveStyle();
         }
 
-        /*
-         public void SetRuntimeState(bool isActive, bool isLeaf, bool isAction, ExecutionPhase activePhase)
+        public void SetRuntimeState(bool isActive, bool isLeaf, bool isActionRunning, ExecutionPhase activePhase)
         {
             Color background = isLeaf ? leafColor : (isActive ? activeColor : inactiveColor);
             titleContainer.style.backgroundColor = new StyleColor(background);
-            descriptionLabel.style.unityFontStyleAndWeight = isAction ? FontStyle.Bold : FontStyle.Normal;
+            descriptionLabel.style.unityFontStyleAndWeight = isActionRunning ? FontStyle.Bold : FontStyle.Normal;
             activityLabel.style.display = isActive ? DisplayStyle.Flex : DisplayStyle.None;
-            bool showPhase = isAction && isActive && activePhase != ExecutionPhase.None;
+            bool showPhase = isActionRunning && isActive && activePhase != ExecutionPhase.None;
             phaseLabel.style.display = showPhase ? DisplayStyle.Flex : DisplayStyle.None;
             if (showPhase)
             {
                 phaseLabel.text = $"Phase: {activePhase}";
             }
-        }*/
+            else
+            {
+                phaseLabel.text = string.Empty;
+            }
+        }
 
         void ApplyInactiveStyle()
         {

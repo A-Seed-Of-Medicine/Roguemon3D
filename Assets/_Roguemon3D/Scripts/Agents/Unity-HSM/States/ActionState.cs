@@ -12,6 +12,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool isActive;
 
         public CharacterAction Action => action;
+        public ExecutionPhase ActivePhase { get; private set; } = ExecutionPhase.None;
+        public bool IsActionRunning => action != null && action.IsActionInProgress;
 
         public ActionState(AgentController controller, StateMachine machine, AgentRoot root, CharacterAction action, State parent = null) : base(controller,
             machine, parent)
@@ -32,9 +34,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (action != null)
             {
                 action.RegisterAnimationListener(HandleAnimationRequestChanged);
-                //action.RegisterPhaseListeners(HandlePhaseStarted, HandlePhaseCompleted);
+                action.phaseStarted += HandlePhaseStarted;
+                action.phaseEnded += HandlePhaseEnded;
                 HandleAnimationRequestChanged(action.GetAnimationRequest());
-                //ActivePhase = action.ActivePhase;
+                ActivePhase = action.ActiveExecutionPhase;
             }
         }
 
@@ -44,11 +47,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 action.UnregisterAnimationListener(HandleAnimationRequestChanged);
                 action.ResetAnimationRequest();
-                //action.UnregisterPhaseListeners(HandlePhaseStarted, HandlePhaseCompleted);
+                action.phaseStarted -= HandlePhaseStarted;
+                action.phaseEnded -= HandlePhaseEnded;
             }
 
             isActive = false;
-            //ActivePhase = ExecutionPhase.None;
+            ActivePhase = ExecutionPhase.None;
             base.OnExit();
         }
 
@@ -68,7 +72,21 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 action?.ResetAnimationRequest();
             }
+            ActivePhase = ExecutionPhase.None;
             controller?.CancelPendingActionState(this);
+        }
+
+        void HandlePhaseStarted(ExecutionPhase phase, float _)
+        {
+            ActivePhase = phase;
+        }
+
+        void HandlePhaseEnded(ExecutionPhase phase)
+        {
+            if (ActivePhase == phase)
+            {
+                ActivePhase = ExecutionPhase.None;
+            }
         }
 
         void HandleAnimationRequestChanged(AgentAnimationRequest request)
