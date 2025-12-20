@@ -35,6 +35,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Recovery
         }
 
+        [Serializable]
         protected struct PhaseAnimationSettings
         {
             public bool usePhaseAnimations;
@@ -77,6 +78,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
         }
 
+        [Serializable]
         protected struct ActionPhaseDurations
         {
             public float Windup;
