@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Effects;
@@ -113,6 +114,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             defaultAnimation = AgentAnimationRequest.None
         };
 
+        [Header("Phase FX")]
+        [SerializeReference] [SerializeField] PhaseFX[] windupFx = Array.Empty<PhaseFX>();
+        [SerializeReference] [SerializeField] PhaseFX[] activeFx = Array.Empty<PhaseFX>();
+        [SerializeReference] [SerializeField] PhaseFX[] recoveryFx = Array.Empty<PhaseFX>();
+
         [field: SerializeField, HideInInspector]
         public AgentController Controller { get; private set; }
         protected InputReader InputReader => Controller != null ? Controller.inputReader : null;
@@ -141,6 +147,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         PhaseAnimationSettings currentPhaseAnimations;
         bool autoCompleteWindupWithoutDuration = true;
         CharacterAction.ActionPhase _activeActionPhase = CharacterAction.ActionPhase.None;
+        readonly Dictionary<ActionPhase, List<IPhaseFxInstance>> runningPhaseFx = new();
 
         public virtual void OnValidate()
         {
@@ -333,6 +340,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             currentPhase = ActionPhase.None;
             SetActiveExecutionPhase(CharacterAction.ActionPhase.None);
+            StopAllPhaseFx();
         }
 
         void BeginWindupPhase()
@@ -443,6 +451,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             currentPhase = ActionPhase.None;
             SetActiveExecutionPhase(CharacterAction.ActionPhase.None);
+            StopAllPhaseFx();
             OnPhasesCompleted();
         }
 
@@ -450,6 +459,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             CharacterAction.ActionPhase mapped = MapPhase(phase);
             SetActiveExecutionPhase(mapped);
+            ApplyPhaseFx(phase, duration);
             phaseStarted?.Invoke(mapped, duration);
             OnPhaseStarted(phase, duration);
         }
@@ -457,6 +467,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void NotifyPhaseEnded(ActionPhase phase)
         {
             OnPhaseEnded(phase);
+            StopPhaseFx(phase);
             CharacterAction.ActionPhase mapped = MapPhase(phase);
             phaseEnded?.Invoke(mapped);
             if (mapped == _activeActionPhase)
@@ -479,6 +490,75 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 ActionPhase.Recovery => CharacterAction.ActionPhase.Recovery,
                 _ => CharacterAction.ActionPhase.None
             };
+        }
+
+        void ApplyPhaseFx(ActionPhase phase, float duration)
+        {
+            PhaseFX[] fxArray = GetPhaseFxForPhase(phase);
+            if (fxArray == null || fxArray.Length == 0)
+            {
+                return;
+            }
+
+            List<IPhaseFxInstance> activeInstances = GetOrCreateFxList(phase);
+            foreach (PhaseFX fx in fxArray)
+            {
+                if (fx == null || Controller == null)
+                {
+                    continue;
+                }
+
+                IPhaseFxInstance instance = fx.Play(Controller, duration);
+                if (instance != null)
+                {
+                    activeInstances.Add(instance);
+                }
+            }
+        }
+
+        void StopPhaseFx(ActionPhase phase)
+        {
+            if (!runningPhaseFx.TryGetValue(phase, out List<IPhaseFxInstance> instances))
+            {
+                return;
+            }
+
+            foreach (IPhaseFxInstance instance in instances)
+            {
+                instance?.Cancel();
+            }
+
+            instances.Clear();
+        }
+
+        void StopAllPhaseFx()
+        {
+            foreach (ActionPhase phase in runningPhaseFx.Keys)
+            {
+                StopPhaseFx(phase);
+            }
+        }
+
+        PhaseFX[] GetPhaseFxForPhase(ActionPhase phase)
+        {
+            return phase switch
+            {
+                ActionPhase.Windup => windupFx,
+                ActionPhase.Active => activeFx,
+                ActionPhase.Recovery => recoveryFx,
+                _ => Array.Empty<PhaseFX>()
+            };
+        }
+
+        List<IPhaseFxInstance> GetOrCreateFxList(ActionPhase phase)
+        {
+            if (!runningPhaseFx.TryGetValue(phase, out List<IPhaseFxInstance> instances))
+            {
+                instances = new List<IPhaseFxInstance>();
+                runningPhaseFx[phase] = instances;
+            }
+
+            return instances;
         }
 
         void ApplyPhaseAnimation(ActionPhase phase)
