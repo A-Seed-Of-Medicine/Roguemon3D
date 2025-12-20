@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using HSM;
 using UtilityAI;
+using ImprovedTimers;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
 {
@@ -26,6 +27,72 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Sprint
         }
 
+        protected enum ActionPhase
+        {
+            None,
+            Windup,
+            Active,
+            Recovery
+        }
+
+        protected struct PhaseAnimationSettings
+        {
+            public bool usePhaseAnimations;
+            public AgentAnimationRequest defaultAnimation;
+            public AgentAnimationRequest windupAnimation;
+            public AgentAnimationRequest activeAnimation;
+            public AgentAnimationRequest recoveryAnimation;
+            public float animationCrossFade;
+            public float animationSpeedMultiplier;
+            public bool scaleAnimationSpeedToDuration;
+            public bool scaleWindupAnimationToDuration;
+            public bool scaleActiveAnimationToDuration;
+            public bool scaleRecoveryAnimationToDuration;
+            public bool overrideAnimationSpeed;
+            public float windupDuration;
+            public float activeDuration;
+            public float recoveryDuration;
+            public float totalDuration;
+
+            public float GetPhaseDuration(ActionPhase phase, ActionPhaseDurations fallback)
+            {
+                return phase switch
+                {
+                    ActionPhase.Windup => ResolveDuration(windupDuration, fallback.Windup),
+                    ActionPhase.Active => ResolveDuration(activeDuration, fallback.Active),
+                    ActionPhase.Recovery => ResolveDuration(recoveryDuration, fallback.Recovery),
+                    _ => 0f
+                };
+            }
+
+            public float GetTotalDuration(ActionPhaseDurations fallback)
+            {
+                float duration = totalDuration;
+                return duration > 0f ? duration : fallback.TotalDuration;
+            }
+
+            static float ResolveDuration(float overrideDuration, float fallback)
+            {
+                return overrideDuration > 0f ? overrideDuration : Mathf.Max(0f, fallback);
+            }
+        }
+
+        protected struct ActionPhaseDurations
+        {
+            public float Windup;
+            public float Active;
+            public float Recovery;
+
+            public ActionPhaseDurations(float windup, float active, float recovery)
+            {
+                Windup = Mathf.Max(0f, windup);
+                Active = Mathf.Max(0f, active);
+                Recovery = Mathf.Max(0f, recovery);
+            }
+
+            public float TotalDuration => Mathf.Max(0f, Windup + Active + Recovery);
+        }
+
         [Header("Action")]
         public PressBinding binding;
         public UnityAction<bool> actionTrigger;
@@ -40,6 +107,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected InputReader InputReader => Controller != null ? Controller.inputReader : null;
         protected Vector3 LastAimWorldPosition => lastAimWorldPosition;
         protected virtual bool UsesAimInput => false;
+        protected bool IsAnyPhaseRunning => currentPhase != ActionPhase.None;
+        protected bool IsInPhase(ActionPhase phase) => currentPhase == phase;
 
         PendingExecution pendingExecution;
         CancellationTokenSource aiAimCancellation;
@@ -51,6 +120,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         ActionState _actionState;
         private AgentAnimationRequest runtimeAnimationRequest;
         private event Action<AgentAnimationRequest> animationRequestChanged;
+        protected MyFixedTimer windupTimer;
+        protected MyFixedTimer activeTimer;
+        protected MyFixedTimer recoveryTimer;
+        ActionPhase currentPhase = ActionPhase.None;
+        ActionPhaseDurations currentPhaseDurations;
+        PhaseAnimationSettings currentPhaseAnimations;
+        bool autoCompleteWindupWithoutDuration = true;
 
         public virtual void OnValidate()
         {
@@ -68,6 +144,15 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             actionTrigger ??= DefaultActionTrigger;
             runtimeAnimationRequest = NormalizeAnimationRequest(defaultAnimationRequest);
             defaultAnimationRequest = runtimeAnimationRequest;
+
+            windupTimer = new MyFixedTimer(0f);
+            windupTimer.OnTimerFinish += HandleWindupTimerFinished;
+
+            activeTimer = new MyFixedTimer(0f);
+            activeTimer.OnTimerFinish += HandleActiveTimerFinished;
+
+            recoveryTimer = new MyFixedTimer(0f);
+            recoveryTimer.OnTimerFinish += HandleRecoveryTimerFinished;
         }
 
         protected virtual void Start()
@@ -84,12 +169,28 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             UnsubscribeInput();
             CancelAiAimRoutine();
             aimPressed = false;
+            CancelActionPhases();
         }
 
         protected virtual void OnDestroy()
         {
             CancelAiAimRoutine();
             aimPressed = false;
+
+            if (windupTimer != null)
+            {
+                windupTimer.OnTimerFinish -= HandleWindupTimerFinished;
+            }
+
+            if (activeTimer != null)
+            {
+                activeTimer.OnTimerFinish -= HandleActiveTimerFinished;
+            }
+
+            if (recoveryTimer != null)
+            {
+                recoveryTimer.OnTimerFinish -= HandleRecoveryTimerFinished;
+            }
         }
 
         internal void ConfigureActionState(AgentRoot root)
@@ -161,6 +262,264 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             runtimeAnimationRequest = normalized;
             animationRequestChanged?.Invoke(runtimeAnimationRequest);
+        }
+
+        protected void StartActionPhases(ActionPhaseDurations durations, PhaseAnimationSettings animations,
+            bool completeWindupWhenDurationMissing = true)
+        {
+            currentPhaseDurations = durations;
+            currentPhaseAnimations = animations;
+            autoCompleteWindupWithoutDuration = completeWindupWhenDurationMissing;
+
+            CancelActionPhases(false);
+            ResetAnimationRequest();
+            BeginWindupPhase();
+        }
+
+        protected void CancelActionPhases(bool notify = true)
+        {
+            windupTimer?.Cancel();
+            activeTimer?.Cancel();
+            recoveryTimer?.Cancel();
+
+            if (notify && currentPhase != ActionPhase.None)
+            {
+                OnPhaseCancelled(currentPhase);
+            }
+
+            currentPhase = ActionPhase.None;
+        }
+
+        void BeginWindupPhase()
+        {
+            currentPhase = ActionPhase.Windup;
+            ApplyPhaseAnimation(ActionPhase.Windup);
+            OnPhaseStarted(ActionPhase.Windup, currentPhaseDurations.Windup);
+
+            if (currentPhaseDurations.Windup > 0f)
+            {
+                windupTimer.Start(currentPhaseDurations.Windup);
+            }
+            else if (autoCompleteWindupWithoutDuration)
+            {
+                HandleWindupTimerFinished();
+            }
+        }
+
+        void BeginActivePhase()
+        {
+            currentPhase = ActionPhase.Active;
+            ApplyPhaseAnimation(ActionPhase.Active);
+            OnPhaseStarted(ActionPhase.Active, currentPhaseDurations.Active);
+
+            if (currentPhaseDurations.Active > 0f)
+            {
+                activeTimer.Start(currentPhaseDurations.Active);
+            }
+            else
+            {
+                HandleActiveTimerFinished();
+            }
+        }
+
+        void BeginRecoveryPhase()
+        {
+            currentPhase = ActionPhase.Recovery;
+            ApplyPhaseAnimation(ActionPhase.Recovery);
+            OnPhaseStarted(ActionPhase.Recovery, currentPhaseDurations.Recovery);
+
+            if (currentPhaseDurations.Recovery > 0f)
+            {
+                recoveryTimer.Start(currentPhaseDurations.Recovery);
+            }
+            else
+            {
+                HandleRecoveryTimerFinished();
+            }
+        }
+
+        void HandleWindupTimerFinished()
+        {
+            if (currentPhase != ActionPhase.Windup)
+            {
+                return;
+            }
+
+            TryCompleteWindupPhase();
+        }
+
+        protected void TryCompleteWindupPhase()
+        {
+            if (!CanCompleteWindupPhase())
+            {
+                return;
+            }
+
+            CompleteWindupPhase();
+        }
+
+        protected void CompleteWindupPhase()
+        {
+            if (currentPhase != ActionPhase.Windup)
+            {
+                return;
+            }
+
+            windupTimer.Cancel();
+            OnPhaseEnded(ActionPhase.Windup);
+            BeginActivePhase();
+        }
+
+        void HandleActiveTimerFinished()
+        {
+            if (currentPhase != ActionPhase.Active)
+            {
+                return;
+            }
+
+            activeTimer.Cancel();
+            OnPhaseEnded(ActionPhase.Active);
+            BeginRecoveryPhase();
+        }
+
+        void HandleRecoveryTimerFinished()
+        {
+            if (currentPhase != ActionPhase.Recovery)
+            {
+                return;
+            }
+
+            recoveryTimer.Cancel();
+            OnPhaseEnded(ActionPhase.Recovery);
+            FinishPhaseSequence();
+        }
+
+        void FinishPhaseSequence()
+        {
+            currentPhase = ActionPhase.None;
+            OnPhasesCompleted();
+        }
+
+        void ApplyPhaseAnimation(ActionPhase phase)
+        {
+            if (Controller == null)
+            {
+                return;
+            }
+
+            if (!TryGetAnimationRequestForPhase(currentPhaseAnimations, phase, out AgentAnimationRequest request,
+                    out float targetDuration, out bool scaleToDuration))
+            {
+                return;
+            }
+
+            AgentAnimationRequest animationRequest = PrepareAnimationRequest(currentPhaseAnimations, request, targetDuration,
+                scaleToDuration);
+            SetAnimationRequest(animationRequest);
+        }
+
+        bool TryGetAnimationRequestForPhase(PhaseAnimationSettings settings, ActionPhase phase,
+            out AgentAnimationRequest request, out float targetDuration, out bool scaleToDuration)
+        {
+            request = AgentAnimationRequest.None;
+            targetDuration = settings.GetTotalDuration(currentPhaseDurations);
+            scaleToDuration = settings.scaleAnimationSpeedToDuration;
+
+            if (!settings.usePhaseAnimations)
+            {
+                request = settings.defaultAnimation.IsValid ? settings.defaultAnimation : defaultAnimationRequest;
+                return request.IsValid;
+            }
+
+            targetDuration = settings.GetPhaseDuration(phase, currentPhaseDurations);
+            request = phase switch
+            {
+                ActionPhase.Windup => settings.windupAnimation,
+                ActionPhase.Active => settings.activeAnimation,
+                ActionPhase.Recovery => settings.recoveryAnimation,
+                _ => AgentAnimationRequest.None
+            };
+
+            scaleToDuration = phase switch
+            {
+                ActionPhase.Windup => settings.scaleWindupAnimationToDuration,
+                ActionPhase.Active => settings.scaleActiveAnimationToDuration,
+                ActionPhase.Recovery => settings.scaleRecoveryAnimationToDuration,
+                _ => false
+            };
+
+            if (!scaleToDuration)
+            {
+                scaleToDuration = settings.scaleAnimationSpeedToDuration;
+            }
+
+            if (!request.IsValid)
+            {
+                if (phase != ActionPhase.Windup || !settings.defaultAnimation.IsValid)
+                {
+                    return false;
+                }
+
+                request = settings.defaultAnimation;
+                targetDuration = settings.GetTotalDuration(currentPhaseDurations);
+                scaleToDuration = settings.scaleAnimationSpeedToDuration;
+                return true;
+            }
+
+            return request.IsValid;
+        }
+
+        AgentAnimationRequest PrepareAnimationRequest(PhaseAnimationSettings settings, AgentAnimationRequest request,
+            float targetDuration, bool scaleToDuration)
+        {
+            AgentAnimationRequest animationRequest = request;
+
+            if (Controller != null && (scaleToDuration || settings.overrideAnimationSpeed ||
+                                       !Mathf.Approximately(settings.animationSpeedMultiplier, 0f)))
+            {
+                AnimationClip resolvedClip = Controller.AnimationController.GetClip(animationRequest);
+                float speed = settings.animationSpeedMultiplier > 0f ? settings.animationSpeedMultiplier : 1f;
+
+                if (scaleToDuration)
+                {
+                    float clipLength = resolvedClip ? resolvedClip.length : 0f;
+                    if (clipLength > 0f)
+                    {
+                        float duration = Mathf.Max(0.0001f, targetDuration);
+                        speed *= clipLength / duration;
+                    }
+                }
+
+                bool shouldOverride = settings.overrideAnimationSpeed || scaleToDuration || !Mathf.Approximately(speed, 1f);
+                float playbackSpeed = shouldOverride ? Mathf.Max(0.0001f, speed) : 1f;
+                animationRequest.playbackSpeed = playbackSpeed;
+                animationRequest.overrideSpeed = shouldOverride;
+            }
+
+            animationRequest.crossFade = settings.animationCrossFade;
+            return animationRequest;
+        }
+
+        protected virtual void OnPhaseStarted(ActionPhase phase, float duration)
+        {
+        }
+
+        protected virtual void OnPhaseEnded(ActionPhase phase)
+        {
+        }
+
+        protected virtual void OnPhaseCancelled(ActionPhase phase)
+        {
+        }
+
+        protected virtual void OnPhasesCompleted()
+        {
+            actionComplete?.Invoke();
+        }
+
+        protected virtual bool CanCompleteWindupPhase()
+        {
+            return true;
         }
 
         void SubscribeInput()

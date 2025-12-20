@@ -262,9 +262,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         bool currentStepExpired => currentStep == null || !IsCurrentStepRunning;
 
-        MyCountTimer windupTimer;
-        MyCountTimer activeTimer;
-        MyCountTimer recoveryTimer;
         MyCountTimer stepTimer;
         MyCountTimer transitionDelayTimer;
         MyCountTimer comboResetTimer;
@@ -314,15 +311,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             actionTrigger = HandleBindingInput;
             base.Awake();
-            windupTimer = new MyCountTimer(0f);
-            windupTimer.OnTimerFinish += HandleWindupTimerFinished;
-
-            activeTimer = new MyCountTimer(0f);
-            activeTimer.OnTimerFinish += HandleActiveTimerFinished;
-
-            recoveryTimer = new MyCountTimer(0f);
-            recoveryTimer.OnTimerFinish += HandleRecoveryTimerFinished;
-
             stepTimer = new MyCountTimer(0f);
 
             transitionDelayTimer = new MyCountTimer(0f);
@@ -371,21 +359,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected override void OnDestroy()
         {
             UnsubscribeStatusEvents();
-            if (windupTimer != null)
-            {
-                windupTimer.OnTimerFinish -= HandleWindupTimerFinished;
-            }
-
-            if (activeTimer != null)
-            {
-                activeTimer.OnTimerFinish -= HandleActiveTimerFinished;
-            }
-
-            if (recoveryTimer != null)
-            {
-                recoveryTimer.OnTimerFinish -= HandleRecoveryTimerFinished;
-            }
-
             if (transitionDelayTimer != null)
             {
                 transitionDelayTimer.OnTimerFinish -= HandleTransitionDelayTimerFinished;
@@ -840,11 +813,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             inActivePhase = false;
             inRecoveryPhase = false;
 
-            windupTimer.Cancel();
-            activeTimer.Cancel();
-            recoveryTimer.Cancel();
+            CancelActionPhases(false);
             stepTimer.Cancel();
             transitionDelayTimer.Cancel();
+            ReleasePhaseLocks();
 
             float totalDuration = Mathf.Max(0f, GetPlannedStepDuration(currentStep));
             if (totalDuration > 0f)
@@ -871,7 +843,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             Controller.ApplyMovementModifier(overrideMovementProfile, -1f);
 
-            StartWindupPhase(step);
+            ActionPhaseDurations phaseDurations = BuildPhaseDurations(step);
+            PhaseAnimationSettings animationSettings = BuildPhaseAnimationSettings(step);
+            bool autoCompleteWindup = ShouldAutoCompleteWindup(step);
+
+            StartActionPhases(phaseDurations, animationSettings, autoCompleteWindup);
         }
 
         void ApplyStepPressMetadata(ComboStep step, bool isLongPress, float holdDuration, float holdNormalized)
@@ -886,108 +862,59 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             step.pressDurationNormalized = Mathf.Clamp01(holdNormalized);
         }
 
-        void ApplyStepAnimation(ComboStep step, HitComboDetector.ExecutionPhase phase)
+        PhaseAnimationSettings BuildPhaseAnimationSettings(ComboStep step)
         {
-            if (!TryGetAnimationRequestForPhase(step, phase, out AgentAnimationRequest animation, out float targetDuration,
-                    out bool scaleToDuration))
-            {
-                return;
-            }
-
-            AgentAnimationRequest request = PrepareAnimationRequest(step, animation, targetDuration, scaleToDuration);
-            ResetAnimationRequest();
-            SetAnimationRequest(request);
-        }
-
-        bool TryGetAnimationRequestForPhase(ComboStep step, HitComboDetector.ExecutionPhase phase, out AgentAnimationRequest request,
-            out float targetDuration, out bool scaleToDuration)
-        {
-            request = AgentAnimationRequest.None;
-            targetDuration = 0f;
-            scaleToDuration = false;
-
             if (step == null)
             {
-                return false;
+                return default;
             }
 
-            if (!step.usePhaseAnimations)
+            return new PhaseAnimationSettings
             {
-                if (phase != HitComboDetector.ExecutionPhase.Windup || !step.animation.IsValid)
-                {
-                    return false;
-                }
+                usePhaseAnimations = step.usePhaseAnimations,
+                defaultAnimation = step.animation,
+                windupAnimation = step.windupAnimation,
+                activeAnimation = step.activeAnimation,
+                recoveryAnimation = step.recoveryAnimation,
+                animationCrossFade = step.animationCrossFade,
+                animationSpeedMultiplier = step.animationSpeedMultiplier,
+                scaleAnimationSpeedToDuration = step.scaleAnimationSpeedToStepDuration,
+                scaleWindupAnimationToDuration = step.scaleWindupAnimationToStepDuration,
+                scaleActiveAnimationToDuration = step.scaleActiveAnimationToStepDuration,
+                scaleRecoveryAnimationToDuration = step.scaleRecoveryAnimationToStepDuration,
+                overrideAnimationSpeed = step.overrideAnimationSpeed,
+                windupDuration = step.windup,
+                activeDuration = step.active,
+                recoveryDuration = step.recovery,
+                totalDuration = step.TotalDuration
+            };
+        }
 
-                request = step.animation;
-                targetDuration = step.TotalDuration;
-                scaleToDuration = step.scaleAnimationSpeedToStepDuration;
+        ActionPhaseDurations BuildPhaseDurations(ComboStep step)
+        {
+            if (step == null)
+            {
+                return new ActionPhaseDurations(0f, 0f, 0f);
+            }
+
+            float windupDuration = Mathf.Max(0f, step.windup);
+            if (step.chargeWindup)
+            {
+                float maxCharge = Mathf.Max(0f, step.maximumChargeTime);
+                windupDuration = maxCharge > 0f ? maxCharge : 0f;
+            }
+
+            return new ActionPhaseDurations(windupDuration, step.active, step.recovery);
+        }
+
+        bool ShouldAutoCompleteWindup(ComboStep step)
+        {
+            if (step == null)
+            {
                 return true;
             }
 
-            targetDuration = ResolvePhaseDuration(step, phase);
-            request = phase switch
-            {
-                HitComboDetector.ExecutionPhase.Windup => step.windupAnimation,
-                HitComboDetector.ExecutionPhase.Active => step.activeAnimation,
-                HitComboDetector.ExecutionPhase.Recovery => step.recoveryAnimation,
-                _ => AgentAnimationRequest.None
-            };
-
-            scaleToDuration = phase switch
-            {
-                HitComboDetector.ExecutionPhase.Windup => step.scaleWindupAnimationToStepDuration,
-                HitComboDetector.ExecutionPhase.Active => step.scaleActiveAnimationToStepDuration,
-                HitComboDetector.ExecutionPhase.Recovery => step.scaleRecoveryAnimationToStepDuration,
-                _ => false
-            };
-
-            if (!scaleToDuration)
-            {
-                scaleToDuration = step.scaleAnimationSpeedToStepDuration;
-            }
-
-            return request.IsValid;
-        }
-
-        static float ResolvePhaseDuration(ComboStep step, HitComboDetector.ExecutionPhase phase)
-        {
-            return phase switch
-            {
-                HitComboDetector.ExecutionPhase.Windup => Mathf.Max(0f, step.windup),
-                HitComboDetector.ExecutionPhase.Active => Mathf.Max(0f, step.active),
-                HitComboDetector.ExecutionPhase.Recovery => Mathf.Max(0f, step.recovery),
-                _ => Mathf.Max(0f, step.TotalDuration)
-            };
-        }
-
-        AgentAnimationRequest PrepareAnimationRequest(ComboStep step, AgentAnimationRequest request, float targetDuration,
-            bool scaleToDuration)
-        {
-            AgentAnimationRequest animationRequest = request;
-
-            if (scaleToDuration || step.overrideAnimationSpeed)
-            {
-                AnimationClip resolvedClip = Controller.AnimationController.GetClip(animationRequest);
-                float speed = step.animationSpeedMultiplier > 0f ? step.animationSpeedMultiplier : 1f;
-
-                if (scaleToDuration)
-                {
-                    float clipLength = resolvedClip ? resolvedClip.length : 0f;
-                    if (clipLength > 0f)
-                    {
-                        float duration = Mathf.Max(0.0001f, targetDuration);
-                        speed *= clipLength / duration;
-                    }
-                }
-
-                bool shouldOverride = step.overrideAnimationSpeed || scaleToDuration || !Mathf.Approximately(speed, 1f);
-                float playbackSpeed = shouldOverride ? Mathf.Max(0.0001f, speed) : 1f;
-                animationRequest.playbackSpeed = playbackSpeed;
-                animationRequest.overrideSpeed = shouldOverride;
-            }
-
-            animationRequest.crossFade = step.animationCrossFade;
-            return animationRequest;
+            return !(step.chargeWindup && step.maximumChargeTime <= 0f);
         }
 
         void ApplyStepHitStopOnExecute(ComboStep step)
@@ -1000,80 +927,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             CameraManager.Instance?.TryAddHitStopForAgent(Controller, step.hitStopOnExecute);
         }
 
-        void StartWindupPhase(ComboStep step)
-        {
-            if (step == null)
-            {
-                return;
-            }
-
-            windupTimer.Cancel();
-            ResetAnimationRequest();
-            ApplyStepAnimation(step, HitComboDetector.ExecutionPhase.Windup);
-
-            activeHitDetector?.HandlePhaseStart(HitComboDetector.ExecutionPhase.Windup, step);
-
-            windupPhaseComplete = false;
-            awaitingChargeRelease = step.chargeWindup;
-            chargeReleaseRequested = false;
-            chargeWindupElapsed = 0f;
-
-            ApplyPhaseLocks(step, HitComboDetector.ExecutionPhase.Windup);
-
-            if (step.windup > 0f)
-            {
-                if (step.chargeWindup)
-                {
-                    float maxCharge = Mathf.Max(0f, step.maximumChargeTime);
-                    if (maxCharge > 0f)
-                    {
-                        windupTimer.Start(maxCharge);
-                    }
-                }
-                else
-                {
-                    windupTimer.Start(step.windup);
-                }
-            }
-            else
-            {
-                HandleWindupTimerFinished();
-            }
-        }
-
-        void HandleWindupTimerFinished()
-        {
-            if (currentStep == null)
-            {
-                return;
-            }
-
-            if (currentStep.chargeWindup && awaitingChargeRelease && !HasReachedMinimumCharge(currentStep))
-            {
-                chargeReleaseRequested = true;
-                return;
-            }
-
-            CompleteWindupPhase();
-        }
-
-        void CompleteWindupPhase()
-        {
-            if (currentStep == null || windupPhaseComplete)
-            {
-                return;
-            }
-
-            awaitingChargeRelease = false;
-            windupPhaseComplete = true;
-            windupTimer.Cancel();
-            activeHitDetector?.HandlePhaseEnd(HitComboDetector.ExecutionPhase.Windup);
-            StartActivePhase();
-        }
-
         void UpdateChargeWindup(float delta)
         {
-            if (currentStep == null || windupPhaseComplete || !awaitingChargeRelease)
+            if (currentStep == null || windupPhaseComplete || !awaitingChargeRelease || !IsInPhase(ActionPhase.Windup))
             {
                 return;
             }
@@ -1082,13 +938,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (currentStep.maximumChargeTime > 0f && chargeWindupElapsed >= currentStep.maximumChargeTime)
             {
-                CompleteWindupPhase();
+                TryCompleteWindupPhase();
                 return;
             }
 
             if (chargeReleaseRequested && HasReachedMinimumCharge(currentStep))
             {
-                CompleteWindupPhase();
+                TryCompleteWindupPhase();
             }
         }
 
@@ -1121,7 +977,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 chargeReleaseRequested = true;
                 if (HasReachedMinimumCharge(currentStep))
                 {
-                    CompleteWindupPhase();
+                    TryCompleteWindupPhase();
                 }
             }
         }
@@ -1232,102 +1088,131 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             aimLockedByStep = false;
         }
 
-        void StartActivePhase()
+        protected override void OnPhaseStarted(ActionPhase phase, float duration)
         {
-            if (currentStep == null)
+            switch (phase)
             {
-                return;
-            }
+                case ActionPhase.Windup:
+                    windupPhaseComplete = false;
+                    awaitingChargeRelease = currentStep?.chargeWindup ?? false;
+                    chargeReleaseRequested = false;
+                    chargeWindupElapsed = 0f;
+                    activeHitDetector?.HandlePhaseStart(HitComboDetector.ExecutionPhase.Windup, currentStep);
+                    ApplyPhaseLocks(currentStep, HitComboDetector.ExecutionPhase.Windup);
+                    break;
+                case ActionPhase.Active:
+                    inActivePhase = duration > 0f;
+                    activeHitDetector?.HandlePhaseStart(HitComboDetector.ExecutionPhase.Active, currentStep);
+                    ApplyPhaseLocks(currentStep, HitComboDetector.ExecutionPhase.Active);
 
-            inActivePhase = currentStep.active > 0f;
-            activeTimer.Cancel();
+                    if (currentStep?.vfx)
+                    {
+                        currentStep.vfx.Clear();
+                        currentStep.vfx.Play();
+                    }
 
-            activeHitDetector?.HandlePhaseStart(HitComboDetector.ExecutionPhase.Active, currentStep);
-            ApplyStepAnimation(currentStep, HitComboDetector.ExecutionPhase.Active);
+                    if (currentStep != null)
+                    {
+                        activeHitDetector?.Activate(currentStep, duration);
 
-            ApplyPhaseLocks(currentStep, HitComboDetector.ExecutionPhase.Active);
+                        if ((currentStep.applyNudgeWhenHit || !stepRegisteredHit) && currentStep.missNudgeImpulse > 0f)
+                        {
+                            if (currentStep.missNudgeDelay > 0f)
+                            {
+                                nudgePending = true;
+                                nudgeTimer = currentStep.missNudgeDelay;
+                            }
+                            else
+                            {
+                                ApplyNudge(currentStep);
+                            }
+                        }
+                    }
 
-            if (currentStep.vfx)
-            {
-                currentStep.vfx.Clear();
-                currentStep.vfx.Play();
-            }
+                    if (inActivePhase)
+                    {
+                        EvaluateStepHits(currentStep);
+                    }
 
-            activeHitDetector?.Activate(currentStep, currentStep.active);
-
-            if ((currentStep.applyNudgeWhenHit || !stepRegisteredHit) && currentStep.missNudgeImpulse > 0f)
-            {
-                if (currentStep.missNudgeDelay > 0f)
-                {
-                    nudgePending = true;
-                    nudgeTimer = currentStep.missNudgeDelay;
-                }
-                else
-                {
-                    ApplyNudge(currentStep);
-                }
-            }
-
-            if (inActivePhase)
-            {
-                activeTimer.Start(currentStep.active);
-                EvaluateStepHits(currentStep);
-            }
-            else
-            {
-                HandleActiveTimerFinished();
+                    break;
+                case ActionPhase.Recovery:
+                    inRecoveryPhase = duration > 0f;
+                    activeHitDetector?.HandlePhaseStart(HitComboDetector.ExecutionPhase.Recovery, currentStep);
+                    ApplyPhaseLocks(currentStep, HitComboDetector.ExecutionPhase.Recovery);
+                    break;
             }
         }
 
-        void HandleActiveTimerFinished()
+        protected override void OnPhaseEnded(ActionPhase phase)
         {
+            switch (phase)
+            {
+                case ActionPhase.Windup:
+                    windupPhaseComplete = true;
+                    awaitingChargeRelease = false;
+                    chargeReleaseRequested = false;
+                    HandlePhaseEndForDetector(phase);
+                    break;
+                case ActionPhase.Active:
+                    inActivePhase = false;
+                    HandlePhaseEndForDetector(phase);
+                    break;
+                case ActionPhase.Recovery:
+                    inRecoveryPhase = false;
+                    HandlePhaseEndForDetector(phase);
+                    break;
+            }
+        }
+
+        protected override void OnPhaseCancelled(ActionPhase phase)
+        {
+            HandlePhaseEndForDetector(phase);
+            ReleasePhaseLocks();
             inActivePhase = false;
-
-            if (currentStep == null)
-            {
-                return;
-            }
-
-            activeHitDetector?.HandlePhaseEnd(HitComboDetector.ExecutionPhase.Active);
-            StartRecoveryPhase();
-        }
-
-        void StartRecoveryPhase()
-        {
-            if (currentStep == null)
-            {
-                return;
-            }
-
-            inRecoveryPhase = currentStep.recovery > 0f;
-            recoveryTimer.Cancel();
-
-            activeHitDetector?.HandlePhaseStart(HitComboDetector.ExecutionPhase.Recovery, currentStep);
-            ApplyStepAnimation(currentStep, HitComboDetector.ExecutionPhase.Recovery);
-
-            ApplyPhaseLocks(currentStep, HitComboDetector.ExecutionPhase.Recovery);
-
-            if (inRecoveryPhase)
-            {
-                recoveryTimer.Start(currentStep.recovery);
-            }
-            else
-            {
-                HandleRecoveryTimerFinished();
-            }
-        }
-
-        void HandleRecoveryTimerFinished()
-        {
             inRecoveryPhase = false;
+            awaitingChargeRelease = false;
+            chargeReleaseRequested = false;
+        }
 
+        protected override void OnPhasesCompleted()
+        {
+            CompleteCurrentStep();
+        }
+
+        protected override bool CanCompleteWindupPhase()
+        {
             if (currentStep == null)
             {
-                return;
+                return true;
             }
 
-            activeHitDetector?.HandlePhaseEnd(HitComboDetector.ExecutionPhase.Recovery);
-            CompleteCurrentStep();
+            if (currentStep.chargeWindup && awaitingChargeRelease && !HasReachedMinimumCharge(currentStep))
+            {
+                chargeReleaseRequested = true;
+                return false;
+            }
+
+            return true;
+        }
+
+        void HandlePhaseEndForDetector(ActionPhase phase)
+        {
+            HitComboDetector.ExecutionPhase mapped = MapPhase(phase);
+            if (mapped != HitComboDetector.ExecutionPhase.None)
+            {
+                activeHitDetector?.HandlePhaseEnd(mapped);
+            }
+        }
+
+        HitComboDetector.ExecutionPhase MapPhase(ActionPhase phase)
+        {
+            return phase switch
+            {
+                ActionPhase.Windup => HitComboDetector.ExecutionPhase.Windup,
+                ActionPhase.Active => HitComboDetector.ExecutionPhase.Active,
+                ActionPhase.Recovery => HitComboDetector.ExecutionPhase.Recovery,
+                _ => HitComboDetector.ExecutionPhase.None
+            };
         }
 
         void HandleTransitionDelayTimerFinished()
@@ -1712,9 +1597,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             nudgeTimer = 0f;
             inActivePhase = false;
             inRecoveryPhase = false;
-            windupTimer.Cancel();
-            activeTimer.Cancel();
-            recoveryTimer.Cancel();
+            CancelActionPhases(false);
             stepTimer.Cancel();
             pendingComboResetDelay = 0f;
             awaitingChargeRelease = false;

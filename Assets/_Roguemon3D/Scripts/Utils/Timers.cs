@@ -47,4 +47,14 @@ namespace ImprovedTimers {
 
         public override bool IsFinished => CurrentTime == 0 && !IsRunning;
     }
+
+    /// <summary>
+    /// FixedUpdate-driven countdown timer with utility helpers matching <see cref="MyCountTimer"/>.
+    /// </summary>
+    public class MyFixedTimer : _Roguemon3D.Scripts.ThirdParty.ImprovedTimers.FixedCountdownTimer
+    {
+        public MyFixedTimer(float value) : base(value)
+        {
+        }
+    }
 }
