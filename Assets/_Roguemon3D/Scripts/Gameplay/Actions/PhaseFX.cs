@@ -59,16 +59,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
     {
         [SerializeField] private Transform target;
         [SerializeField] private ShakePhaseFxTarget shakeTarget = ShakePhaseFxTarget.Position;
+        [SerializeField] private AnimationCurve strengthOverTime = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
         [SerializeField] private Vector3 strength = Vector3.one * 0.1f;
-        [SerializeField] private float frequency = ShakeSettings.defaultFrequency;
-        [SerializeField] private bool enableFalloff = true;
-        [SerializeField] private Ease easeBetweenShakes = Ease.Default;
-        [SerializeField, Range(0f, 1f)] private float asymmetry = 0f;
+        [SerializeField] private float frequency = 20f;
 
         protected override IPhaseFxInstance OnPlay(AgentController controller, float duration)
         {
-            Transform resolvedTarget = target ? target : controller.transform;
-            ShakeSettings settings = new(strength, duration, frequency, enableFalloff, easeBetweenShakes, asymmetry);
+            Transform resolvedTarget = target ? target : controller.animationTransform;
+            ShakeSettings settings = new(strength, duration, frequency, strengthOverTime:strengthOverTime);
 
             Tween tween = shakeTarget switch
             {
@@ -113,7 +111,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             int propertyId = Shader.PropertyToID(string.IsNullOrWhiteSpace(colorProperty) ? "_Color" : colorProperty);
             Color resolvedStart = useCurrentAsStart ? material.GetColor(propertyId) : startColor;
-            Tween tween = Tween.MaterialColor(material, propertyId, resolvedStart, targetColor, duration, ease);
+            Tween tween = Tween.MaterialColor(material, propertyId, resolvedStart, targetColor, duration, ease).OnComplete(() =>
+            {
+                material.SetColor(propertyId, resolvedStart);
+            });
             return tween.isAlive ? new TweenPhaseFxInstance(tween) : null;
         }
     }
