@@ -75,8 +75,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             dashCooldownTimer.OnTimerFinish += () => { canDashAgain = true; };
         }
 
-        private void FixedUpdate()
+        protected override void FixedUpdate()
         {
+            base.FixedUpdate();
             if (!isDashing)
                 if (dashQueueTimer.IsRunning && CanStartDash())
                 {
@@ -470,7 +471,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return interrupt;
             }
 
-            if (!dashAction.isDashing)
+            bool dashRunning = dashAction.IsPhaseSequenceActive || dashAction.isDashing;
+            if (!dashRunning)
             {
                 return GetLocomotionState();
             }

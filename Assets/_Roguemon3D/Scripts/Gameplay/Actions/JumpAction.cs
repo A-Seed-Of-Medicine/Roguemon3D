@@ -329,7 +329,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return interrupt;
             }
 
-            if (!jumpAction.IsJumping)
+            bool jumpRunning = jumpAction.IsPhaseSequenceActive || jumpAction.IsJumping;
+            if (!jumpRunning)
             {
                 return GetLocomotionState();
             }

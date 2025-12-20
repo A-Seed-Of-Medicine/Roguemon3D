@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Effects;
 using AdvancedController;
+using _Roguemon3D.Scripts.ThirdParty.ImprovedTimers;
 using UnityEngine;
 using HSM;
-using ImprovedTimers;
-using _Roguemon3D.Scripts.Utils;
 using UnityEngine.Serialization;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
@@ -258,8 +257,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         bool currentStepExpired => currentStep == null || !IsCurrentStepRunning;
 
-        MyCountTimer transitionDelayTimer;
-        MyCountTimer comboResetTimer;
+        MyCountdownTimer transitionDelayTimer;
+        MyCountdownTimer comboResetTimer;
 
         protected override bool UsesAimInput => comboDefinition ? comboDefinition.RequiresAimInput : true;
 
@@ -303,10 +302,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             actionTrigger = HandleBindingInput;
             base.Awake();
-            transitionDelayTimer = new MyCountTimer(0f);
+            transitionDelayTimer = new MyCountdownTimer(0f);
+            comboResetTimer = new MyCountdownTimer(0f);
             transitionDelayTimer.OnTimerFinish += HandleTransitionDelayTimerFinished;
-
-            comboResetTimer = new MyCountTimer(0f);
             comboResetTimer.OnTimerFinish += HandleComboResetTimerFinished;
             BuildLookups();
         }
@@ -327,8 +325,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             BuildLookups();
         }
 
-        void FixedUpdate()
+        protected override void FixedUpdate()
         {
+            base.FixedUpdate();
             EvaluateLongPressStates();
             HandlePendingTransition();
         }
@@ -343,16 +342,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected override void OnDestroy()
         {
             UnsubscribeStatusEvents();
-            if (transitionDelayTimer != null)
-            {
-                transitionDelayTimer.OnTimerFinish -= HandleTransitionDelayTimerFinished;
-            }
-
-            if (comboResetTimer != null)
-            {
-                comboResetTimer.OnTimerFinish -= HandleComboResetTimerFinished;
-            }
-
             base.OnDestroy();
         }
 

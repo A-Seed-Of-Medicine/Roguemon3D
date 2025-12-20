@@ -8,7 +8,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using HSM;
 using UtilityAI;
-using _Roguemon3D.Scripts.ThirdParty.ImprovedTimers;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
 {
@@ -88,7 +87,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         private event Action<AgentAnimationRequest> animationRequestChanged;
         private event Action<ExecutionPhase> phaseStarted;
         private event Action<ExecutionPhase> phaseCompleted;
-        PhaseTimer phaseTimer;
+        PhaseSequence phaseSequence;
 
         public virtual void OnValidate()
         {
@@ -110,7 +109,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             activeAnimationRequest = NormalizeAnimationRequest(activeAnimationRequest);
             recoveryAnimationRequest = NormalizeAnimationRequest(recoveryAnimationRequest);
 
-            phaseTimer = new PhaseTimer(this);
+            phaseSequence = new PhaseSequence(this);
         }
 
         protected virtual void Start()
@@ -120,6 +119,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected virtual void OnEnable()
         {
             SubscribeInput();
+        }
+
+        protected virtual void FixedUpdate()
+        {
+            phaseSequence?.Tick(Time.fixedDeltaTime);
         }
 
         protected virtual void OnDisable()
@@ -179,7 +183,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         internal ExecutionPhase ActivePhase => CurrentPhase;
 
-        internal bool IsPhaseSequenceActive => phaseTimer is { IsRunning: true };
+        internal bool IsPhaseSequenceActive => phaseSequence is { IsRunning: true };
 
         internal PhaseExecution GetPhaseExecution(ExecutionPhase phase)
         {
@@ -215,7 +219,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 requests.Add(BuildPhaseRequest(ExecutionPhase.Recovery, recoveryDurationOverride));
             }
 
-            phaseTimer?.Begin(requests, invokeCompleteOnFinish);
+            phaseSequence?.Begin(requests, invokeCompleteOnFinish);
         }
 
         PhaseRequest BuildPhaseRequest(ExecutionPhase phase, float phaseDuration)
@@ -423,12 +427,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected void CancelPhaseSequence()
         {
-            phaseTimer?.Cancel();
+            phaseSequence?.Cancel();
         }
 
         protected void CompleteCurrentPhase()
         {
-            phaseTimer?.AdvancePhase();
+            phaseSequence?.AdvancePhase();
         }
 
         void ResetPhaseSequence(bool invokeComplete)
@@ -466,23 +470,20 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             animationRequestChanged?.Invoke(runtimeAnimationRequest);
         }
 
-        sealed class PhaseTimer
+        sealed class PhaseSequence
         {
             readonly CharacterAction owner;
-            readonly FixedCountdownTimer timer;
             readonly Queue<PhaseRequest> phaseQueue = new();
             PhaseRequest currentPhase;
             bool invokeCompleteOnFinish;
             bool active;
+            float remainingPhaseTime;
 
-            internal bool IsRunning => active || timer.IsRunning || phaseQueue.Count > 0;
+            internal bool IsRunning => active || phaseQueue.Count > 0;
 
-            internal PhaseTimer(CharacterAction owner)
+            internal PhaseSequence(CharacterAction owner)
             {
                 this.owner = owner;
-                timer = new FixedCountdownTimer(0f);
-                timer.OnTimerTick += HandleTimerTick;
-                timer.OnTimerFinish += HandleTimerFinished;
             }
 
             internal void Begin(IEnumerable<PhaseRequest> phases, bool invokeComplete)
@@ -517,10 +518,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             internal void Cancel()
             {
-                bool hadActiveSequence = active || timer.IsRunning || phaseQueue.Count > 0;
+                bool hadActiveSequence = active || phaseQueue.Count > 0;
                 phaseQueue.Clear();
                 active = false;
-                timer.Cancel();
+                remainingPhaseTime = 0f;
 
                 if (hadActiveSequence)
                 {
@@ -535,7 +536,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     return;
                 }
 
-                timer.Finish();
+                remainingPhaseTime = 0f;
+                CompletePhase();
+            }
+
+            internal void Tick(float deltaTime)
+            {
+                if (!active || remainingPhaseTime <= 0f)
+                {
+                    return;
+                }
+
+                float clampedDelta = Mathf.Max(0f, deltaTime);
+                remainingPhaseTime = Mathf.Max(0f, remainingPhaseTime - clampedDelta);
+
+                float elapsed = Mathf.Max(0f, currentPhase.Duration - remainingPhaseTime);
+                owner.OnPhaseTick(currentPhase.Phase, elapsed, clampedDelta);
+
+                if (remainingPhaseTime <= 0f)
+                {
+                    CompletePhase();
+                }
             }
 
             void StartNextPhase()
@@ -555,25 +576,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     owner.ApplyAnimationRequest(currentPhase.AnimationRequest);
                 }
 
-                float duration = Mathf.Max(0f, currentPhase.Duration);
-                if (duration <= 0f)
+                remainingPhaseTime = Mathf.Max(0f, currentPhase.Duration);
+
+                if (remainingPhaseTime <= 0f)
                 {
-                    timer.Start(0f);
-                    timer.Finish();
-                    return;
+                    CompletePhase();
                 }
-
-                timer.Start(duration);
             }
 
-            void HandleTimerTick(float delta)
+            void CompletePhase()
             {
-                float elapsed = Mathf.Max(0f, currentPhase.Duration - timer.CurrentTime);
-                owner.OnPhaseTick(currentPhase.Phase, elapsed, delta);
-            }
-
-            void HandleTimerFinished()
-            {
+                remainingPhaseTime = 0f;
                 owner.BroadcastPhaseCompleted(currentPhase.Phase);
                 StartNextPhase();
             }
@@ -581,7 +594,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             void CompleteSequence()
             {
                 active = false;
-                timer.Cancel();
+                remainingPhaseTime = 0f;
                 owner.ResetPhaseSequence(invokeCompleteOnFinish);
             }
         }
