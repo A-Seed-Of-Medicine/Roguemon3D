@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using _PinBoy.Scripts.CharacterMovement;
 using _PinBoy.Scripts.Gameplay.Effects;
 using _PinBoy.Scripts.Gameplay.Projectiles;
-using HSM;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -48,12 +47,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         float nextFireTime;
         bool actionHeld;
         readonly List<Collider> cachedOwnerColliders = new List<Collider>();
-        ProjectileConfiguration pendingConfiguration;
-        Vector3 pendingTargetPosition;
-        Vector3? pendingDirectionOverride;
-        IDamager pendingSourceOverride;
-        float? pendingEffectOverride;
-        bool fireQueued;
 
         protected override bool UsesAimInput => true;
 
@@ -88,7 +81,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return false;
             }
 
-            return TryQueueFire(configuration, GetCurrentAimWorldPosition(), direction, sourceOverride,
+            return TryFire(configuration, GetCurrentAimWorldPosition(), direction, sourceOverride,
                 effectMagnitudeOverride);
         }
 
@@ -99,7 +92,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 actionHeld = true;
                 if (!fireOnRelease)
                 {
-                    TryQueueFire(ResolveConfiguration(null), GetCurrentAimWorldPosition(), null, null, null);
+                    TryFire(ResolveConfiguration(null), GetCurrentAimWorldPosition(), null, null, null);
                 }
             }
             else
@@ -112,7 +105,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 actionHeld = false;
                 if (fireOnRelease)
                 {
-                    TryQueueFire(ResolveConfiguration(null), GetCurrentAimWorldPosition(), null, null, null);
+                    TryFire(ResolveConfiguration(null), GetCurrentAimWorldPosition(), null, null, null);
                 }
             }
         }
@@ -153,7 +146,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return null;
         }
 
-        bool TryQueueFire(ProjectileConfiguration configuration, Vector3 worldPosition, Vector3? directionOverride,
+        bool TryFire(ProjectileConfiguration configuration, Vector3 worldPosition, Vector3? directionOverride,
             IDamager sourceOverride, float? effectMagnitudeOverride)
         {
             if (configuration == null || !configuration.projectilePrefab)
@@ -162,63 +155,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return false;
             }
 
-            if (Time.time < nextFireTime || IsPhaseSequenceActive)
+            if (Time.time < nextFireTime)
             {
                 return false;
             }
 
-            pendingConfiguration = configuration;
-            pendingTargetPosition = worldPosition;
-            pendingDirectionOverride = directionOverride;
-            pendingSourceOverride = sourceOverride;
-            pendingEffectOverride = effectMagnitudeOverride;
-            fireQueued = true;
-
-            float recoveryDuration = Mathf.Max(fireCooldown, recoveryPhaseExecution.Duration);
-            BeginPhaseSequence(true, true, true, windupPhaseExecution.Duration, activePhaseExecution.Duration,
-                recoveryDuration);
-            return true;
-        }
-
-        protected override void OnPhaseStarted(ExecutionPhase phase)
-        {
-            base.OnPhaseStarted(phase);
-
-            if (phase == ExecutionPhase.Active)
-            {
-                ExecuteQueuedFire();
-            }
-        }
-
-        protected override void OnPhaseCompleted(ExecutionPhase phase)
-        {
-            base.OnPhaseCompleted(phase);
-
-            if (phase == ExecutionPhase.Recovery)
-            {
-                float recoveryDuration = Mathf.Max(CurrentPhaseDuration, fireCooldown);
-                nextFireTime = Time.time + recoveryDuration;
-                fireQueued = false;
-                pendingConfiguration = null;
-            }
-        }
-
-        void ExecuteQueuedFire()
-        {
-            if (!fireQueued || pendingConfiguration == null)
-            {
-                return;
-            }
-
-            ProjectileConfiguration configuration = pendingConfiguration;
             Vector3 origin = GetSpawnPosition(configuration);
-            Vector3 direction = pendingDirectionOverride ?? ResolveAimDirection(origin, pendingTargetPosition);
+            Vector3 direction = directionOverride ?? ResolveAimDirection(origin, worldPosition);
 
             if (direction.sqrMagnitude <= 0.0001f)
-            {
-                fireQueued = false;
-                return;
-            }
+                return false;
 
             if (configuration.ignoreOwnerColliders)
             {
@@ -234,35 +180,17 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Projectile projectileInstance = Instantiate(configuration.projectilePrefab, origin, spawnRotation, parent);
 
             if (!projectileInstance)
-            {
-                fireQueued = false;
-                return;
-            }
+                return false;
 
-            actionStarted?.Invoke();
-            Projectile.LaunchData launchData = BuildLaunchData(direction, origin, pendingTargetPosition, configuration,
-                pendingSourceOverride, pendingEffectOverride);
+            Projectile.LaunchData launchData = BuildLaunchData(direction, origin, worldPosition, configuration,
+                sourceOverride, effectMagnitudeOverride);
             projectileInstance.Launch(launchData);
 
             onProjectileFired?.Invoke(projectileInstance);
             ExecuteConfiguredAction();
 
-            fireQueued = false;
-            pendingConfiguration = null;
-            pendingDirectionOverride = null;
-            pendingEffectOverride = null;
-            pendingSourceOverride = null;
-        }
-
-        protected override ActionState CreateActionState(AgentRoot root)
-        {
-            if (Controller == null || root == null)
-            {
-                return null;
-            }
-
-            AgentState parent = GetDefaultActionParent(root);
-            return new AimActionState(Controller, root.Machine, root, this, parent);
+            nextFireTime = Time.time + fireCooldown;
+            return true;
         }
 
         Vector3 GetCurrentAimWorldPosition()
@@ -378,37 +306,5 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
         }
     }
-
-    sealed class AimActionState : ActionState
-    {
-        readonly CharacterAimAction aimAction;
-
-        public AimActionState(AgentController controller, StateMachine machine, AgentRoot root, CharacterAimAction aimAction, AgentState parent)
-            : base(controller, machine, root, aimAction, parent)
-        {
-            this.aimAction = aimAction;
-        }
-
-        protected override State GetTransition()
-        {
-            if (IsStunned)
-            {
-                return AgentRoot.Stunned;
-            }
-
-            ActionState interrupt = CheckForRequestedActionInterrupt();
-            if (interrupt != null)
-            {
-                return interrupt;
-            }
-
-            bool isRunning = aimAction.IsPhaseSequenceActive || IsControllerPerformingAction;
-            if (!isRunning)
-            {
-                return GetLocomotionState();
-            }
-
-            return null;
-        }
-    }
 }
+

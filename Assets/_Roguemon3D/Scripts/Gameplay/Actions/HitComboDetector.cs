@@ -6,6 +6,14 @@ using UnityEngine;
 
 public class HitComboDetector : HitDetector
 {
+    public enum ExecutionPhase
+    {
+        None = -1,
+        Windup = 0,
+        Active = 1,
+        Recovery = 2
+    }
+    
     [System.Serializable]
     public class PhaseParticleEffect
     {

@@ -13,26 +13,6 @@ namespace UnityUtils {
         /// <param name="maxDistance">The maximum distance allowed between the two transforms.</param>
         /// <param name="maxAngle">The maximum allowed angle between the transform's forward vector and the direction to the target (default is 360).</param>
         /// <returns>True if the transform is within range and angle (if provided) of the target, false otherwise.</returns>
-        public static bool InRangeOf(this Transform source, Transform target, float maxDistance, float maxAngle = 360f) {
-            Vector3 directionToTarget = target.position - source.position;
-            directionToTarget.y = 0f;
-            float distance = directionToTarget.magnitude;
-            if (distance > maxDistance) {
-                return false;
-            }
-
-            if (maxAngle >= 360f) {
-                return true;
-            }
-
-            Vector3 planarForward = source.forward;
-            planarForward.y = 0f;
-            if (planarForward.sqrMagnitude <= 0.0001f || directionToTarget.sqrMagnitude <= 0.0001f) {
-                return true;
-            }
-
-            return Vector3.Angle(planarForward, directionToTarget) <= maxAngle / 2f;
-        }
 
         public static bool InRangeOf(this Transform source, Transform target, float minDistance, float maxDistance, float maxAngle = 360f) {
             Vector3 directionToTarget = target.position - source.position;

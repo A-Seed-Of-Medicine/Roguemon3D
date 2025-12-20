@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using _PinBoy.Scripts.CharacterMovement;
 using Cysharp.Threading.Tasks;
-using HSM;
 using UnityEngine;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
@@ -17,12 +16,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
     public sealed class JumpAction : CharacterAction
     {
         [Header("Arc Shape")]
-        [field: SerializeField, Tooltip("Time in seconds to complete the jump arc."), Min(0f)]
-        private float arcDuration
-        {
-            get => activePhaseExecution.Duration;
-            set => activePhaseExecution.Duration = Mathf.Max(0f, value);
-        }
+        [SerializeField, Tooltip("Time in seconds to complete the jump arc."), Min(0f)]
+        private float arcDuration = 0.6f;
         [SerializeField, Tooltip("Planar distance travelled during the jump."), Min(0f)]
         private float arcDistance = 4f;
         [SerializeField, Tooltip("Maximum height reached above the starting point."), Min(0f)]
@@ -57,7 +52,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         CancellationTokenSource jumpCancellation;
         bool isJumping;
-        internal bool IsJumping => isJumping;
 
         protected override void OnDisable()
         {
@@ -78,11 +72,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return;
             }
             Debug.Log("Jump Action Pressed");
-            BeginPhaseSequence(true, true, true, windupPhaseExecution.Duration, arcDuration,
-                recoveryPhaseExecution.Duration);
+            BeginJumpArc().Forget();
         }
 
-        async UniTaskVoid BeginJumpArc(float duration)
+        async UniTaskVoid BeginJumpArc()
         {
             isJumping = true;
             jumpCancellation = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
@@ -107,24 +100,24 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             Vector3 endOffset = transform.TransformVector(localEndOffset);
             Vector3 planarOffset = jumpDirection.normalized * Mathf.Max(0f, arcDistance);
 
-            SuspensionState suspension = SuspendController(duration);
+        SuspensionState suspension = SuspendController();
             actionStarted?.Invoke();
             ExecuteConfiguredAction();
 
             try
             {
-                float resolvedDuration = Mathf.Max(0f, duration);
-                if (resolvedDuration <= 0f)
+                float duration = Mathf.Max(0f, arcDuration);
+                if (duration <= 0f)
                 {
                     ApplyJumpPosition(startPosition, startOffset, endOffset, planarOffset, 1f);
                     return;
                 }
 
                 float elapsed = 0f;
-                while (elapsed < resolvedDuration)
+                while (elapsed < duration)
                 {
                     token.ThrowIfCancellationRequested();
-                    float normalizedTime = Mathf.Clamp01(elapsed / Mathf.Max(0.0001f, resolvedDuration));
+                    float normalizedTime = Mathf.Clamp01(elapsed / Mathf.Max(0.0001f, duration));
                     ApplyJumpPosition(startPosition, startOffset, endOffset, planarOffset, normalizedTime);
                     await UniTask.Yield(PlayerLoopTiming.FixedUpdate, token);
                     elapsed += Time.fixedDeltaTime;
@@ -139,6 +132,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             finally
             {
                 RestoreController(suspension);
+                actionComplete?.Invoke();
                 isJumping = false;
                 jumpCancellation?.Dispose();
                 jumpCancellation = null;
@@ -198,38 +192,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return Vector3.forward;
         }
 
-        protected override ActionState CreateActionState(AgentRoot root)
-        {
-            if (Controller == null || root == null)
-            {
-                return null;
-            }
-
-            AgentState parent = GetDefaultActionParent(root);
-            return new JumpState(Controller, root.Machine, root, this, parent);
-        }
-
-        protected override void OnPhaseStarted(ExecutionPhase phase)
-        {
-            base.OnPhaseStarted(phase);
-
-            if (phase == ExecutionPhase.Active)
-            {
-                BeginJumpArc(CurrentPhaseDuration > 0f ? CurrentPhaseDuration : arcDuration).Forget();
-            }
-        }
-
-        protected override void OnPhaseCompleted(ExecutionPhase phase)
-        {
-            base.OnPhaseCompleted(phase);
-
-            if (phase == ExecutionPhase.Active)
-            {
-                CancelJump();
-            }
-        }
-
-        SuspensionState SuspendController(float activeDuration)
+        SuspensionState SuspendController()
         {
             SuspensionState state = new SuspensionState
             {
@@ -246,7 +209,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             if (suspendControllerWhileJumping && Controller != null && !Controller.IsMovementLocked)
             {
-                Controller.LockMovement(Mathf.Max(activeDuration, 0f), true);
+                Controller.LockMovement(Mathf.Max(arcDuration, 0f), true);
             }
 
             if (body != null)
@@ -303,39 +266,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool BodyKinematic;
             public bool MovementLocked;
             public Vector3 StoredVelocity;
-        }
-    }
-
-    sealed class JumpState : ActionState
-    {
-        readonly JumpAction jumpAction;
-
-        public JumpState(AgentController controller, StateMachine machine, AgentRoot root, JumpAction jumpAction, AgentState parent)
-            : base(controller, machine, root, jumpAction, parent)
-        {
-            this.jumpAction = jumpAction;
-        }
-
-        protected override State GetTransition()
-        {
-            if (IsStunned)
-            {
-                return AgentRoot.Stunned;
-            }
-
-            ActionState interrupt = CheckForRequestedActionInterrupt();
-            if (interrupt != null)
-            {
-                return interrupt;
-            }
-
-            bool jumpRunning = jumpAction.IsPhaseSequenceActive || jumpAction.IsJumping;
-            if (!jumpRunning)
-            {
-                return GetLocomotionState();
-            }
-
-            return null;
         }
     }
 }

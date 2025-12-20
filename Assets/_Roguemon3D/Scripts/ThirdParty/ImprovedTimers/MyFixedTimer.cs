@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace _Roguemon3D.Scripts.ThirdParty.ImprovedTimers {
     [Serializable]
-    public class FixedCountdownTimer : MyCountdownTimer, IFixedUpdateTimer {
-        public FixedCountdownTimer(float value) : base(value) { }
+    public class MyFixedTimer : MyCountdownTimer, IFixedUpdateTimer {
+        public MyFixedTimer(float value) : base(value) { }
 
         public override void Tick() {
             if (!IsRunning || CurrentTime < 0f) {

@@ -421,8 +421,8 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
                 bool isActive = activePath.Contains(state);
                 bool isLeaf = state == activeLeaf;
                 ActionState actionState = state as ActionState;
-                node.SetRuntimeState(isActive, isLeaf, agent.IsPerformingAction && actionState != null,
-                    actionState?.ActivePhase ?? ExecutionPhase.None);
+                /*node.SetRuntimeState(isActive, isLeaf, agent.IsPerformingAction && actionState != null,
+                    actionState?.ActivePhase ?? ExecutionPhase.None);*/
             }
         }
     }
@@ -478,7 +478,8 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
             ApplyInactiveStyle();
         }
 
-        public void SetRuntimeState(bool isActive, bool isLeaf, bool isAction, ExecutionPhase activePhase)
+        /*
+         public void SetRuntimeState(bool isActive, bool isLeaf, bool isAction, ExecutionPhase activePhase)
         {
             Color background = isLeaf ? leafColor : (isActive ? activeColor : inactiveColor);
             titleContainer.style.backgroundColor = new StyleColor(background);
@@ -490,7 +491,7 @@ namespace _PinBoy.Scripts.Agents.UnityHSM.Editor
             {
                 phaseLabel.text = $"Phase: {activePhase}";
             }
-        }
+        }*/
 
         void ApplyInactiveStyle()
         {

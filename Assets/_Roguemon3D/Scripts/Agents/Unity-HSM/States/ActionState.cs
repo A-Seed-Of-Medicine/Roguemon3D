@@ -10,7 +10,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions
     {
         protected readonly CharacterAction action;
         bool isActive;
-        public ExecutionPhase ActivePhase { get; private set; } = ExecutionPhase.None;
 
         public CharacterAction Action => action;
 
@@ -33,9 +32,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             if (action != null)
             {
                 action.RegisterAnimationListener(HandleAnimationRequestChanged);
-                action.RegisterPhaseListeners(HandlePhaseStarted, HandlePhaseCompleted);
+                //action.RegisterPhaseListeners(HandlePhaseStarted, HandlePhaseCompleted);
                 HandleAnimationRequestChanged(action.GetAnimationRequest());
-                ActivePhase = action.ActivePhase;
+                //ActivePhase = action.ActivePhase;
             }
         }
 
@@ -45,11 +44,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 action.UnregisterAnimationListener(HandleAnimationRequestChanged);
                 action.ResetAnimationRequest();
-                action.UnregisterPhaseListeners(HandlePhaseStarted, HandlePhaseCompleted);
+                //action.UnregisterPhaseListeners(HandlePhaseStarted, HandlePhaseCompleted);
             }
 
             isActive = false;
-            ActivePhase = ExecutionPhase.None;
+            //ActivePhase = ExecutionPhase.None;
             base.OnExit();
         }
 
@@ -100,9 +99,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 return null;
             }
-
-            CharacterAction.PhaseExecution execution = action.GetPhaseExecution(ActivePhase);
-            CharacterAction[] interrupts = execution.Interrupts;
+            
+           /* CharacterAction[] interrupts = execution.Interrupts;
             if (interrupts == null || interrupts.Length == 0)
             {
                 return null;
@@ -115,19 +113,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                     controller.TryConsumeActionState(Parent, out _);
                     return requested;
                 }
-            }
+            }*/
 
             return null;
-        }
-
-        void HandlePhaseStarted(ExecutionPhase phase)
-        {
-            ActivePhase = phase;
-        }
-
-        void HandlePhaseCompleted(ExecutionPhase phase)
-        {
-            ActivePhase = phase;
         }
         
         protected bool IsStunned => controller?.statusHandler?.StunnedStatus?.IsActive ?? false;
