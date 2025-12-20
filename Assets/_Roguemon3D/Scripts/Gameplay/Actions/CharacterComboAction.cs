@@ -140,6 +140,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool multiplyHitStopPerHit = true;
 
             [Header("Animation")]
+            public bool useDefaultAnimationSettings = false;
             public bool usePhaseAnimations;
             public AgentAnimationRequest animation;
             public AgentAnimationRequest windupAnimation;
@@ -152,6 +153,12 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool scaleActiveAnimationToStepDuration;
             public bool scaleRecoveryAnimationToStepDuration;
             public bool overrideAnimationSpeed;
+
+            [Header("Phase FX")]
+            public bool useDefaultPhaseFx = true;
+            [SerializeReference] public PhaseFX[] windupFx = Array.Empty<PhaseFX>();
+            [SerializeReference] public PhaseFX[] activeFx = Array.Empty<PhaseFX>();
+            [SerializeReference] public PhaseFX[] recoveryFx = Array.Empty<PhaseFX>();
 
             [NonSerialized] public float pressDuration;
             [NonSerialized] public float pressDurationNormalized;
@@ -845,9 +852,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             ActionPhaseDurations phaseDurations = BuildPhaseDurations(step);
             PhaseAnimationSettings animationSettings = BuildPhaseAnimationSettings(step);
+            PhaseFxSettings? phaseFx = BuildPhaseFxSettings(step);
             bool autoCompleteWindup = ShouldAutoCompleteWindup(step);
 
-            StartActionPhases(phaseDurations, animationSettings, autoCompleteWindup);
+            StartActionPhases(phaseDurations, animationSettings, autoCompleteWindup, phaseFx);
         }
 
         void ApplyStepPressMetadata(ComboStep step, bool isLongPress, float holdDuration, float holdNormalized)
@@ -869,24 +877,44 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return default;
             }
 
-            return new PhaseAnimationSettings
+            PhaseAnimationSettings settings = step.useDefaultAnimationSettings
+                ? GetDefaultPhaseAnimations()
+                : new PhaseAnimationSettings
+                {
+                    usePhaseAnimations = step.usePhaseAnimations,
+                    defaultAnimation = step.animation,
+                    windupAnimation = step.windupAnimation,
+                    activeAnimation = step.activeAnimation,
+                    recoveryAnimation = step.recoveryAnimation,
+                    animationCrossFade = step.animationCrossFade,
+                    animationSpeedMultiplier = step.animationSpeedMultiplier,
+                    scaleAnimationSpeedToDuration = step.scaleAnimationSpeedToStepDuration,
+                    scaleWindupAnimationToDuration = step.scaleWindupAnimationToStepDuration,
+                    scaleActiveAnimationToDuration = step.scaleActiveAnimationToStepDuration,
+                    scaleRecoveryAnimationToDuration = step.scaleRecoveryAnimationToStepDuration,
+                    overrideAnimationSpeed = step.overrideAnimationSpeed
+                };
+
+            settings.windupDuration = step.windup;
+            settings.activeDuration = step.active;
+            settings.recoveryDuration = step.recovery;
+            settings.totalDuration = step.TotalDuration;
+
+            return settings;
+        }
+
+        PhaseFxSettings? BuildPhaseFxSettings(ComboStep step)
+        {
+            if (step == null || step.useDefaultPhaseFx)
             {
-                usePhaseAnimations = step.usePhaseAnimations,
-                defaultAnimation = step.animation,
-                windupAnimation = step.windupAnimation,
-                activeAnimation = step.activeAnimation,
-                recoveryAnimation = step.recoveryAnimation,
-                animationCrossFade = step.animationCrossFade,
-                animationSpeedMultiplier = step.animationSpeedMultiplier,
-                scaleAnimationSpeedToDuration = step.scaleAnimationSpeedToStepDuration,
-                scaleWindupAnimationToDuration = step.scaleWindupAnimationToStepDuration,
-                scaleActiveAnimationToDuration = step.scaleActiveAnimationToStepDuration,
-                scaleRecoveryAnimationToDuration = step.scaleRecoveryAnimationToStepDuration,
-                overrideAnimationSpeed = step.overrideAnimationSpeed,
-                windupDuration = step.windup,
-                activeDuration = step.active,
-                recoveryDuration = step.recovery,
-                totalDuration = step.TotalDuration
+                return null;
+            }
+
+            return new PhaseFxSettings
+            {
+                WindupFx = step.windupFx,
+                ActiveFx = step.activeFx,
+                RecoveryFx = step.recoveryFx
             };
         }
 

@@ -96,6 +96,29 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public float TotalDuration => Mathf.Max(0f, Windup + Active + Recovery);
         }
 
+        [Serializable]
+        protected struct PhaseFxSettings
+        {
+            public PhaseFX[] WindupFx;
+            public PhaseFX[] ActiveFx;
+            public PhaseFX[] RecoveryFx;
+
+            public PhaseFX[] GetWindup(PhaseFX[] fallback)
+            {
+                return WindupFx ?? fallback ?? Array.Empty<PhaseFX>();
+            }
+
+            public PhaseFX[] GetActive(PhaseFX[] fallback)
+            {
+                return ActiveFx ?? fallback ?? Array.Empty<PhaseFX>();
+            }
+
+            public PhaseFX[] GetRecovery(PhaseFX[] fallback)
+            {
+                return RecoveryFx ?? fallback ?? Array.Empty<PhaseFX>();
+            }
+        }
+
         [Header("Action")]
         public PressBinding binding;
         public UnityAction<bool> actionTrigger;
@@ -148,6 +171,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         bool autoCompleteWindupWithoutDuration = true;
         CharacterAction.ActionPhase _activeActionPhase = CharacterAction.ActionPhase.None;
         readonly Dictionary<ActionPhase, List<IPhaseFxInstance>> runningPhaseFx = new();
+        PhaseFxSettings currentPhaseFx;
 
         public virtual void OnValidate()
         {
@@ -301,17 +325,28 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             return settings;
         }
 
+        protected PhaseFxSettings GetDefaultPhaseFxSettings()
+        {
+            return new PhaseFxSettings
+            {
+                WindupFx = windupFx,
+                ActiveFx = activeFx,
+                RecoveryFx = recoveryFx
+            };
+        }
+
         protected void StartActionPhases(bool completeWindupWhenDurationMissing = true)
         {
             StartActionPhases(defaultPhaseDurations, GetDefaultPhaseAnimations(), completeWindupWhenDurationMissing);
         }
 
         protected void StartActionPhases(ActionPhaseDurations durations, PhaseAnimationSettings animations,
-            bool completeWindupWhenDurationMissing = true)
+            bool completeWindupWhenDurationMissing = true, PhaseFxSettings? fxSettings = null)
         {
             currentPhaseDurations = durations;
             currentPhaseAnimations = animations;
             autoCompleteWindupWithoutDuration = completeWindupWhenDurationMissing;
+            currentPhaseFx = ResolvePhaseFxSettings(fxSettings);
 
             CancelActionPhases(false);
             ResetAnimationRequest();
@@ -543,10 +578,23 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             return phase switch
             {
-                ActionPhase.Windup => windupFx,
-                ActionPhase.Active => activeFx,
-                ActionPhase.Recovery => recoveryFx,
+                ActionPhase.Windup => currentPhaseFx.WindupFx,
+                ActionPhase.Active => currentPhaseFx.ActiveFx,
+                ActionPhase.Recovery => currentPhaseFx.RecoveryFx,
                 _ => Array.Empty<PhaseFX>()
+            };
+        }
+
+        PhaseFxSettings ResolvePhaseFxSettings(PhaseFxSettings? overrides)
+        {
+            PhaseFxSettings defaults = GetDefaultPhaseFxSettings();
+            PhaseFxSettings resolved = overrides ?? defaults;
+
+            return new PhaseFxSettings
+            {
+                WindupFx = resolved.GetWindup(defaults.WindupFx),
+                ActiveFx = resolved.GetActive(defaults.ActiveFx),
+                RecoveryFx = resolved.GetRecovery(defaults.RecoveryFx)
             };
         }
 
