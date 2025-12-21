@@ -29,7 +29,7 @@ MonoBehaviour:
     triggerWhenNoTarget: 0
     allowRepeatedHits: 0
     stunImmune: 0
-    windup: 0.5
+    windup: 3
     chargeWindup: 0
     minimumChargeTime: 0.05
     maximumChargeTime: 0
@@ -53,7 +53,7 @@ MonoBehaviour:
     hitDetectorPositionOffset: {x: 0, y: 0, z: 0.9}
     hitDetectorRotationOffset: {x: 0, y: 0, z: 0}
     fallbackDirection: {x: 0, y: 0, z: 1}
-    graphPosition: {x: 0, y: 0}
+    graphPosition: {x: 412, y: 80}
     transitions:
     - input: 0
       nextStep:
@@ -67,6 +67,7 @@ MonoBehaviour:
     hitStopOnExecute: 0
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
+    useDefaultAnimationSettings: 0
     usePhaseAnimations: 0
     animation:
       directionMode: 2
@@ -135,6 +136,10 @@ MonoBehaviour:
     scaleActiveAnimationToStepDuration: 0
     scaleRecoveryAnimationToStepDuration: 0
     overrideAnimationSpeed: 0
+    useDefaultPhaseFx: 1
+    windupFx: []
+    activeFx: []
+    recoveryFx: []
   - id: step2
     action: {fileID: 11400000, guid: 28204fe25e282f548bd607e7d251579b, type: 2}
     magnitudeMultiplier: 1
@@ -179,6 +184,7 @@ MonoBehaviour:
     hitStopOnExecute: 0
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
+    useDefaultAnimationSettings: 0
     usePhaseAnimations: 0
     animation:
       directionMode: 2
@@ -247,6 +253,10 @@ MonoBehaviour:
     scaleActiveAnimationToStepDuration: 0
     scaleRecoveryAnimationToStepDuration: 0
     overrideAnimationSpeed: 0
+    useDefaultPhaseFx: 1
+    windupFx: []
+    activeFx: []
+    recoveryFx: []
   - id: step3
     action: {fileID: 11400000, guid: 28204fe25e282f548bd607e7d251579b, type: 2}
     magnitudeMultiplier: 1
@@ -291,6 +301,7 @@ MonoBehaviour:
     hitStopOnExecute: 0
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
+    useDefaultAnimationSettings: 0
     usePhaseAnimations: 0
     animation:
       directionMode: 2
@@ -359,3 +370,10 @@ MonoBehaviour:
     scaleActiveAnimationToStepDuration: 0
     scaleRecoveryAnimationToStepDuration: 0
     overrideAnimationSpeed: 0
+    useDefaultPhaseFx: 1
+    windupFx: []
+    activeFx: []
+    recoveryFx: []
+  references:
+    version: 2
+    RefIds: []

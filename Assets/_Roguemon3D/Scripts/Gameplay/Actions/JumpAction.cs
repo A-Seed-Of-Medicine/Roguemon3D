@@ -66,7 +66,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected override void OnActionPressed()
         {
-            if (isJumping || Controller == null)
+            if (IsActionInProgress || Controller == null)
             {
                 return;
             }

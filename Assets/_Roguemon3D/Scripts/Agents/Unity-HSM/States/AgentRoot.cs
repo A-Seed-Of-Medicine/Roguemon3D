@@ -176,7 +176,7 @@ namespace HSM {
             if (controller?.statusHandler?.StunnedStatus?.IsActive ?? false)
                 return ((AgentRoot)Parent.Parent).Stunned;
 
-            if (controller != null && !controller.grounded) return ((AgentRoot)Parent).Airborne;
+            if (controller != null && !controller.grounded) return ((AgentRoot)Parent.Parent).Airborne;
 
             ActionState requested = CheckForRequestedActionState();
             if (requested != null)

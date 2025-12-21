@@ -126,7 +126,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected override void OnActionPressed()
         {
-            if (isDashing)
+            if (IsActionInProgress)
             {
                 if (IsDashWithinPreInputWindowInternal())
                 {

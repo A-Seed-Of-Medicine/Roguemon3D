@@ -54,6 +54,12 @@ namespace HSM {
             OnExit();
         }
         internal void Update(float deltaTime) {
+            if (ActiveChild != null) ActiveChild.Update(deltaTime);
+
+            // If a deeper state already requested a transition, don't evaluate higher levels this frame.
+            if (Machine.Sequencer.IsTransitioning)
+                return;
+            
             State t = GetTransition();
             if (t != null) {
                 if (ActiveChild != null) Machine.Sequencer.RequestTransition(ActiveChild, t);
@@ -61,7 +67,6 @@ namespace HSM {
                 return;
             }
             
-            if (ActiveChild != null) ActiveChild.Update(deltaTime);
             OnUpdate(deltaTime);
         }
         

@@ -360,6 +360,7 @@ MonoBehaviour:
   actionDefinition: {fileID: 11400000, guid: 3164d2070ae92b34c8d7c99506046c40, type: 2}
   actionMagnitude: 1
   skipIfActionInProgress: 1
+  actionInterrupts: []
   defaultAnimationRequest:
     directionMode: 2
     mirrorLeftRight: 0
