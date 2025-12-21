@@ -42,7 +42,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             if (tween.isAlive)
             {
-                tween.Stop();
+                tween.Complete();
             }
         }
     }
@@ -86,10 +86,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField] private Renderer targetRenderer;
         [SerializeField] private Material materialOverride;
         [SerializeField] private string colorProperty = "_Color";
-        [SerializeField] private Color startColor = Color.white;
+        [SerializeField] private Color startColor = Color.clear;
         [SerializeField] private Color targetColor = Color.white;
         [SerializeField] private bool useCurrentAsStart = true;
-        [SerializeField] private Ease ease = Ease.Linear;
+        [SerializeField] private AnimationCurve ease = AnimationCurve.Linear(0f, 0f, 1f, 1f);
 
         protected override IPhaseFxInstance OnPlay(AgentController controller, float duration)
         {

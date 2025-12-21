@@ -67,6 +67,7 @@ MonoBehaviour:
     hitStopOnExecute: 0
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
+    useDefaultAnimationSettings: 0
     usePhaseAnimations: 1
     animation:
       directionMode: 0
@@ -135,6 +136,10 @@ MonoBehaviour:
     scaleActiveAnimationToStepDuration: 1
     scaleRecoveryAnimationToStepDuration: 1
     overrideAnimationSpeed: 0
+    useDefaultPhaseFx: 1
+    windupFx: []
+    activeFx: []
+    recoveryFx: []
   - id: shoot
     action: {fileID: 11400000, guid: 3c058fe33f6cfc049b98c3c29afe5ebd, type: 2}
     magnitudeMultiplier: 1
@@ -175,18 +180,11 @@ MonoBehaviour:
       longPress: 0
       longPressMinThreshold: 0.35
       longPressMaxThreshold: 1
-    - input: 0
-      nextStep:
-        stepIndex: 0
-      queueUntilWindow: 0
-      transitionDelay: 0
-      longPress: 0
-      longPressMinThreshold: 0.35
-      longPressMaxThreshold: 1
     vfx: {fileID: 0}
     hitStopOnExecute: 0
     hitStopOnHit: 0
     multiplyHitStopPerHit: 1
+    useDefaultAnimationSettings: 0
     usePhaseAnimations: 1
     animation:
       directionMode: 0
@@ -255,3 +253,10 @@ MonoBehaviour:
     scaleActiveAnimationToStepDuration: 1
     scaleRecoveryAnimationToStepDuration: 1
     overrideAnimationSpeed: 0
+    useDefaultPhaseFx: 1
+    windupFx: []
+    activeFx: []
+    recoveryFx: []
+  references:
+    version: 2
+    RefIds: []

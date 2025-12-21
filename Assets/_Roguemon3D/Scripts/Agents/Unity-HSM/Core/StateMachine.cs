@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace HSM {
     public class StateMachine {
@@ -29,7 +30,6 @@ namespace HSM {
         // Perform the actual switch from 'from' to 'to' by exiting up to the shared ancestor, then entering down to the target.
         public void ChangeState(State from, State to) {
             if (from == to || from == null || to == null) return;
-            
             State lca = TransitionSequencer.Lca(from, to);
             
             // Exit current branch up to (but not including) LCA

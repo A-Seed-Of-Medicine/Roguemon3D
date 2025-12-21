@@ -45,6 +45,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             if (action != null)
             {
+                action.CancelActionPhases(false);
                 action.UnregisterAnimationListener(HandleAnimationRequestChanged);
                 action.ResetAnimationRequest();
                 action.phaseStarted -= HandlePhaseStarted;
@@ -118,20 +119,19 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 return null;
             }
             
-           /* CharacterAction[] interrupts = execution.Interrupts;
-            if (interrupts == null || interrupts.Length == 0)
+            if (action.actionInterrupts == null || action.actionInterrupts.Length == 0)
             {
                 return null;
             }
 
-            foreach (CharacterAction interrupt in interrupts)
+            foreach (CharacterAction interrupt in action.actionInterrupts)
             {
                 if (interrupt == requested.Action)
                 {
                     controller.TryConsumeActionState(Parent, out _);
                     return requested;
                 }
-            }*/
+            }
 
             return null;
         }

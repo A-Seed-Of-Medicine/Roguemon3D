@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using _PinBoy.Scripts.CharacterMovement;
 using Cysharp.Threading.Tasks;
+using HSM;
 using UnityEngine;
 
 namespace _PinBoy.Scripts.Gameplay.Actions
@@ -279,6 +280,48 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             public bool BodyKinematic;
             public bool MovementLocked;
             public Vector3 StoredVelocity;
+        }
+        
+        protected override ActionState CreateActionExecuteState(AgentRoot root)
+        {
+            if (Controller == null || root == null)
+                return null;
+
+            JumpState state = new JumpState(Controller, root.Machine, root, this, root.Grounded);
+            return state;
+        }
+    }
+    
+    sealed class JumpState : ActionState
+    {
+        readonly JumpAction jumpAction;
+
+        public JumpState(AgentController controller, StateMachine machine, AgentRoot root, JumpAction jumpAction, AgentState parent)
+            : base(controller, machine, root, jumpAction, parent)
+        {
+            this.jumpAction = jumpAction;
+            parent.RegisterDynamicChild(this);
+        }
+
+        protected override State GetTransition()
+        {
+            if (IsStunned)
+            {
+                return AgentRoot.Stunned;
+            }
+
+            ActionState interrupt = CheckForRequestedActionInterrupt();
+            if (interrupt != null)
+            {
+                return interrupt;
+            }
+
+            if (!jumpAction.IsActionInProgress)
+            {
+                return GetLocomotionState();
+            }
+
+            return null;
         }
     }
 }

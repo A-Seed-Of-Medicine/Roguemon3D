@@ -1946,6 +1946,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             : base(controller, machine, root, comboAction, parent)
         {
             this.comboAction = comboAction;
+            parent.RegisterDynamicChild(this);
         }
 
         protected override State GetTransition()

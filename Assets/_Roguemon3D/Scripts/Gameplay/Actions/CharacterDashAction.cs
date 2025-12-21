@@ -410,6 +410,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             : base(controller, machine, root, dashAction, parent)
         {
             this.dashAction = dashAction;
+            parent.RegisterDynamicChild(this);
         }
 
         protected override State GetTransition()

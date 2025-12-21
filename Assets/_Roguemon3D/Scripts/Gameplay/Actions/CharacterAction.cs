@@ -125,6 +125,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [SerializeField] protected AgentActionDefinition actionDefinition;
         [SerializeField, Min(0f)] protected float actionMagnitude = 1f;
         [SerializeField] protected bool skipIfActionInProgress = true;
+        public CharacterAction[] actionInterrupts = Array.Empty<CharacterAction>();
+        
         [Header("Animation")]
         [SerializeField] private AgentAnimationRequest defaultAnimationRequest;
 
@@ -357,7 +359,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         internal bool IsActionInProgress => IsAnyPhaseRunning;
 
-        protected void CancelActionPhases(bool notify = true)
+        public void CancelActionPhases(bool notify = true)
         {
             windupTimer?.Cancel();
             activeTimer?.Cancel();
@@ -368,13 +370,13 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 OnPhaseCancelled(currentPhase);
             }
 
-            if (_activeActionPhase != CharacterAction.ActionPhase.None)
+            if (_activeActionPhase != ActionPhase.None)
             {
                 phaseEnded?.Invoke(_activeActionPhase);
             }
 
             currentPhase = ActionPhase.None;
-            SetActiveExecutionPhase(CharacterAction.ActionPhase.None);
+            SetActiveExecutionPhase(ActionPhase.None);
             StopAllPhaseFx();
         }
 
@@ -719,6 +721,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected virtual void OnPhaseCancelled(ActionPhase phase)
         {
+            
         }
 
         protected virtual void OnPhasesCompleted()
