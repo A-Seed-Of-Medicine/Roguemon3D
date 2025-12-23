@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_CustomLightingURP
+  m_Name: M_GroundStones
   m_Shader: {fileID: -6465566751694194690, guid: 3f4139e4e412e5e46913d7203807aebc, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -33,16 +33,16 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: 
+  m_LockedProperties: _Metallic
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
+        m_Texture: {fileID: 2800000, guid: 4ff4f90c4a7724d46b0184c28f65612f, type: 3}
+        m_Scale: {x: 3, y: 1.92}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 0d0edc7f474949a4b910e5e4d412a78f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
@@ -50,7 +50,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _HilightTex:
-        m_Texture: {fileID: 2800000, guid: a1d44e7d81858eb4a98f092b5136c473, type: 3}
+        m_Texture: {fileID: 2800000, guid: be062204c42a8734da8cf9146818f8d4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -79,13 +79,14 @@ Material:
     - _CellShade: 1
     - _Clamp: 0.78
     - _EMISSION: 0
-    - _Float: 1.22
-    - _HilightClamp: 0.8
-    - _HilightIntensity: 0.56
-    - _HilightPosturize: 13.47
+    - _Float: 22.17
+    - _HighlightIntensityAtten: 1
+    - _HilightClamp: 0.82
+    - _HilightIntensity: 24.36
+    - _HilightPosturize: 19.57
     - _HilightRotation: 0
-    - _HilightSize: 8.59
-    - _HilightSizeAttenuation: 0.89
+    - _HilightSize: 0.15
+    - _HilightSizeAttenuation: 1
     - _InvertHilight: 1
     - _METALLICSPECGLOSSMAP: 0
     - _Metallic: 0
@@ -100,12 +101,12 @@ Material:
     - _ShadowRotation: 45
     - _ShadowSize: 3.57
     - _Size: 3.6
-    - _Smoothness: 0.5
+    - _Smoothness: 0
     - _SmoothnessTextureChannel: 0
     - _Steps: 12.53
     m_Colors:
-    - _BaseColor: {r: 0.21698111, g: 0.21698111, b: 0.21698111, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _HilightColor: {r: 3.9533496, g: 3.9533496, b: 3.9533496, a: 1}
+    - _HilightColor: {r: 5.278032, g: 5.278032, b: 5.278032, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

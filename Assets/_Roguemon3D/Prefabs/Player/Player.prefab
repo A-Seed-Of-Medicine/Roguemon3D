@@ -263,6 +263,7 @@ MonoBehaviour:
   actionDefinition: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
   actionMagnitude: 1
   skipIfActionInProgress: 1
+  actionInterrupts: []
   defaultAnimationRequest:
     directionMode: 0
     mirrorLeftRight: 0
@@ -355,9 +356,15 @@ MonoBehaviour:
     activeDuration: 0
     recoveryDuration: 0
     totalDuration: 0
+  windupFx: []
+  activeFx: []
+  recoveryFx: []
   <Controller>k__BackingField: {fileID: 5281150600340613872}
   comboDefinition: {fileID: 11400000, guid: 13914a94b4f9b0c48bf77dec38255389, type: 2}
   overrideMovementProfile: {fileID: 0}
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &724318794685187200
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -374,6 +381,7 @@ MonoBehaviour:
   actionDefinition: {fileID: 0}
   actionMagnitude: 1
   skipIfActionInProgress: 1
+  actionInterrupts: []
   defaultAnimationRequest:
     directionMode: 0
     mirrorLeftRight: 0
@@ -391,7 +399,7 @@ MonoBehaviour:
     overrideSpeed: 0
   defaultPhaseDurations:
     Windup: 0
-    Active: 0
+    Active: 0.15
     Recovery: 0
   defaultPhaseAnimations:
     usePhaseAnimations: 0
@@ -466,6 +474,9 @@ MonoBehaviour:
     activeDuration: 0
     recoveryDuration: 0
     totalDuration: 0
+  windupFx: []
+  activeFx: []
+  recoveryFx: []
   <Controller>k__BackingField: {fileID: 5281150600340613872}
   dashDistance: 20
   dashCooldown: 0.5
@@ -501,6 +512,9 @@ MonoBehaviour:
   dashChainPostInputTolerance: 0.2
   dashQueueDuration: 0
   dashCache: {x: 0, y: 0, z: 0}
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &6209621729777210589
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -20,6 +20,12 @@
         },
         {
             "m_Id": "530285f154954276b3f6245bbd29e947"
+        },
+        {
+            "m_Id": "b91ef67caa824ff9aa898177f1457899"
+        },
+        {
+            "m_Id": "ba5d507c17b342a4997d7eda28eff853"
         }
     ],
     "m_Keywords": [],
@@ -68,6 +74,12 @@
         },
         {
             "m_Id": "c15512235d2f46b4b03bc2c4a1be229d"
+        },
+        {
+            "m_Id": "6ad10a289ffe4907b3a7cf13b2d1f126"
+        },
+        {
+            "m_Id": "9ffc4a1b52a746689f90b30764a1b195"
         }
     ],
     "m_GroupDatas": [],
@@ -150,6 +162,20 @@
         {
             "m_OutputSlot": {
                 "m_Node": {
+                    "m_Id": "6ad10a289ffe4907b3a7cf13b2d1f126"
+                },
+                "m_SlotId": 0
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "af7e463337fa464994ef4fefeb1ef2b0"
+                },
+                "m_SlotId": 13
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
                     "m_Id": "7c168e0b18c646368f6d37ae73c66db0"
                 },
                 "m_SlotId": 0
@@ -173,6 +199,20 @@
                     "m_Id": "af7e463337fa464994ef4fefeb1ef2b0"
                 },
                 "m_SlotId": 3
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
+                    "m_Id": "9ffc4a1b52a746689f90b30764a1b195"
+                },
+                "m_SlotId": 0
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "af7e463337fa464994ef4fefeb1ef2b0"
+                },
+                "m_SlotId": 14
             }
         },
         {
@@ -229,6 +269,20 @@
                     "m_Id": "f60afd3e2b9848c6a7c34ee429cc7a64"
                 },
                 "m_SlotId": 3
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
+                    "m_Id": "af7e463337fa464994ef4fefeb1ef2b0"
+                },
+                "m_SlotId": 12
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "f60afd3e2b9848c6a7c34ee429cc7a64"
+                },
+                "m_SlotId": 4
             }
         },
         {
@@ -328,6 +382,29 @@
     "m_SlotType": 0,
     "m_Hidden": false,
     "m_ShaderOutputName": "Specular",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
+    "m_ObjectId": "0309967a28e2442b8c345305084f4014",
+    "m_Id": 4,
+    "m_DisplayName": "AdditionalLightColor",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "AdditionalLightColor",
     "m_StageCapability": 3,
     "m_Value": {
         "x": 0.0,
@@ -462,6 +539,20 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.BooleanMaterialSlot",
+    "m_ObjectId": "1ebfffafcda84cf18de9f9dc6849c3ba",
+    "m_Id": 13,
+    "m_DisplayName": "TwoSidedLighting",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "TwoSidedLighting",
+    "m_StageCapability": 3,
+    "m_Value": false,
+    "m_DefaultValue": false
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
     "m_ObjectId": "2513193f41b14b61a4eea5d0e24f5c54",
     "m_Id": 10,
@@ -586,6 +677,10 @@
     "m_Value": 0.0,
     "m_FloatType": 0,
     "m_LiteralFloatMode": false,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    },
     "m_SliderType": 0,
     "m_SliderPower": 3.0,
     "m_EnumType": 0,
@@ -732,6 +827,42 @@
 }
 
 {
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
+    "m_ObjectId": "6ad10a289ffe4907b3a7cf13b2d1f126",
+    "m_Group": {
+        "m_Id": ""
+    },
+    "m_Name": "Property",
+    "m_DrawState": {
+        "m_Expanded": true,
+        "m_Position": {
+            "serializedVersion": "2",
+            "x": -359.0,
+            "y": 398.0,
+            "width": 0.0,
+            "height": 0.0
+        }
+    },
+    "m_Slots": [
+        {
+            "m_Id": "725a0b3dcd7b42ccb1de987e0b04acbf"
+        }
+    ],
+    "synonyms": [],
+    "m_Precision": 0,
+    "m_PreviewExpanded": true,
+    "m_DismissedVersion": 0,
+    "m_PreviewMode": 0,
+    "m_CustomColors": {
+        "m_SerializableColors": []
+    },
+    "m_Property": {
+        "m_Id": "b91ef67caa824ff9aa898177f1457899"
+    }
+}
+
+{
     "m_SGVersion": 1,
     "m_Type": "UnityEditor.ShaderGraph.Internal.Vector3ShaderProperty",
     "m_ObjectId": "70cbf5ac6da04bf6bd87eb71ccb7c48d",
@@ -762,6 +893,20 @@
         "z": 0.0,
         "w": 0.0
     }
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.BooleanMaterialSlot",
+    "m_ObjectId": "725a0b3dcd7b42ccb1de987e0b04acbf",
+    "m_Id": 0,
+    "m_DisplayName": "TwoSidedLighting",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "Out",
+    "m_StageCapability": 3,
+    "m_Value": false,
+    "m_DefaultValue": false
 }
 
 {
@@ -817,6 +962,10 @@
     "m_Value": 0.0,
     "m_FloatType": 0,
     "m_LiteralFloatMode": false,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    },
     "m_SliderType": 0,
     "m_SliderPower": 3.0,
     "m_EnumType": 0,
@@ -897,6 +1046,45 @@
         "z": 0.0,
         "w": 0.0
     }
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
+    "m_ObjectId": "823fadb79b314a49a974cceac42d82e9",
+    "m_Id": 12,
+    "m_DisplayName": "LightColor",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "LightColor",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
+    "m_ObjectId": "84f9be966ac84933a63e22f7dc45f0a6",
+    "m_Id": 0,
+    "m_DisplayName": "WrapAmount",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "Out",
+    "m_StageCapability": 3,
+    "m_Value": 0.0,
+    "m_DefaultValue": 0.0,
+    "m_Labels": [],
+    "m_LiteralMode": false
 }
 
 {
@@ -1022,6 +1210,42 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
+    "m_ObjectId": "9ffc4a1b52a746689f90b30764a1b195",
+    "m_Group": {
+        "m_Id": ""
+    },
+    "m_Name": "Property",
+    "m_DrawState": {
+        "m_Expanded": true,
+        "m_Position": {
+            "serializedVersion": "2",
+            "x": -728.0000610351563,
+            "y": 424.0000305175781,
+            "width": 143.0,
+            "height": 34.0
+        }
+    },
+    "m_Slots": [
+        {
+            "m_Id": "84f9be966ac84933a63e22f7dc45f0a6"
+        }
+    ],
+    "synonyms": [],
+    "m_Precision": 0,
+    "m_PreviewExpanded": true,
+    "m_DismissedVersion": 0,
+    "m_PreviewMode": 0,
+    "m_CustomColors": {
+        "m_SerializableColors": []
+    },
+    "m_Property": {
+        "m_Id": "ba5d507c17b342a4997d7eda28eff853"
+    }
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
     "m_ObjectId": "a20bd994a61349b183b292f543a94b52",
     "m_Id": 7,
@@ -1059,6 +1283,12 @@
         },
         {
             "m_Id": "530285f154954276b3f6245bbd29e947"
+        },
+        {
+            "m_Id": "b91ef67caa824ff9aa898177f1457899"
+        },
+        {
+            "m_Id": "ba5d507c17b342a4997d7eda28eff853"
         }
     ]
 }
@@ -1142,6 +1372,18 @@
     },
     "m_Slots": [
         {
+            "m_Id": "a20bd994a61349b183b292f543a94b52"
+        },
+        {
+            "m_Id": "2c54247b66954edd8e2688422b8f35d1"
+        },
+        {
+            "m_Id": "ac75252a30af458fbdb93d43e98ae814"
+        },
+        {
+            "m_Id": "823fadb79b314a49a974cceac42d82e9"
+        },
+        {
             "m_Id": "cb9ea527355b4619b23e3db2f18ec7b3"
         },
         {
@@ -1169,13 +1411,10 @@
             "m_Id": "8ce60e001a9b4abca30cc839ef6723dd"
         },
         {
-            "m_Id": "a20bd994a61349b183b292f543a94b52"
+            "m_Id": "1ebfffafcda84cf18de9f9dc6849c3ba"
         },
         {
-            "m_Id": "2c54247b66954edd8e2688422b8f35d1"
-        },
-        {
-            "m_Id": "ac75252a30af458fbdb93d43e98ae814"
+            "m_Id": "ed6138dbea6d4371b5c9480843830c08"
         }
     ],
     "synonyms": [
@@ -1193,7 +1432,7 @@
     "m_FunctionName": "AddAdditionalLights",
     "m_FunctionSource": "3beadf505dbc54f4cae878435013d751",
     "m_FunctionSourceUsePragmas": true,
-    "m_FunctionBody": "Diffuse = MainDiffuse;\nSpecular = MainSpecular;\nColor = MainColor * (MainDiffuse + MainSpecular);\n\n#ifndef SHADERGRAPH_PREVIEW\n    \n    uint pixelLightCount = GetAdditionalLightsCount();\n    half Roughness = pow(1 - Smoothness, 2);\n    half Roughness2 = Roughness * Roughness;\n\thalf Roughness2Minus1 = Roughness2 - 1;\n\thalf normalizationTerm = (Roughness * half(4.0) + half(2.0));\n\n#if USE_CLUSTER_LIGHT_LOOP\n    // for Forward+ LIGHT_LOOP_BEGIN macro uses inputData.normalizedScreenSpaceUV and inputData.positionWS\n    InputData inputData = (InputData)0;\n\n    inputData.normalizedScreenSpaceUV = ScreenPosition;\n    inputData.positionWS = WorldPosition;\n#endif\n\n    LIGHT_LOOP_BEGIN(pixelLightCount)\n\t\t#if !USE_CLUSTER_LIGHT_LOOP\n\t\t\tlightIndex = GetPerObjectLightIndex(lightIndex);\n\t\t#endif\n\n\t\tLight light = GetAdditionalPerObjectLight(lightIndex, WorldPosition);\n\t\tlight.shadowAttenuation = AdditionalLightRealtimeShadow(lightIndex, WorldPosition, light.direction);\n\n        #if defined(_LIGHT_COOKIES)\n            float3 cookieColor = SampleAdditionalLightCookie(lightIndex, WorldPosition);\n            light.color *= cookieColor;\n        #endif\n\n        // Two-sided lighting: include normals and inverted normals\n        float3 N = float3(WorldNormal);\n        float3 L = float3(light.direction);\n        float  NdotL = saturate(abs(dot(N, L)));   // was: saturate(dot(WorldNormal, light.direction))\n\n        float atten = light.distanceAttenuation * light.shadowAttenuation;\n        float thisDiffuse = NdotL * atten;\n\n        // DirectBRDFSpecular\n        float3 V = float3(WorldView);\n        float3 halfDir = SafeNormalize(L + V);\n        float  NoH = saturate(abs(dot(N, halfDir)));  // was: saturate(dot(WorldNormal, halfDir))\n        half   LoH = half(saturate(dot(L, halfDir)));\n\n        float d = NoH * NoH * Roughness2Minus1 + 1.00001f;\n        half  LoH2 = LoH * LoH;\n        half  spec = Roughness2 / ((d * d) * max(0.1h, LoH2) * normalizationTerm);\n        #if REAL_IS_HALF\n            spec = spec - HALF_MIN;\n            spec = clamp(spec, 0.0, 1000.0);\n        #endif\t\t\n\n        float3 thisSpecular = spec * Reflectance * NdotL * atten;\n\n        Diffuse += thisDiffuse;\n        Specular += thisSpecular;\n        Color += light.color * (thisDiffuse + thisSpecular);\n\n    LIGHT_LOOP_END\n\n    float total = Diffuse + dot(Specular, float3(0.333, 0.333, 0.333));\n    Color = total <= 0 ? MainColor : Color / total;\n#endif\n"
+    "m_FunctionBody": "// Existing outputs\nDiffuse  = MainDiffuse;\nSpecular = MainSpecular;\nColor    = MainColor * (MainDiffuse + MainSpecular);\n\n// Output port on the Custom Function node\nLightColor = MainColor; // preview/default\n\n#ifndef SHADERGRAPH_PREVIEW\n\n    // Change #1: stable normalization near zero\n    const float EPS = 1e-3;\n\n    // Change #3: attenuation-weighted additional-lights-only light color\n    float3 AdditionalColorAccum  = 0.0;\n    float  AdditionalWeightAccum = 0.0;\n\n    uint pixelLightCount = GetAdditionalLightsCount();\n\n    half Roughness = pow(1 - Smoothness, 2);\n    half Roughness2 = Roughness * Roughness;\n    half Roughness2Minus1 = Roughness2 - 1;\n    half normalizationTerm = (Roughness * half(4.0) + half(2.0));\n\n#if USE_CLUSTER_LIGHT_LOOP\n    InputData inputData = (InputData)0;\n    inputData.normalizedScreenSpaceUV = ScreenPosition;\n    inputData.positionWS = WorldPosition;\n#endif\n\n    // Boolean input parameter (Shader Graph Boolean port):\n    // true  = double-sided lighting\n    // false = typical URP lighting\n    bool twoSided = TwoSidedLighting;\n\n    // Float input parameter (Vector1 port), only used when twoSided == true\n    // recommended range [0..1]\n    float w = clamp(WrapAmount, 0.0, 1.0);\n\n    LIGHT_LOOP_BEGIN(pixelLightCount)\n        #if !USE_CLUSTER_LIGHT_LOOP\n            lightIndex = GetPerObjectLightIndex(lightIndex);\n        #endif\n\n        Light light = GetAdditionalPerObjectLight(lightIndex, WorldPosition);\n        light.shadowAttenuation = AdditionalLightRealtimeShadow(lightIndex, WorldPosition, light.direction);\n\n        #if defined(_LIGHT_COOKIES)\n            float3 cookieColor = SampleAdditionalLightCookie(lightIndex, WorldPosition);\n            light.color *= cookieColor;\n        #endif\n\n        float3 N = float3(WorldNormal);\n        float3 L = float3(light.direction);\n\n        float atten = light.distanceAttenuation * light.shadowAttenuation;\n\n        // Change #2: wrap/bias N·L (only in two-sided mode to solve overhead dead-zone)\n        float ndlRaw = dot(N, L);\n        float NdotL  = twoSided ? abs(ndlRaw) : saturate(ndlRaw);\n\n        if (twoSided)\n        {\n            // wrapped lighting: prevents NdotL from going to 0 at perpendicular angles\n            NdotL = saturate((NdotL + w) / (1.0 + w));\n        }\n\n        float thisDiffuse = NdotL * atten;\n\n        // DirectBRDFSpecular (two-sided toggle for NoH)\n        float3 V = float3(WorldView);\n        float3 halfDir = SafeNormalize(L + V);\n\n        float NoHraw = dot(N, halfDir);\n        float NoH = twoSided ? saturate(abs(NoHraw)) : saturate(NoHraw);\n        half  LoH = half(saturate(dot(L, halfDir)));\n\n        float d = NoH * NoH * Roughness2Minus1 + 1.00001f;\n        half  LoH2 = LoH * LoH;\n        half  spec = Roughness2 / ((d * d) * max(0.1h, LoH2) * normalizationTerm);\n        #if REAL_IS_HALF\n            spec = spec - HALF_MIN;\n            spec = clamp(spec, 0.0, 1000.0);\n        #endif\n\n        float3 thisSpecular = spec * Reflectance * NdotL * atten;\n\n        // Existing accumulation (main + additional)\n        Diffuse  += thisDiffuse;\n        Specular += thisSpecular;\n        Color    += light.color * (thisDiffuse + thisSpecular);\n\n        // Change #3: LightColor accumulation (attenuation-weighted; independent of NdotL)\n        AdditionalColorAccum  += light.color * atten;\n        AdditionalWeightAccum += atten;\n\n    LIGHT_LOOP_END\n\n    // Change #1: epsilon-clamped normalization\n    float total = Diffuse + dot(Specular, float3(0.333, 0.333, 0.333));\n    Color = (total <= EPS) ? MainColor : (Color / total);\n\n    // Change #1 + #3: epsilon-clamped LightColor output\n    LightColor = (AdditionalWeightAccum <= EPS) ? float3(0,0,0) : (AdditionalColorAccum / AdditionalWeightAccum);\n\n#endif\n"
 }
 
 {
@@ -1233,6 +1472,34 @@
     "m_DefaultValue": 0.0,
     "m_Labels": [],
     "m_LiteralMode": false
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.BooleanShaderProperty",
+    "m_ObjectId": "b91ef67caa824ff9aa898177f1457899",
+    "m_Guid": {
+        "m_GuidSerialized": "1b550771-6759-4d87-8015-965aa58470cc"
+    },
+    "promotedFromAssetID": "97b36dcc0c1df064bab3b4b47d231089",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
+    "m_Name": "TwoSidedLighting",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "TwoSidedLighting",
+    "m_DefaultReferenceName": "_TwoSidedLighting",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_PerRendererData": false,
+    "m_customAttributes": [],
+    "m_Value": true
 }
 
 {
@@ -1292,6 +1559,50 @@
     "m_Property": {
         "m_Id": "3c49dbf5eca648f799f5b531726c7ec8"
     }
+}
+
+{
+    "m_SGVersion": 1,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Vector1ShaderProperty",
+    "m_ObjectId": "ba5d507c17b342a4997d7eda28eff853",
+    "m_Guid": {
+        "m_GuidSerialized": "6fd69dfd-a5d6-4d9f-b2a3-f9d103cf2aca"
+    },
+    "promotedFromAssetID": "97b36dcc0c1df064bab3b4b47d231089",
+    "promotedFromCategoryName": "",
+    "promotedOrdering": -1,
+    "m_Name": "WrapAmount",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "WrapAmount",
+    "m_DefaultReferenceName": "_WrapAmount",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_DismissedVersion": 0,
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 0,
+    "m_Hidden": false,
+    "m_PerRendererData": false,
+    "m_customAttributes": [],
+    "m_Value": 0.5,
+    "m_FloatType": 1,
+    "m_LiteralFloatMode": false,
+    "m_RangeValues": {
+        "x": 0.0,
+        "y": 1.0
+    },
+    "m_SliderType": 0,
+    "m_SliderPower": 3.0,
+    "m_EnumType": 0,
+    "m_CSharpEnumString": "",
+    "m_EnumNames": [
+        "Default"
+    ],
+    "m_EnumValues": [
+        0
+    ]
 }
 
 {
@@ -1470,7 +1781,7 @@
     "m_Type": "UnityEditor.ShaderGraph.StickyNoteData",
     "m_ObjectId": "e0cb7ba40e0940709b8dd5a2869d4b94",
     "m_Title": "",
-    "m_Content": "Additional lights are only possible to calculate in code because they require a loop - which can't be done in the Shader Graph UI - so we use a Custom Function node for them.",
+    "m_Content": "Lights on both sides\n",
     "m_TextSize": 0,
     "m_Theme": 0,
     "m_Position": {
@@ -1568,6 +1879,22 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
+    "m_ObjectId": "ed6138dbea6d4371b5c9480843830c08",
+    "m_Id": 14,
+    "m_DisplayName": "WrapAmount",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "WrapAmount",
+    "m_StageCapability": 3,
+    "m_Value": 0.0,
+    "m_DefaultValue": 0.0,
+    "m_Labels": [],
+    "m_LiteralMode": false
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
     "m_ObjectId": "eea8eda455d44ae7b30c65f80baac806",
     "m_Group": {
@@ -1637,10 +1964,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 0.0,
-            "height": 0.0
+            "x": 18.000011444091798,
+            "y": -0.0000021457672119140627,
+            "width": 160.9999542236328,
+            "height": 148.99998474121095
         }
     },
     "m_Slots": [
@@ -1652,6 +1979,9 @@
         },
         {
             "m_Id": "b9b50f20cbb5424ba1de7ea840dd331a"
+        },
+        {
+            "m_Id": "0309967a28e2442b8c345305084f4014"
         }
     ],
     "synonyms": [],

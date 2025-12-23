@@ -15,8 +15,8 @@ TagManager:
   - 2.5D
   - Unit
   - BehindUnit
-  - 
-  - 
+  - FloorMask
+  - OverFloor
   - 
   - 
   - 
@@ -45,7 +45,7 @@ TagManager:
   m_RenderingLayers:
   - Default
   - HitIndicators
-  - Light Layer 2
+  - RecieveDecals
   - Light Layer 3
   - Light Layer 4
   - Light Layer 5

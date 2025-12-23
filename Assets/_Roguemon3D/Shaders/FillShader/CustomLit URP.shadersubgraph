@@ -446,6 +446,20 @@
         {
             "m_OutputSlot": {
                 "m_Node": {
+                    "m_Id": "a89ba1fec34a4a1483bdf64a59d298ca"
+                },
+                "m_SlotId": 4
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "3dea70c056684beda1038dca836ff4ca"
+                },
+                "m_SlotId": 4
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
                     "m_Id": "b522b61b85ff4ecbb0eb63cff689f5cb"
                 },
                 "m_SlotId": 0
@@ -951,6 +965,29 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
+    "m_ObjectId": "378b7edc89a749cc8fdda2c6a930acdc",
+    "m_Id": 4,
+    "m_DisplayName": "AdditionalLightColor",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "AdditionalLightColor",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.PropertyNode",
     "m_ObjectId": "383a017d83a8420dac016260bc833f58",
     "m_Group": {
@@ -1067,6 +1104,9 @@
         },
         {
             "m_Id": "3cdf0909d76a4950af66fd6e74327f93"
+        },
+        {
+            "m_Id": "e8159a22694f4bffbb9c79880e70110a"
         }
     ],
     "synonyms": [],
@@ -1901,6 +1941,9 @@
         },
         {
             "m_Id": "278a6dbd3f6245b79a44c559ba111882"
+        },
+        {
+            "m_Id": "378b7edc89a749cc8fdda2c6a930acdc"
         }
     ],
     "synonyms": [],
@@ -2355,6 +2398,29 @@
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "m_Labels": []
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
+    "m_ObjectId": "e8159a22694f4bffbb9c79880e70110a",
+    "m_Id": 4,
+    "m_DisplayName": "AdditionalLightColor",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "AdditionalLightColor",
     "m_StageCapability": 3,
     "m_Value": {
         "x": 0.0,

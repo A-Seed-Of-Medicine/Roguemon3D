@@ -271,6 +271,7 @@ MonoBehaviour:
   actionDefinition: {fileID: 11400000, guid: 3164d2070ae92b34c8d7c99506046c40, type: 2}
   actionMagnitude: 1
   skipIfActionInProgress: 1
+  actionInterrupts: []
   defaultAnimationRequest:
     directionMode: 0
     mirrorLeftRight: 1
@@ -363,9 +364,15 @@ MonoBehaviour:
     activeDuration: 0
     recoveryDuration: 0
     totalDuration: 0
+  windupFx: []
+  activeFx: []
+  recoveryFx: []
   <Controller>k__BackingField: {fileID: 941551738761022137}
   comboDefinition: {fileID: 11400000, guid: 719759d9b8ac0964ba9e4c8f066cfcb8, type: 2}
   overrideMovementProfile: {fileID: 0}
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &1900401294623219668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -382,6 +389,7 @@ MonoBehaviour:
   actionDefinition: {fileID: 0}
   actionMagnitude: 1
   skipIfActionInProgress: 1
+  actionInterrupts: []
   defaultAnimationRequest:
     directionMode: 0
     mirrorLeftRight: 0
@@ -474,6 +482,9 @@ MonoBehaviour:
     activeDuration: 0
     recoveryDuration: 0
     totalDuration: 0
+  windupFx: []
+  activeFx: []
+  recoveryFx: []
   <Controller>k__BackingField: {fileID: 941551738761022137}
   defaultSpawnPoint: {fileID: 0}
   defaultPositionOffset: {x: 0, y: 0, z: 0}
@@ -496,6 +507,9 @@ MonoBehaviour:
       m_Calls: []
   aimDistance: 0
   aimLineRenderer: {fileID: 0}
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &3626789424898377726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -512,6 +526,7 @@ MonoBehaviour:
   actionDefinition: {fileID: 0}
   actionMagnitude: 1
   skipIfActionInProgress: 1
+  actionInterrupts: []
   defaultAnimationRequest:
     directionMode: 0
     mirrorLeftRight: 0
@@ -528,7 +543,7 @@ MonoBehaviour:
     playbackSpeed: 0
     overrideSpeed: 0
   defaultPhaseDurations:
-    Windup: 0.5
+    Windup: 1
     Active: 0.5
     Recovery: 0
   defaultPhaseAnimations:
@@ -604,6 +619,11 @@ MonoBehaviour:
     activeDuration: 0
     recoveryDuration: 0
     totalDuration: 0
+  windupFx:
+  - rid: 4875902429157654776
+  - rid: 4875902429157654780
+  activeFx: []
+  recoveryFx: []
   <Controller>k__BackingField: {fileID: 941551738761022137}
   arcDistance: 4
   arcHeight: 2
@@ -674,6 +694,75 @@ MonoBehaviour:
   restoreVelocityOnComplete: 0
   maxDirectionOffset: 45
   directionalOffset: 180
+  references:
+    version: 2
+    RefIds:
+    - rid: 4875902429157654776
+      type: {class: ShakePhaseFX, ns: _PinBoy.Scripts.Gameplay.Actions, asm: Assembly-CSharp}
+      data:
+        enabled: 1
+        target: {fileID: 0}
+        shakeTarget: 0
+        strengthOverTime:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 2
+            outSlope: 2
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        strength: {x: 0.1, y: 0.1, z: 0.1}
+        frequency: 30
+    - rid: 4875902429157654780
+      type: {class: MaterialColorPhaseFX, ns: _PinBoy.Scripts.Gameplay.Actions, asm: Assembly-CSharp}
+      data:
+        enabled: 1
+        targetRenderer: {fileID: 0}
+        materialOverride: {fileID: 0}
+        colorProperty: _Color
+        startColor: {r: 0, g: 0, b: 0, a: 0}
+        targetColor: {r: 1, g: 1, b: 1, a: 1}
+        useCurrentAsStart: 1
+        ease:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 2
+            outSlope: 2
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
 --- !u!1 &2582759698366746051
 GameObject:
   m_ObjectHideFlags: 0

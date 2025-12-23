@@ -67,7 +67,7 @@ namespace _PinBoy.Scripts.Utils.Editor
 
         void ApplyToScene()
         {
-            SpriteRenderer[] renderers = FindObjectsOfType<SpriteRenderer>(true);
+            SpriteRenderer[] renderers = FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.InstanceID);
             ApplySettings(renderers, material);
         }
 

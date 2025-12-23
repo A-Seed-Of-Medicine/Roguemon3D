@@ -57,13 +57,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             evt.menu.ClearItems();
             evt.menu.AppendAction(
                 "Duplicate Step",
-                _ => onDuplicate?.Invoke(this),
-                DropdownMenuAction.Status.Normal);
+                _ => onDuplicate?.Invoke(this));
 
             evt.menu.AppendAction(
                 "Delete Step",
-                _ => onDelete?.Invoke(this),
-                DropdownMenuAction.Status.Normal);
+                _ => onDelete?.Invoke(this));
         }
 
         public override void OnSelected()
@@ -89,7 +87,6 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
     {
         readonly SerializedProperty entryProperty;
         readonly SerializedProperty positionProperty;
-        // entryProperty is a SerializedProperty pointing at a ComboEntry element
         SerializedProperty nextStepProp   => entryProperty.FindPropertyRelative("nextStep");
         public SerializedProperty stepIndexProp  => nextStepProp.FindPropertyRelative("stepIndex");
         public SerializedProperty SerializedEntry => entryProperty;
@@ -122,8 +119,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
             evt.menu.ClearItems();
             evt.menu.AppendAction(
                 "Delete Step",
-                _ => onDelete?.Invoke(this),
-                DropdownMenuAction.Status.Normal);
+                _ => onDelete?.Invoke(this));
         }
 
         public override void OnSelected()
@@ -174,10 +170,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions.Editor
                 return;
             }
 
-            Vector3 from = output != null ? (Vector3)output.worldBound.center : Vector3.zero;
-            Vector3 to = input != null ? (Vector3)input.worldBound.center : Vector3.zero;
+            Vector3 from = output != null ? output.worldBound.center : Vector3.zero;
+            Vector3 to = input != null ? input.worldBound.center : Vector3.zero;
             Vector3 mid = (from + to) * 0.5f;
-            label.transform.position = mid;
+            label.style.translate = new Translate(mid.x, mid.y, 0f);
         }
     }
 }
