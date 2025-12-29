@@ -30,7 +30,7 @@ namespace UtilityAI {
             hasWarnedForNullConsideration = false;
 
             Transform originalTarget = context.target;
-            Transform bestTarget = null;
+            TargetContext bestTarget = null;
             float highestUtility = 0;
             int count = 0;
 
@@ -55,7 +55,7 @@ namespace UtilityAI {
                     if (utility > highestUtility) {
                         Debug.Log($"AIAction {GetType().Name} on {context.brain.name} evaluated target {transform.name} with utility {utility}", context.brain);
                         highestUtility = utility;
-                        bestTarget = transform;
+                        bestTarget = target;
                     }
 
                     count++;

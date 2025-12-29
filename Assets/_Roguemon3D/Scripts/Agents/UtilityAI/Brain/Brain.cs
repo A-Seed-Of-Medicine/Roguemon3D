@@ -9,6 +9,24 @@ using UnityUtils;
 
 namespace UtilityAI {
     public class Brain : MonoBehaviour {
+        public readonly struct ActionEvaluation {
+            public Brain Brain { get; }
+            public AIAction Action { get; }
+            public TargetContext Target { get; }
+            public float Utility { get; }
+            public string Error { get; }
+            public float Time { get; }
+
+            public ActionEvaluation(Brain brain, AIAction action, TargetContext target, float utility, string error, float time) {
+                Brain = brain;
+                Action = action;
+                Target = target;
+                Utility = utility;
+                Error = error;
+                Time = time;
+            }
+        }
+
         [SerializeField]
         [SerializeReference]
         public List<AIAction> actions = new List<AIAction>();
@@ -23,7 +41,17 @@ namespace UtilityAI {
         [SerializeField]
         List<TargetContext> detectedTargets = new(10);
         readonly List<TargetContext> orderedTargetsBuffer = new(10);
-        
+
+        public event Action<ActionEvaluation> ActionEvaluated;
+
+        public AIAction CurrentAction => currentAction;
+        public AIAction LastBestAction { get; private set; }
+        public float LastBestUtility { get; private set; }
+        public TargetContext LastBestTarget { get; private set; }
+        public IReadOnlyDictionary<AIAction, ActionEvaluation> LastActionEvaluations => lastActionEvaluations;
+
+        readonly Dictionary<AIAction, ActionEvaluation> lastActionEvaluations = new();
+
         private AIAction currentAction;
 
         void Awake() {
@@ -57,6 +85,7 @@ namespace UtilityAI {
 
         void OnDisable() {
             detectedTargets.Clear();
+            lastActionEvaluations.Clear();
         }
 
         void Update() {
@@ -73,6 +102,7 @@ namespace UtilityAI {
             Transform bestTarget = null;
             float highestUtility = 0f;
             var targets = GetPerceivedTargets();
+            lastActionEvaluations.Clear();
 
             foreach (var action in actions) {
                 if (action == null) {
@@ -80,8 +110,22 @@ namespace UtilityAI {
                 }
 
                 context.ResetLastEvaluatedTarget();
-                float utility = action.CalculateUtility(context, targets);
-                Transform evaluatedTarget = context.LastEvaluatedTarget;
+                float utility = 0f;
+                string error = null;
+                try {
+                    utility = action.CalculateUtility(context, targets);
+                } catch (Exception ex) {
+                    error = ex.Message;
+                }
+
+                TargetContext evaluatedTarget = context.LastEvaluatedTarget;
+                var evaluation = new ActionEvaluation(this, action, evaluatedTarget, utility, error, Time.time);
+                lastActionEvaluations[action] = evaluation;
+                ActionEvaluated?.Invoke(evaluation);
+
+                if (!string.IsNullOrEmpty(error)) {
+                    continue;
+                }
 
                 if (utility > highestUtility) {
                     highestUtility = utility;
@@ -90,6 +134,9 @@ namespace UtilityAI {
                 }
             }
 
+            LastBestAction = bestAction;
+            LastBestUtility = highestUtility;
+            LastBestTarget = bestTarget;
             context.target = bestTarget;
             // /Debug.Log($"Best Action: {(bestAction != null ? bestAction.GetType().Name : "None")} with Utility: {highestUtility:0.###}");
             if (bestAction != null) {
