@@ -9,6 +9,24 @@ using UnityUtils;
 
 namespace UtilityAI {
     public class Brain : MonoBehaviour {
+        public readonly struct ActionEvaluation {
+            public ActionEvaluation(AIAction action, float utility, Transform evaluatedTarget, int targetsInRange, bool isCurrentBest, float time) {
+                Action = action;
+                Utility = utility;
+                EvaluatedTarget = evaluatedTarget;
+                TargetsInRange = targetsInRange;
+                IsCurrentBest = isCurrentBest;
+                Time = time;
+            }
+
+            public AIAction Action { get; }
+            public float Utility { get; }
+            public Transform EvaluatedTarget { get; }
+            public int TargetsInRange { get; }
+            public bool IsCurrentBest { get; }
+            public float Time { get; }
+        }
+
         [SerializeField]
         [SerializeReference]
         public List<AIAction> actions = new List<AIAction>();
@@ -18,6 +36,7 @@ namespace UtilityAI {
         public float tickCooldown = 0.2f;
         public AgentController controller;
         public Context context;
+        public event Action<ActionEvaluation> ActionEvaluated;
         private float tickCount;
 
         [SerializeField]
@@ -82,8 +101,10 @@ namespace UtilityAI {
                 context.ResetLastEvaluatedTarget();
                 float utility = action.CalculateUtility(context, targets);
                 Transform evaluatedTarget = context.LastEvaluatedTarget;
+                bool isCurrentBest = utility > highestUtility;
+                ActionEvaluated?.Invoke(new ActionEvaluation(action, utility, evaluatedTarget, targets?.Count ?? 0, isCurrentBest, Time.time));
 
-                if (utility > highestUtility) {
+                if (isCurrentBest) {
                     highestUtility = utility;
                     bestAction = action;
                     bestTarget = evaluatedTarget;
