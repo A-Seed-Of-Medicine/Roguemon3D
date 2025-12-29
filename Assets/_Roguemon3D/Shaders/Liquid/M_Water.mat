@@ -82,16 +82,16 @@ Material:
     - _NormalStrength: 0.33
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _WaterDepth: -0.64
+    - _WaterDepth: -1
     - _WaveAmplitude: 0.99
-    - _WaveFrequency: 0.08
+    - _WaveFrequency: 0.13
     - _WaveSpeed: 0.5
-    - _WaveSwitchSpeed: 0.64
+    - _WaveSwitchSpeed: 0.13
     m_Colors:
-    - _DeepColor: {r: 0.01308296, g: 0.01831887, b: 0.3962264, a: 1}
-    - _ShallowColor: {r: 0, g: 1, b: 0.9811893, a: 1}
+    - _DeepColor: {r: 0.05724925, g: 0.103773594, b: 0.02300641, a: 1}
+    - _ShallowColor: {r: 0.29075256, g: 0.9137255, b: 0, a: 1}
     - _Tiling: {r: 0.04, g: 0.04, b: 0, a: 0}
     - _WaveSpeed: {r: -0.01, g: -0.01, b: 0, a: 0}
-    - _WhiteWater: {r: 1.515717, g: 1.515717, b: 1.515717, a: 1}
+    - _WhiteWater: {r: 1.5624253, g: 4.5412054, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

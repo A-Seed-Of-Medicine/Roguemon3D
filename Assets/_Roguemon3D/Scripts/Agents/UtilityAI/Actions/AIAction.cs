@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using _PinBoy.Scripts.Gameplay.Effects;
 using UnityEngine;
 
 namespace UtilityAI {
     [Serializable]
     public abstract class AIAction {
         public string targetTag;
+        public AllegianceType allegianceMask;
         public int maxTargets = 3;
         [SerializeField]
         [SerializeReference]
@@ -29,25 +31,31 @@ namespace UtilityAI {
 
             Transform originalTarget = context.target;
             Transform bestTarget = null;
-            float highestUtility = float.MinValue;
+            float highestUtility = 0;
             int count = 0;
 
             if (targets != null && targets.Count > 0) {
                 for (int i = 0; i < targets.Count; i++) {
-                    Transform candidate = targets[i];
-                    if (!candidate) {
+                    TargetContext target = targets[i];
+                    Transform transform = target.transform;
+                    if (!transform) {
                         continue;
                     }
 
-                    if (!string.IsNullOrEmpty(targetTag) && !candidate.CompareTag(targetTag)) {
+                    if (!string.IsNullOrEmpty(targetTag) && !transform.CompareTag(targetTag)) {
+                        continue;
+                    }
+                    
+                    if (allegianceMask != 0 && target.agentController && !context.Controller.IsAllegiance(allegianceMask, target.agentController.allegiance)) {
                         continue;
                     }
 
-                    context.target = candidate;
-                    float utility = consideration.Evaluate(context, candidate);
+                    context.target = transform;
+                    float utility = consideration.Evaluate(context, transform);
                     if (utility > highestUtility) {
+                        Debug.Log($"AIAction {GetType().Name} on {context.brain.name} evaluated target {transform.name} with utility {utility}", context.brain);
                         highestUtility = utility;
-                        bestTarget = candidate;
+                        bestTarget = transform;
                     }
 
                     count++;

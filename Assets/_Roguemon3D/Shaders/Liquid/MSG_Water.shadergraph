@@ -356,9 +356,6 @@
         },
         {
             "m_Id": "7f965a722f78415cac38f0e426fe002c"
-        },
-        {
-            "m_Id": "452d2f893c04401883095bb8553df03a"
         }
     ],
     "m_GroupDatas": [],
@@ -1888,9 +1885,6 @@
         "m_Blocks": [
             {
                 "m_Id": "3fb48f25d5834cbcaf3fd1da47dce1b8"
-            },
-            {
-                "m_Id": "452d2f893c04401883095bb8553df03a"
             }
         ]
     },
@@ -2397,7 +2391,7 @@
     "m_ShaderOutputName": "Edge1",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.44999998807907107,
+        "x": 0.4399999976158142,
         "y": 0.0,
         "z": 0.0,
         "w": 0.0
@@ -4079,7 +4073,7 @@
     "m_ShaderOutputName": "A",
     "m_StageCapability": 3,
     "m_Value": {
-        "e00": 0.0,
+        "e00": 1.0,
         "e01": 0.0,
         "e02": 0.0,
         "e03": 0.0,
@@ -4758,10 +4752,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -1133.54931640625,
-            "y": -168.54931640625,
-            "width": 208.0,
-            "height": 302.0
+            "x": -1182.0,
+            "y": -269.0,
+            "width": 126.0,
+            "height": 118.0
         }
     },
     "m_Slots": [
@@ -5420,40 +5414,6 @@
     "m_CustomColors": {
         "m_SerializableColors": []
     }
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.BlockNode",
-    "m_ObjectId": "452d2f893c04401883095bb8553df03a",
-    "m_Group": {
-        "m_Id": ""
-    },
-    "m_Name": "SurfaceDescription.Alpha",
-    "m_DrawState": {
-        "m_Expanded": true,
-        "m_Position": {
-            "serializedVersion": "2",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 0.0,
-            "height": 0.0
-        }
-    },
-    "m_Slots": [
-        {
-            "m_Id": "ca8b48be0f944e0fab2c6d02e79e1051"
-        }
-    ],
-    "synonyms": [],
-    "m_Precision": 0,
-    "m_PreviewExpanded": true,
-    "m_DismissedVersion": 0,
-    "m_PreviewMode": 0,
-    "m_CustomColors": {
-        "m_SerializableColors": []
-    },
-    "m_SerializedDescriptor": "SurfaceDescription.Alpha"
 }
 
 {
@@ -6791,7 +6751,7 @@
     "m_ShaderOutputName": "Edge2",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.9399999976158142,
+        "x": 0.7900000214576721,
         "y": 1.0,
         "z": 1.0,
         "w": 1.0
@@ -7410,7 +7370,7 @@
     "m_ShaderOutputName": "Edge1",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.5,
+        "x": 0.44999998807907107,
         "y": 0.0,
         "z": 0.0,
         "w": 0.0
@@ -7733,7 +7693,7 @@
         "m_Id": "0e06215f42f24874bf3bbeb7d19858a6"
     },
     "m_AllowMaterialOverride": false,
-    "m_SurfaceType": 1,
+    "m_SurfaceType": 0,
     "m_ZTestMode": 4,
     "m_ZWriteControl": 0,
     "m_AlphaMode": 0,
@@ -11308,8 +11268,8 @@
     "m_ShaderOutputName": "OutMinMax",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 8.0,
-        "y": 8.5
+        "x": 9.0,
+        "y": 9.5
     },
     "m_DefaultValue": {
         "x": 0.0,
@@ -11577,7 +11537,7 @@
     "m_ShaderOutputName": "Edge2",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.5199999809265137,
+        "x": 0.5400000214576721,
         "y": 1.0,
         "z": 1.0,
         "w": 1.0
@@ -12016,10 +11976,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": 177.9999542236328,
-            "y": -383.9999694824219,
-            "width": 208.0000762939453,
-            "height": 325.9999694824219
+            "x": 155.00001525878907,
+            "y": -379.0000305175781,
+            "width": 208.00001525878907,
+            "height": 326.0
         }
     },
     "m_Slots": [
@@ -12198,22 +12158,6 @@
     "m_StageCapability": 3,
     "m_Value": 0.0,
     "m_DefaultValue": 0.0,
-    "m_Labels": [],
-    "m_LiteralMode": false
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
-    "m_ObjectId": "ca8b48be0f944e0fab2c6d02e79e1051",
-    "m_Id": 0,
-    "m_DisplayName": "Alpha",
-    "m_SlotType": 0,
-    "m_Hidden": false,
-    "m_ShaderOutputName": "Alpha",
-    "m_StageCapability": 2,
-    "m_Value": 1.0,
-    "m_DefaultValue": 1.0,
     "m_Labels": [],
     "m_LiteralMode": false
 }

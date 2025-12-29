@@ -10002,6 +10002,10 @@ MonoBehaviour:
   - {fileID: 8755687311842327937}
   - {fileID: 5016021830704671645}
   triggerVolumeRoot: {fileID: 7226414839519014032}
+  bakedRenderMesh: {fileID: 0}
+  bakedTriggerMesh: {fileID: 0}
+  bakedRenderHash: 0
+  bakedTriggerHash: 0
 --- !u!1 &5016021830481472948
 GameObject:
   m_ObjectHideFlags: 0

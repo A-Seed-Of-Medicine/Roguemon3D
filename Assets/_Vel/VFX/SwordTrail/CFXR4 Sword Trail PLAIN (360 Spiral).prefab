@@ -158,6 +158,10 @@ MonoBehaviour:
   particleSystem: {fileID: 6710139492206580334}
   subEmitterSystems: []
   triggerVolumeRoot: {fileID: 6396664134703494338}
+  bakedRenderMesh: {fileID: 0}
+  bakedTriggerMesh: {fileID: 0}
+  bakedRenderHash: 0
+  bakedTriggerHash: 0
 --- !u!198 &6710139492206580334
 ParticleSystem:
   m_ObjectHideFlags: 0

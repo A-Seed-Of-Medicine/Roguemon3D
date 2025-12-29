@@ -53,7 +53,6 @@ namespace UtilityAI
         public override void Initialize(Context context)
         {
             base.Initialize(context);
-            context?.RegisterTargetTag(targetTag);
             controller = context?.Controller;
             inputReader = controller?.inputReader;
             TryBindTicket(context);

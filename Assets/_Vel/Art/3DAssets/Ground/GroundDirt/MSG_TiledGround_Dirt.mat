@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-6667099860822602501
+--- !u!114 &-3944897461999943670
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -20,8 +20,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_GroundDirt
-  m_Shader: {fileID: -6465566751694194690, guid: 3f4139e4e412e5e46913d7203807aebc, type: 3}
+  m_Name: MSG_TiledGround_Dirt
+  m_Shader: {fileID: -6465566751694194690, guid: ca61e56884145a347badc2ff79ba451b, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -33,13 +33,13 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: _Metallic
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _BaseMap:
+    - _BaseMaps:
         m_Texture: {fileID: 0}
-        m_Scale: {x: 3, y: 1.92}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
@@ -61,6 +61,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 01780a3c935e5b241ba182b8b9327213, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Texture2DAsset_b64bef3e98184ddabdb8ad01beee5bc2_Out_0_Texture2D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -76,39 +80,36 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _CellShade: 1
-    - _Clamp: 0.78
+    - _CellShade: 0
     - _EMISSION: 0
-    - _Float: 22.17
     - _HighlightIntensityAtten: 1
-    - _HilightClamp: 0.82
-    - _HilightIntensity: 23.7
-    - _HilightPosturize: 36.39
+    - _HilightClamp: 0.8
+    - _HilightIntensity: 25
+    - _HilightPosturize: 100
     - _HilightRotation: 0
-    - _HilightSize: 0.15
-    - _HilightSizeAttenuation: 1
-    - _InvertHilight: 1
+    - _HilightSize: 1
+    - _InvertHilight: 0
     - _METALLICSPECGLOSSMAP: 0
     - _Metallic: 0
     - _OCCLUSIONMAP: 0
     - _OcclusionStrength: 1
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Rotation: 45
-    - _ShadowClamp: 0.29
-    - _ShadowFalloff: 0.3
+    - _Seed: 0
+    - _ShadowClamp: 0.3
     - _ShadowIntensity: 0.13
     - _ShadowRotation: 45
-    - _ShadowSize: 3.57
-    - _Size: 3.6
-    - _Smoothness: 0
+    - _ShadowSize: 1
+    - _SliceCount: 3
+    - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
-    - _Steps: 12.53
-    - _TwoSidedLighting: 0
-    - _WrapAmount: 0
+    - _Steps: 2
+    - _TilesPerUnit: 1
+    - _TwoSidedLighting: 1
+    - _WrapAmount: 0.5
     m_Colors:
-    - _BaseColor: {r: 0.24313727, g: 0.19607845, b: 0.20000002, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _HilightColor: {r: 5.278032, g: 5.278032, b: 5.278032, a: 1}
+    - _HilightColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

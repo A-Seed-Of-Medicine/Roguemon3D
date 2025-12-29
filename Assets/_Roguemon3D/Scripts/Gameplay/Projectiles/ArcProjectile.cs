@@ -95,8 +95,6 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
         protected override void Expire()
         {
-            Debug.Log("Expire called on ArcProjectile");
-            
             ApplyTargetDetectorHits();
             ApplyImpactEffects(transform.position);
             base.Expire();
@@ -190,7 +188,6 @@ namespace _PinBoy.Scripts.Gameplay.Projectiles
 
         void ApplyTargetDetectorHits()
         {
-            Debug.Log("Applying target detector hits");
             if (!activeTargetDetector)
             {
                 return;

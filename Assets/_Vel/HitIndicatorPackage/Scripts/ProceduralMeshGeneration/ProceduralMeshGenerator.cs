@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -50,7 +49,8 @@ public class ProceduralMeshGenerator : MonoBehaviour
     [Header("Trigger Volume (Collision)")]
     [Tooltip("Creates/updates a child transform with trigger colliders approximating the generated mesh dimensions.")]
     public bool generateTriggerVolume = true;
-    
+
+    [Tooltip("Layer index assigned to the trigger volume root object.")]
     public int triggerLayerMask = 2;
 
     [Tooltip("Thickness used for planar shapes (Quad / NineSliceQuad / Radial).")]
@@ -76,20 +76,55 @@ public class ProceduralMeshGenerator : MonoBehaviour
 
     [Tooltip("Name of the generated trigger volume child")]
     public string triggerVolumeName => gameObject.name + "_TriggerVolume";
-    
+
     public Collider triggerCollider;
     public ParticleSystem particleSystem;
     public ParticleSystem[] subEmitterSystems = Array.Empty<ParticleSystem>();
 
-    private Mesh mesh;
-
     /// <summary>Returns the generated trigger volume root (child Transform), or null if none exists.</summary>
     public Transform triggerVolumeRoot;
 
+    // ---------------------------
+    // Persistence / Baking fields
+    // ---------------------------
+
+    [Header("Baked Assets (optional)")]
+    [SerializeField, HideInInspector] private Mesh bakedRenderMesh;
+    [SerializeField, HideInInspector] private Mesh bakedTriggerMesh; // only used for Radial MeshCollider trigger
+    [SerializeField, HideInInspector] private int bakedRenderHash;
+    [SerializeField, HideInInspector] private int bakedTriggerHash;
+
+    // Runtime/preview meshes (per-instance, not saved)
+    [NonSerialized] private Mesh runtimeRenderMesh;
+    [NonSerialized] private Mesh runtimeTriggerMesh;
+
+    private Mesh ActiveRenderMesh => runtimeRenderMesh != null ? runtimeRenderMesh : bakedRenderMesh;
+    private Mesh ActiveTriggerMesh => runtimeTriggerMesh != null ? runtimeTriggerMesh : bakedTriggerMesh;
+
+    // ---------------------------
+    // Unity lifecycle
+    // ---------------------------
+
     private void OnEnable()
     {
+        EnsureRenderMeshOnEnable();
         SetupParticleSystemParameters();
-        GenerateMesh(true);
+        UpdateParticleMesh();
+
+        // If you want trigger volume to be present automatically at runtime, uncomment:
+        // if (generateTriggerVolume) UpdateTriggerVolume(false);
+    }
+
+    private void OnDisable()
+    {
+        // Avoid leaking runtime meshes in Edit Mode / domain reload.
+        if (!Application.isPlaying)
+            CleanupRuntimeMeshes(immediate: true);
+    }
+
+    private void OnDestroy()
+    {
+        CleanupRuntimeMeshes(immediate: Application.isPlaying ? false : true);
     }
 
     private void OnValidate()
@@ -97,38 +132,261 @@ public class ProceduralMeshGenerator : MonoBehaviour
         if (!Application.isEditor)
             return;
 
-        if (autoUpdate)
-            GenerateMesh(true);
+        if (!autoUpdate)
+            return;
+
+        // Editor preview should never mutate baked assets. Always regenerate into a runtime mesh.
+        RegenerateMeshes(forceUniqueInstance: true, regenerateTrigger: false);
+    }
+
+    // ---------------------------
+    // Public API
+    // ---------------------------
+
+    /// <summary>
+    /// Ensures mesh exists on enable: uses baked mesh if present AND matching current parameters,
+    /// otherwise generates a runtime mesh.
+    /// </summary>
+    private void EnsureRenderMeshOnEnable()
+    {
+        int currentHash = ComputeRenderMeshHash();
+
+        bool bakedValid = bakedRenderMesh != null && bakedRenderHash == currentHash;
+        if (bakedValid)
+        {
+            // Ensure we are not overriding baked mesh.
+            DestroySafe(runtimeRenderMesh, immediate: !Application.isPlaying);
+            runtimeRenderMesh = null;
+            return;
+        }
+
+        // No valid baked mesh: ensure runtime mesh and generate if empty.
+        EnsureRuntimeRenderMesh();
+        if (runtimeRenderMesh.vertexCount == 0)
+            BuildRenderMesh(runtimeRenderMesh);
+    }
+
+    /// <summary>
+    /// Regenerates the render mesh (and optionally trigger) using current inspector parameters.
+    /// If forceUniqueInstance is true, it will never edit baked assets; it will generate into runtime meshes.
+    /// </summary>
+    public void RegenerateMeshes(bool forceUniqueInstance = true, bool regenerateTrigger = true)
+    {
+        if (forceUniqueInstance)
+        {
+            // Ensure we are writing into runtime meshes, not baked assets.
+            EnsureRuntimeRenderMesh();
+            BuildRenderMesh(runtimeRenderMesh);
+        }
+        else
+        {
+            // If not forcing unique, prefer existing active mesh (could be baked).
+            var m = ActiveRenderMesh;
+            if (m == null)
+            {
+                EnsureRuntimeRenderMesh();
+                m = runtimeRenderMesh;
+            }
+            BuildRenderMesh(m);
+        }
+
+        UpdateParticleMesh();
+
+        if (regenerateTrigger && generateTriggerVolume)
+            UpdateTriggerVolume(destroyImmediate: !Application.isPlaying);
     }
 
     [ContextMenu("Generate Mesh")]
     public void GenerateMesh(bool destroyImmediate = false)
     {
-        mesh = new Mesh();
-        mesh.name = "P" + shape.ToString();
+        // Keep the context menu behavior: regenerate using current params, do not mutate baked assets.
+        RegenerateMeshes(forceUniqueInstance: true, regenerateTrigger: false);
+    }
+
+    [ContextMenu("Regenerate Mesh (Force Runtime Instance)")]
+    public void RegenerateMeshForceRuntime()
+    {
+        RegenerateMeshes(forceUniqueInstance: true, regenerateTrigger: false);
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Bake Render + Trigger Meshes To Asset...")]
+    public void BakeMeshesToAsset()
+    {
+        // Build a fresh render mesh snapshot.
+        var renderSnapshot = new Mesh { name = "P" + shape };
+        BuildRenderMesh(renderSnapshot);
+
+        // Build a trigger mesh snapshot (only meaningful for Radial MeshCollider triggers).
+        Mesh triggerSnapshot = null;
+        if (generateTriggerVolume && shape == ShapeType.Radial)
+        {
+            int seg = Mathf.Clamp(radialTriggerSegmentsOverride > 0 ? radialTriggerSegmentsOverride : segments, 1, 256);
+
+            float a0 = 0f;
+            float a1 = Mathf.Deg2Rad * Mathf.Clamp(angle, 0.1f, 360f);
+            float thickness = Mathf.Max(0.0001f, triggerHeight + triggerSizeOffset * 2f);
+
+            triggerSnapshot = CreateRadialWedgePrismMesh(
+                innerRadius, outerRadius, a0, a1, thickness, seg, triggerSizeOffset,
+                dontSaveHideFlags: false
+            );
+        }
+
+        string path = UnityEditor.EditorUtility.SaveFilePanelInProject(
+            "Save Generated Mesh Asset",
+            $"{gameObject.name}_{shape}.asset",
+            "asset",
+            "Choose where to save the baked mesh asset."
+        );
+
+        if (string.IsNullOrEmpty(path))
+        {
+            DestroySafe(renderSnapshot, immediate: true);
+            if (triggerSnapshot != null) DestroySafe(triggerSnapshot, immediate: true);
+            return;
+        }
+
+        // Create the render mesh asset.
+        renderSnapshot.hideFlags = HideFlags.None;
+        UnityEditor.AssetDatabase.CreateAsset(renderSnapshot, path);
+
+        // Add trigger mesh as sub-asset if present.
+        if (triggerSnapshot != null)
+        {
+            triggerSnapshot.name = $"{gameObject.name}_{shape}_Trigger";
+            triggerSnapshot.hideFlags = HideFlags.None;
+            UnityEditor.AssetDatabase.AddObjectToAsset(triggerSnapshot, renderSnapshot);
+        }
+
+        UnityEditor.AssetDatabase.SaveAssets();
+        UnityEditor.AssetDatabase.Refresh();
+
+        // Assign baked references + hashes.
+        bakedRenderMesh = renderSnapshot;
+        bakedTriggerMesh = triggerSnapshot;
+
+        bakedRenderHash = ComputeRenderMeshHash();
+        bakedTriggerHash = ComputeTriggerMeshHash();
+
+        // Clear runtime overrides so instances use baked mesh (until parameters change).
+        CleanupRuntimeMeshes(immediate: true);
+
+        // Apply baked meshes to components (and bake trigger components into prefab/scene object).
+        UpdateParticleMesh();
+        BakeTriggerComponentsImmediate();
+
+        UnityEditor.EditorUtility.SetDirty(this);
+        UnityEditor.EditorUtility.SetDirty(gameObject);
+    }
+
+    private void BakeTriggerComponentsImmediate()
+    {
+        if (!generateTriggerVolume)
+            return;
+
+        var root = GetOrCreateTriggerVolumeRoot(createIfMissing: true);
+        if (root == null)
+            return;
+
+        root.gameObject.SetActive(true);
+        root.localPosition = Vector3.zero;
+        root.localScale = Vector3.one;
+        root.localRotation = alignTriggerVolumeToParticleRotation ? GetParticleMeshLocalRotation() : Quaternion.identity;
+        root.gameObject.layer = triggerLayerMask;
+
+        ClearTriggerVolume(root, destroyImmediate: true);
 
         switch (shape)
         {
             case ShapeType.Quad:
-                GenerateQuad(mesh);
+            case ShapeType.NineSliceQuad:
+                BuildPlanarBoxTrigger(root, GetPlanarSizeFromMesh(), triggerHeight, triggerSizeOffset);
+                break;
+
+            case ShapeType.Radial:
+            {
+                // Use baked trigger mesh if it matches current trigger params.
+                var meshToUse = (bakedTriggerMesh != null && bakedTriggerHash == ComputeTriggerMeshHash())
+                    ? bakedTriggerMesh
+                    : null;
+
+                if (meshToUse == null)
+                {
+                    int seg = Mathf.Clamp(radialTriggerSegmentsOverride > 0 ? radialTriggerSegmentsOverride : segments, 1, 256);
+                    float a0 = 0f;
+                    float a1 = Mathf.Deg2Rad * Mathf.Clamp(angle, 0.1f, 360f);
+                    float thickness = Mathf.Max(0.0001f, triggerHeight + triggerSizeOffset * 2f);
+                    meshToUse = CreateRadialWedgePrismMesh(innerRadius, outerRadius, a0, a1, thickness, seg, triggerSizeOffset, dontSaveHideFlags: false);
+                }
+
+                AttachTriggerMesh(root, meshToUse);
+                break;
+            }
+
+            case ShapeType.Cylinder:
+                BuildCylinderTrigger(root);
+                break;
+
+            case ShapeType.Sphere:
+                BuildSphereTrigger(root);
+                break;
+        }
+    }
+#endif
+
+#if UNITY_EDITOR
+    [ContextMenu("Reassign Particle Mesh")]
+    public void ReassignParticleMesh()
+    {
+        RegenerateMeshes(forceUniqueInstance: true, regenerateTrigger: false);
+    }
+#endif
+
+    // ---------------------------
+    // Render Mesh generation
+    // ---------------------------
+
+    private void EnsureRuntimeRenderMesh()
+    {
+        if (runtimeRenderMesh != null)
+            return;
+
+        runtimeRenderMesh = new Mesh
+        {
+            name = "P" + shape,
+            hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild
+        };
+    }
+
+    private void BuildRenderMesh(Mesh target)
+    {
+        if (target == null)
+            return;
+
+        target.name = "P" + shape;
+
+        switch (shape)
+        {
+            case ShapeType.Quad:
+                GenerateQuad(target);
                 break;
             case ShapeType.Radial:
-                GenerateRadial(mesh);
+                GenerateRadial(target);
                 break;
             case ShapeType.Cylinder:
-                GenerateCylinder(mesh);
+                GenerateCylinder(target);
                 break;
             case ShapeType.Sphere:
-                GenerateSphere(mesh);
+                GenerateSphere(target);
                 break;
             case ShapeType.NineSliceQuad:
-                GenerateNineSliceQuad(mesh);
+                GenerateNineSliceQuad(target);
                 break;
         }
 
-        mesh.RecalculateNormals();
-        UpdateParticleMesh();
-        //UpdateTriggerVolume(destroyImmediate);
+        target.RecalculateNormals();
+        target.RecalculateBounds();
     }
 
     private void GenerateQuad(Mesh mesh)
@@ -143,7 +401,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
             new Vector3( halfSize.x,  halfSize.y, 0)
         };
 
-        int[] triangles = new int[6] { 0, 2, 1, 2, 3, 1 };
+        int[] triangles = { 0, 2, 1, 2, 3, 1 };
 
         Vector2[] uvs = new Vector2[4]
         {
@@ -222,10 +480,9 @@ public class ProceduralMeshGenerator : MonoBehaviour
                 triangles[t++] = i3;
             }
         }
+
         for (int i = 0; i < uvs.Length; i++)
-        {
             uvs[i] = RotateUV(uvs[i], uvRotation);
-        }
 
         mesh.Clear();
         mesh.vertices = vertices;
@@ -250,12 +507,12 @@ public class ProceduralMeshGenerator : MonoBehaviour
 
         for (int r = 0; r <= rings; r++)
         {
-            float tR = (float)r / rings;
+            float tR = (float)r / Mathf.Max(1, rings);
             float radius = Mathf.Lerp(r0, r1, tR);
 
             for (int s = 0; s <= segments; s++)
             {
-                float tS = (float)s / segments;
+                float tS = (float)s / Mathf.Max(1, segments);
                 float a = tS * angleRad;
 
                 float x = Mathf.Cos(a) * radius;
@@ -264,7 +521,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
                 vertices[vert] = new Vector3(x, y, 0);
 
                 float u = tS;
-                float v = (radius - r0) / (r1 - r0);
+                float v = (r1 - r0) > 0.0000001f ? (radius - r0) / (r1 - r0) : 0f;
                 uvs[vert] = new Vector2(u, v) * tiling;
 
                 if (r < rings && s < segments)
@@ -284,10 +541,9 @@ public class ProceduralMeshGenerator : MonoBehaviour
                 vert++;
             }
         }
+
         for (int i = 0; i < uvs.Length; i++)
-        {
             uvs[i] = RotateUV(uvs[i], uvRotation);
-        }
 
         mesh.Clear();
         mesh.vertices = vertices;
@@ -298,10 +554,10 @@ public class ProceduralMeshGenerator : MonoBehaviour
     private void GenerateCylinder(Mesh mesh)
     {
         int seg = Mathf.Max(3, cylinderSegments);
-        int rings = Mathf.Max(1, cylinderRings);
+        int ringCount = Mathf.Max(1, cylinderRings);
 
-        int vertexCount = (rings + 1) * (seg + 1);
-        int triangleCount = rings * seg * 6;
+        int vertexCount = (ringCount + 1) * (seg + 1);
+        int triangleCount = ringCount * seg * 6;
 
         Vector3[] vertices = new Vector3[vertexCount];
         Vector2[] uvs = new Vector2[vertexCount];
@@ -309,26 +565,24 @@ public class ProceduralMeshGenerator : MonoBehaviour
 
         int vert = 0, tri = 0;
 
-        for (int r = 0; r <= rings; r++)
+        for (int r = 0; r <= ringCount; r++)
         {
-            float tR = (float)r / rings;
-
+            float tR = (float)r / ringCount;
             float radius = cylinderProfile.Evaluate(tR) * cylinderRadius;
-
             float y = Mathf.Lerp(-cylinderHeight * 0.5f, cylinderHeight * 0.5f, tR);
 
             for (int s = 0; s <= seg; s++)
             {
                 float tS = (float)s / seg;
-                float angle = tS * Mathf.PI * 2f;
+                float ang = tS * Mathf.PI * 2f;
 
-                float x = Mathf.Cos(angle) * radius;
-                float z = Mathf.Sin(angle) * radius;
+                float x = Mathf.Cos(ang) * radius;
+                float z = Mathf.Sin(ang) * radius;
 
                 vertices[vert] = new Vector3(x, z, y);
                 uvs[vert] = new Vector2(tS, tR) * tiling;
 
-                if (r < rings && s < seg)
+                if (r < ringCount && s < seg)
                 {
                     int current = vert;
                     int next = vert + seg + 1;
@@ -345,10 +599,9 @@ public class ProceduralMeshGenerator : MonoBehaviour
                 vert++;
             }
         }
+
         for (int i = 0; i < uvs.Length; i++)
-        {
             uvs[i] = RotateUV(uvs[i], uvRotation);
-        }
 
         mesh.Clear();
         mesh.vertices = vertices;
@@ -359,10 +612,10 @@ public class ProceduralMeshGenerator : MonoBehaviour
     private void GenerateSphere(Mesh mesh)
     {
         int seg = Mathf.Max(3, sphereSegments);
-        int rings = Mathf.Max(2, sphereRings);
+        int ringCount = Mathf.Max(2, sphereRings);
 
-        int vertexCount = (rings + 1) * (seg + 1);
-        int triangleCount = rings * seg * 6;
+        int vertexCount = (ringCount + 1) * (seg + 1);
+        int triangleCount = ringCount * seg * 6;
 
         Vector3[] vertices = new Vector3[vertexCount];
         Vector2[] uvs = new Vector2[vertexCount];
@@ -371,9 +624,9 @@ public class ProceduralMeshGenerator : MonoBehaviour
         int vert = 0;
         int tri = 0;
 
-        for (int r = 0; r <= rings; r++)
+        for (int r = 0; r <= ringCount; r++)
         {
-            float v = (float)r / rings;
+            float v = (float)r / ringCount;
             float lat = Mathf.PI * v - Mathf.PI / 2f;
 
             float y = Mathf.Sin(lat);
@@ -390,7 +643,7 @@ public class ProceduralMeshGenerator : MonoBehaviour
                 vertices[vert] = new Vector3(x, z, y) * sphereRadius;
                 uvs[vert] = new Vector2(u, v) * tiling;
 
-                if (r < rings && s < seg)
+                if (r < ringCount && s < seg)
                 {
                     int current = vert;
                     int next = vert + seg + 1;
@@ -407,16 +660,19 @@ public class ProceduralMeshGenerator : MonoBehaviour
                 vert++;
             }
         }
+
         for (int i = 0; i < uvs.Length; i++)
-        {
             uvs[i] = RotateUV(uvs[i], uvRotation);
-        }
 
         mesh.Clear();
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.uv = uvs;
     }
+
+    // ---------------------------
+    // Particle mesh assignment
+    // ---------------------------
 
     private void SetupParticleSystemParameters()
     {
@@ -438,8 +694,8 @@ public class ProceduralMeshGenerator : MonoBehaviour
         emission.rateOverDistance = 0f;
         emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 1) });
 
-        var shape = ps.shape;
-        shape.enabled = false;
+        var shapeModule = ps.shape;
+        shapeModule.enabled = false;
 
         var psr = GetComponent<ParticleSystemRenderer>();
         if (psr == null)
@@ -454,40 +710,22 @@ public class ProceduralMeshGenerator : MonoBehaviour
     private void UpdateParticleMesh()
     {
         particleSystem = GetComponent<ParticleSystem>();
-        ParticleSystemRenderer psr = particleSystem.GetComponent<ParticleSystemRenderer>();
-        if (psr && mesh)
-            psr.mesh = mesh;
-        
+        var psr = particleSystem ? particleSystem.GetComponent<ParticleSystemRenderer>() : null;
+
+        var m = ActiveRenderMesh;
+        if (psr && m)
+            psr.mesh = m;
+
         foreach (var subPs in subEmitterSystems)
         {
             if (!subPs || subPs == particleSystem)
                 continue;
 
             var subPsr = subPs.GetComponent<ParticleSystemRenderer>();
-            if (subPsr)
-                subPsr.mesh = mesh;
+            if (subPsr && m)
+                subPsr.mesh = m;
         }
     }
-
-    private Vector2 RotateUV(Vector2 uv, float angleDegrees)
-    {
-        float rad = angleDegrees * Mathf.Deg2Rad;
-        float cos = Mathf.Cos(rad);
-        float sin = Mathf.Sin(rad);
-
-        uv -= new Vector2(0.5f, 0.5f);
-        float x = uv.x * cos - uv.y * sin;
-        float y = uv.x * sin + uv.y * cos;
-        return new Vector2(x, y) + new Vector2(0.5f, 0.5f);
-    }
-
-#if UNITY_EDITOR
-    [ContextMenu("Reassign Particle Mesh")]
-    public void ReassignParticleMesh()
-    {
-        GenerateMesh();
-    }
-#endif
 
     // ---------------------------
     // Trigger Volume (Collision)
@@ -504,17 +742,17 @@ public class ProceduralMeshGenerator : MonoBehaviour
         if (!generateTriggerVolume)
             return;
 
-        // Reset to a stable baseline so downstream systems can reliably "sweep" this transform.
         root.localPosition = Vector3.zero;
         root.localScale = Vector3.one;
         root.localRotation = alignTriggerVolumeToParticleRotation ? GetParticleMeshLocalRotation() : Quaternion.identity;
-        
+        root.gameObject.layer = triggerLayerMask;
+
         ClearTriggerVolume(root, destroyImmediate);
 
-        UnityEditor.EditorApplication.delayCall += () =>
+        void BuildNow()
         {
-            if (!root)
-                return;
+            if (!root) return;
+
             switch (shape)
             {
                 case ShapeType.Quad:
@@ -523,8 +761,29 @@ public class ProceduralMeshGenerator : MonoBehaviour
                     break;
 
                 case ShapeType.Radial:
-                    BuildRadialTrigger(root);
+                {
+                    int seg = Mathf.Clamp(radialTriggerSegmentsOverride > 0 ? radialTriggerSegmentsOverride : segments, 1, 256);
+                    float a0 = 0f;
+                    float a1 = Mathf.Deg2Rad * Mathf.Clamp(angle, 0.1f, 360f);
+                    float thickness = Mathf.Max(0.0001f, triggerHeight + triggerSizeOffset * 2f);
+
+                    // If a baked trigger mesh matches current trigger params, reuse it.
+                    Mesh trigMesh = (bakedTriggerMesh != null && bakedTriggerHash == ComputeTriggerMeshHash())
+                        ? bakedTriggerMesh
+                        : null;
+
+                    if (trigMesh == null)
+                    {
+                        // Build a runtime trigger mesh (DontSave) and attach it.
+                        EnsureRuntimeTriggerMesh();
+                        DestroySafe(runtimeTriggerMesh, immediate: destroyImmediate);
+                        runtimeTriggerMesh = CreateRadialWedgePrismMesh(innerRadius, outerRadius, a0, a1, thickness, seg, triggerSizeOffset, dontSaveHideFlags: true);
+                        trigMesh = runtimeTriggerMesh;
+                    }
+
+                    AttachTriggerMesh(root, trigMesh);
                     break;
+                }
 
                 case ShapeType.Cylinder:
                     BuildCylinderTrigger(root);
@@ -534,7 +793,19 @@ public class ProceduralMeshGenerator : MonoBehaviour
                     BuildSphereTrigger(root);
                     break;
             }
-        };
+        }
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.delayCall += BuildNow;
+#else
+        BuildNow();
+#endif
+    }
+
+    private void EnsureRuntimeTriggerMesh()
+    {
+        // No-op placeholder so we have a single place to manage runtimeTriggerMesh lifecycle.
+        // The actual mesh is created per-build in CreateRadialWedgePrismMesh to match current params.
     }
 
     private Transform GetOrCreateTriggerVolumeRoot(bool createIfMissing)
@@ -555,7 +826,6 @@ public class ProceduralMeshGenerator : MonoBehaviour
         go.transform.localScale = Vector3.one;
         return go.transform;
     }
-    
 
     private void ClearTriggerVolume(Transform root, bool destroyImmediate = false)
     {
@@ -567,10 +837,19 @@ public class ProceduralMeshGenerator : MonoBehaviour
                 DestroySafe(mc.sharedMesh, destroyImmediate);
         }
 
-        // Remove all colliders on the root (root is dedicated to this trigger volume).
+        var meshFilters = root.GetComponents<MeshFilter>();
+        foreach (var mf in meshFilters)
+        {
+            if (mf != null && mf.sharedMesh != null && (mf.sharedMesh.hideFlags & HideFlags.DontSave) != 0)
+                DestroySafe(mf.sharedMesh, destroyImmediate);
+            if (mf != null)
+                DestroySafe(mf, destroyImmediate);
+        }
+
         var colliders = root.GetComponents<Collider>();
         foreach (var c in colliders)
             DestroySafe(c, destroyImmediate);
+
         triggerCollider = null;
     }
 
@@ -598,25 +877,13 @@ public class ProceduralMeshGenerator : MonoBehaviour
         triggerCollider = sc;
     }
 
-    private void BuildRadialTrigger(Transform root)
-    {
-        float r1 = Mathf.Max(innerRadius, outerRadius);
-
-        float outer = Mathf.Max(0.0001f, r1 + triggerSizeOffset);
-        float height = Mathf.Max(triggerCapsuleHeight + triggerSizeOffset * 2f, triggerHeight + triggerSizeOffset * 2f);
-
-        var capsule = root.gameObject.AddComponent<CapsuleCollider>();
-        capsule.isTrigger = triggerVolumeIsTrigger;
-        capsule.center = Vector3.zero;
-        capsule.direction = 2; // Z axis thickness
-        capsule.radius = outer;
-        capsule.height = Mathf.Max(height, capsule.radius * 2f);
-        triggerCollider = capsule;
-    }
-
     private void BuildCylinderTrigger(Transform root)
     {
-        int sampleCount = Mathf.Clamp(cylinderTriggerSlicesOverride > 0 ? cylinderTriggerSlicesOverride : Mathf.Max(1, cylinderRings), 1, 128);
+        int sampleCount = Mathf.Clamp(
+            cylinderTriggerSlicesOverride > 0 ? cylinderTriggerSlicesOverride : Mathf.Max(1, cylinderRings),
+            1, 128
+        );
+
         float maxRadius = 0.0001f;
         for (int i = 0; i <= sampleCount; i++)
         {
@@ -636,13 +903,31 @@ public class ProceduralMeshGenerator : MonoBehaviour
         triggerCollider = capsule;
     }
 
+    private void AttachTriggerMesh(Transform root, Mesh triggerMesh)
+    {
+        if (!root || triggerMesh == null)
+            return;
+
+        // Optional visualization / debug: MeshFilter doesn't affect physics.
+        var mf = root.GetComponent<MeshFilter>();
+        if (!mf) mf = root.gameObject.AddComponent<MeshFilter>();
+        mf.sharedMesh = triggerMesh;
+
+        var mc = root.GetComponent<MeshCollider>();
+        if (!mc) mc = root.gameObject.AddComponent<MeshCollider>();
+        mc.sharedMesh = triggerMesh;
+        mc.convex = true;
+        mc.isTrigger = triggerVolumeIsTrigger;
+        triggerCollider = mc;
+    }
+
     private Vector2 GetPlanarSizeFromMesh()
     {
-        if (mesh == null)
+        var m = ActiveRenderMesh;
+        if (m == null)
             return quadSize;
 
-        // Mesh is built in XY for planar shapes, so "planar size" is x/y in local space.
-        var b = mesh.bounds.size;
+        var b = m.bounds.size;
         return new Vector2(Mathf.Abs(b.x), Mathf.Abs(b.y));
     }
 
@@ -665,119 +950,359 @@ public class ProceduralMeshGenerator : MonoBehaviour
         return Quaternion.Euler(0f, 0f, rz);
     }
 
-    private static Mesh BuildRadialWedgePrism(float inner, float outer, float a0, float a1, float thickness)
+    // ---------------------------
+    // Radial trigger mesh (multi segment) creation
+    // ---------------------------
+
+    private Mesh CreateRadialWedgePrismMesh(
+        float inner, float outer, float a0, float a1,
+        float thickness, int arcSegments, float sizeOffset,
+        bool dontSaveHideFlags
+    )
     {
+        arcSegments = Mathf.Max(1, arcSegments);
+
+        float rIn = Mathf.Max(0f, Mathf.Min(inner, outer) + sizeOffset);
+        float rOut = Mathf.Max(0.0001f, Mathf.Max(inner, outer) + sizeOffset);
+        rOut = Mathf.Max(rOut, rIn + 0.0001f);
+
+        float twoPi = Mathf.PI * 2f;
+        float span = a1 - a0;
+        while (span < 0f) span += twoPi;
+        span = Mathf.Clamp(span, 0.001f, twoPi - 0.001f);
+        a1 = a0 + span;
+
         float z0 = -thickness * 0.5f;
         float z1 = thickness * 0.5f;
 
-        Vector3 p0 = new Vector3(Mathf.Cos(a0) * inner, Mathf.Sin(a0) * inner, z0);
-        Vector3 p1 = new Vector3(Mathf.Cos(a1) * inner, Mathf.Sin(a1) * inner, z0);
-        Vector3 p2 = new Vector3(Mathf.Cos(a1) * outer, Mathf.Sin(a1) * outer, z0);
-        Vector3 p3 = new Vector3(Mathf.Cos(a0) * outer, Mathf.Sin(a0) * outer, z0);
+        Mesh m;
+        if (rIn <= 0.00011f)
+            m = CreateSolidSectorPrismMesh(rOut, a0, a1, z0, z1, arcSegments);
+        else
+            m = CreateAnnularSectorPrismMesh(rIn, rOut, a0, a1, z0, z1, arcSegments);
 
-        Vector3 p4 = new Vector3(p0.x, p0.y, z1);
-        Vector3 p5 = new Vector3(p1.x, p1.y, z1);
-        Vector3 p6 = new Vector3(p2.x, p2.y, z1);
-        Vector3 p7 = new Vector3(p3.x, p3.y, z1);
+        if (dontSaveHideFlags)
+            m.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
 
-        // 8 verts, 12 triangles (2 per face * 6 faces)
-        var vertices = new Vector3[8] { p0, p1, p2, p3, p4, p5, p6, p7 };
-        var triangles = new int[]
+        return m;
+    }
+
+    private static Mesh CreateSolidSectorPrismMesh(float rOut, float a0, float a1, float z0, float z1, int seg)
+    {
+        int ringCount = seg + 1;
+
+        int bottomCenter = 0;
+        int bottomOuterStart = 1;
+        int topCenter = 1 + ringCount;
+        int topOuterStart = topCenter + 1;
+
+        var vertices = new Vector3[2 + ringCount * 2];
+
+        vertices[bottomCenter] = new Vector3(0f, 0f, z0);
+        vertices[topCenter] = new Vector3(0f, 0f, z1);
+
+        for (int i = 0; i < ringCount; i++)
         {
-            // Bottom (reverse winding to face -Z)
-            0, 2, 1, 0, 3, 2,
+            float t = (float)i / seg;
+            float a = Mathf.Lerp(a0, a1, t);
+            float c = Mathf.Cos(a);
+            float s = Mathf.Sin(a);
 
-            // Top (faces +Z)
-            4, 5, 6, 4, 6, 7,
+            vertices[bottomOuterStart + i] = new Vector3(c * rOut, s * rOut, z0);
+            vertices[topOuterStart + i] = new Vector3(c * rOut, s * rOut, z1);
+        }
 
-            // Inner wall (0-1)
-            0, 1, 5, 0, 5, 4,
+        var tris = new List<int>(seg * 18);
 
-            // Outer wall (3-2)
-            3, 7, 6, 3, 6, 2,
+        // Bottom (-Z)
+        for (int i = 0; i < seg; i++)
+        {
+            int o0 = bottomOuterStart + i;
+            int o1 = bottomOuterStart + i + 1;
+            tris.Add(bottomCenter); tris.Add(o1); tris.Add(o0);
+        }
 
-            // Side wall at a1 (1-2)
-            1, 2, 6, 1, 6, 5,
+        // Top (+Z)
+        for (int i = 0; i < seg; i++)
+        {
+            int o0 = topOuterStart + i;
+            int o1 = topOuterStart + i + 1;
+            tris.Add(topCenter); tris.Add(o0); tris.Add(o1);
+        }
 
-            // Side wall at a0 (0-3)
-            0, 4, 7, 0, 7, 3
-        };
+        // Outer wall
+        for (int i = 0; i < seg; i++)
+        {
+            int b0 = bottomOuterStart + i;
+            int b1 = bottomOuterStart + i + 1;
+            int t0 = topOuterStart + i;
+            int t1 = topOuterStart + i + 1;
+
+            tris.Add(b0); tris.Add(t0); tris.Add(t1);
+            tris.Add(b0); tris.Add(t1); tris.Add(b1);
+        }
+
+        // Side wall at start (a0)
+        {
+            int bC = bottomCenter;
+            int tC = topCenter;
+            int bO = bottomOuterStart + 0;
+            int tO = topOuterStart + 0;
+
+            tris.Add(bC); tris.Add(tC); tris.Add(tO);
+            tris.Add(bC); tris.Add(tO); tris.Add(bO);
+        }
+
+        // Side wall at end (a1)
+        {
+            int bC = bottomCenter;
+            int tC = topCenter;
+            int bO = bottomOuterStart + seg;
+            int tO = topOuterStart + seg;
+
+            tris.Add(bC); tris.Add(bO); tris.Add(tO);
+            tris.Add(bC); tris.Add(tO); tris.Add(tC);
+        }
 
         var mesh = new Mesh();
-        mesh.hideFlags = HideFlags.DontSave;
         mesh.vertices = vertices;
-        mesh.triangles = triangles;
+        mesh.triangles = tris.ToArray();
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         return mesh;
     }
 
-    private static Mesh BuildFrustumPrism(float r0, float r1, float z0, float z1, int seg)
+    private static Mesh CreateAnnularSectorPrismMesh(float rIn, float rOut, float a0, float a1, float z0, float z1, int seg)
     {
-        seg = Mathf.Max(3, seg);
+        int ringCount = seg + 1;
 
-        var vertices = new List<Vector3>((seg + 1) * 2 + 2);
-        var triangles = new List<int>(seg * 12);
+        int biStart = 0;
+        int boStart = biStart + ringCount;
+        int tiStart = boStart + ringCount;
+        int toStart = tiStart + ringCount;
 
-        // Bottom ring
-        for (int i = 0; i <= seg; i++)
+        var vertices = new Vector3[ringCount * 4];
+
+        for (int i = 0; i < ringCount; i++)
         {
             float t = (float)i / seg;
-            float a = t * Mathf.PI * 2f;
-            vertices.Add(new Vector3(Mathf.Cos(a) * r0, Mathf.Sin(a) * r0, z0));
+            float a = Mathf.Lerp(a0, a1, t);
+            float c = Mathf.Cos(a);
+            float s = Mathf.Sin(a);
+
+            vertices[biStart + i] = new Vector3(c * rIn, s * rIn, z0);
+            vertices[boStart + i] = new Vector3(c * rOut, s * rOut, z0);
+            vertices[tiStart + i] = new Vector3(c * rIn, s * rIn, z1);
+            vertices[toStart + i] = new Vector3(c * rOut, s * rOut, z1);
         }
 
-        int topStart = vertices.Count;
+        var tris = new List<int>(seg * 30);
 
-        // Top ring
-        for (int i = 0; i <= seg; i++)
-        {
-            float t = (float)i / seg;
-            float a = t * Mathf.PI * 2f;
-            vertices.Add(new Vector3(Mathf.Cos(a) * r1, Mathf.Sin(a) * r1, z1));
-        }
-
-        int bottomCenter = vertices.Count;
-        vertices.Add(new Vector3(0f, 0f, z0));
-
-        int topCenter = vertices.Count;
-        vertices.Add(new Vector3(0f, 0f, z1));
-
-        // Sides
+        // Bottom (-Z)
         for (int i = 0; i < seg; i++)
         {
-            int b0 = i;
-            int b1 = i + 1;
-            int t0 = topStart + i;
-            int t1 = topStart + i + 1;
+            int i0 = biStart + i;
+            int i1 = biStart + i + 1;
+            int o1 = boStart + i + 1;
+            int o0 = boStart + i;
 
-            triangles.Add(b0); triangles.Add(t0); triangles.Add(b1);
-            triangles.Add(b1); triangles.Add(t0); triangles.Add(t1);
+            tris.Add(i0); tris.Add(o1); tris.Add(i1);
+            tris.Add(i0); tris.Add(o0); tris.Add(o1);
         }
 
-        // Bottom cap (faces -Z)
+        // Top (+Z)
         for (int i = 0; i < seg; i++)
         {
-            int b0 = i;
-            int b1 = i + 1;
-            triangles.Add(bottomCenter); triangles.Add(b1); triangles.Add(b0);
+            int i0 = tiStart + i;
+            int i1 = tiStart + i + 1;
+            int o1 = toStart + i + 1;
+            int o0 = toStart + i;
+
+            tris.Add(i0); tris.Add(i1); tris.Add(o1);
+            tris.Add(i0); tris.Add(o1); tris.Add(o0);
         }
 
-        // Top cap (faces +Z)
+        // Inner wall
         for (int i = 0; i < seg; i++)
         {
-            int t0 = topStart + i;
-            int t1 = topStart + i + 1;
-            triangles.Add(topCenter); triangles.Add(t0); triangles.Add(t1);
+            int b0 = biStart + i;
+            int b1 = biStart + i + 1;
+            int t1 = tiStart + i + 1;
+            int t0 = tiStart + i;
+
+            tris.Add(b0); tris.Add(b1); tris.Add(t1);
+            tris.Add(b0); tris.Add(t1); tris.Add(t0);
+        }
+
+        // Outer wall
+        for (int i = 0; i < seg; i++)
+        {
+            int b0 = boStart + i;
+            int b1 = boStart + i + 1;
+            int t0 = toStart + i;
+            int t1 = toStart + i + 1;
+
+            tris.Add(b0); tris.Add(t0); tris.Add(t1);
+            tris.Add(b0); tris.Add(t1); tris.Add(b1);
+        }
+
+        // Side wall at start (a0)
+        {
+            int bI = biStart + 0;
+            int bO = boStart + 0;
+            int tI = tiStart + 0;
+            int tO = toStart + 0;
+
+            tris.Add(bI); tris.Add(bO); tris.Add(tO);
+            tris.Add(bI); tris.Add(tO); tris.Add(tI);
+        }
+
+        // Side wall at end (a1)
+        {
+            int bI = biStart + seg;
+            int bO = boStart + seg;
+            int tI = tiStart + seg;
+            int tO = toStart + seg;
+
+            tris.Add(bI); tris.Add(tO); tris.Add(bO);
+            tris.Add(bI); tris.Add(tI); tris.Add(tO);
         }
 
         var mesh = new Mesh();
-        mesh.hideFlags = HideFlags.DontSave;
-        mesh.SetVertices(vertices);
-        mesh.SetTriangles(triangles, 0);
+        mesh.vertices = vertices;
+        mesh.triangles = tris.ToArray();
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         return mesh;
+    }
+
+    // ---------------------------
+    // Hashing (detect baked validity)
+    // ---------------------------
+
+    private int ComputeRenderMeshHash()
+    {
+        unchecked
+        {
+            int h = 17;
+            h = h * 31 + shape.GetHashCode();
+            h = h * 31 + tiling.GetHashCode();
+            h = h * 31 + uvRotation.GetHashCode();
+
+            switch (shape)
+            {
+                case ShapeType.Quad:
+                    h = h * 31 + quadSize.GetHashCode();
+                    break;
+
+                case ShapeType.NineSliceQuad:
+                    h = h * 31 + quadSize.GetHashCode();
+                    h = h * 31 + border.GetHashCode();
+                    h = h * 31 + nineSliceSubdiv.GetHashCode();
+                    break;
+
+                case ShapeType.Radial:
+                    h = h * 31 + innerRadius.GetHashCode();
+                    h = h * 31 + outerRadius.GetHashCode();
+                    h = h * 31 + angle.GetHashCode();
+                    h = h * 31 + segments.GetHashCode();
+                    h = h * 31 + rings.GetHashCode();
+                    break;
+
+                case ShapeType.Cylinder:
+                    h = h * 31 + cylinderHeight.GetHashCode();
+                    h = h * 31 + cylinderSegments.GetHashCode();
+                    h = h * 31 + cylinderRings.GetHashCode();
+                    h = h * 31 + cylinderRadius.GetHashCode();
+                    h = h * 31 + HashCurve(cylinderProfile);
+                    break;
+
+                case ShapeType.Sphere:
+                    h = h * 31 + sphereSegments.GetHashCode();
+                    h = h * 31 + sphereRings.GetHashCode();
+                    h = h * 31 + sphereRadius.GetHashCode();
+                    break;
+            }
+
+            return h;
+        }
+    }
+
+    private int ComputeTriggerMeshHash()
+    {
+        // Only meaningful for the radial MeshCollider trigger mesh.
+        unchecked
+        {
+            int h = 17;
+            h = h * 31 + generateTriggerVolume.GetHashCode();
+            h = h * 31 + triggerHeight.GetHashCode();
+            h = h * 31 + triggerSizeOffset.GetHashCode();
+            h = h * 31 + radialTriggerSegmentsOverride.GetHashCode();
+            h = h * 31 + shape.GetHashCode();
+
+            if (shape == ShapeType.Radial)
+            {
+                h = h * 31 + innerRadius.GetHashCode();
+                h = h * 31 + outerRadius.GetHashCode();
+                h = h * 31 + angle.GetHashCode();
+                h = h * 31 + segments.GetHashCode();
+            }
+
+            return h;
+        }
+    }
+
+    private static int HashCurve(AnimationCurve curve)
+    {
+        if (curve == null)
+            return 0;
+
+        unchecked
+        {
+            int h = 17;
+            var keys = curve.keys;
+            h = h * 31 + keys.Length;
+            for (int i = 0; i < keys.Length; i++)
+            {
+                var k = keys[i];
+                h = h * 31 + k.time.GetHashCode();
+                h = h * 31 + k.value.GetHashCode();
+                h = h * 31 + k.inTangent.GetHashCode();
+                h = h * 31 + k.outTangent.GetHashCode();
+            }
+            return h;
+        }
+    }
+
+    // ---------------------------
+    // Utilities
+    // ---------------------------
+
+    private Vector2 RotateUV(Vector2 uv, float angleDegrees)
+    {
+        float rad = angleDegrees * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rad);
+        float sin = Mathf.Sin(rad);
+
+        uv -= new Vector2(0.5f, 0.5f);
+        float x = uv.x * cos - uv.y * sin;
+        float y = uv.x * sin + uv.y * cos;
+        return new Vector2(x, y) + new Vector2(0.5f, 0.5f);
+    }
+
+    private void CleanupRuntimeMeshes(bool immediate)
+    {
+        if (runtimeRenderMesh != null)
+        {
+            DestroySafe(runtimeRenderMesh, immediate);
+            runtimeRenderMesh = null;
+        }
+
+        if (runtimeTriggerMesh != null)
+        {
+            DestroySafe(runtimeTriggerMesh, immediate);
+            runtimeTriggerMesh = null;
+        }
     }
 
     private static void DestroySafe(Object obj, bool immediate = false)
@@ -785,12 +1310,13 @@ public class ProceduralMeshGenerator : MonoBehaviour
         if (obj == null)
             return;
 
-        if (!immediate)
-            Destroy(obj);
+#if UNITY_EDITOR
+        if (immediate)
+            DestroyImmediate(obj, true);
         else
-            UnityEditor.EditorApplication.delayCall+=()=>
-            {
-                DestroyImmediate(obj, true);
-            };
+            Destroy(obj);
+#else
+        Destroy(obj);
+#endif
     }
 }

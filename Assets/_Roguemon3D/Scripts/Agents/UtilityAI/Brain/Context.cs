@@ -23,10 +23,6 @@ namespace UtilityAI {
             return brain != null ? brain.GetClosestTarget(tag) : null;
         }
 
-        public void RegisterTargetTag(string tag) {
-            brain?.RegisterTargetTag(tag);
-        }
-
         internal void ResetLastEvaluatedTarget() {
             LastEvaluatedTarget = null;
         }

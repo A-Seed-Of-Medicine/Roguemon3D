@@ -357,6 +357,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Actions.CharacterComboAction
   binding: 0
+  cooldownDuration: 0
   actionDefinition: {fileID: 11400000, guid: 3164d2070ae92b34c8d7c99506046c40, type: 2}
   actionMagnitude: 1
   skipIfActionInProgress: 1
@@ -645,8 +646,12 @@ MonoBehaviour:
   actions:
   - rid: 8319330709940469852
   - rid: 8319330709940469854
+  detectionLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967291
   detectionCollider: {fileID: 435177238226391425}
   detectionRadius: 20
+  tickCooldown: 0.2
   controller: {fileID: 5590122781720635312}
   references:
     version: 2
@@ -655,6 +660,7 @@ MonoBehaviour:
       type: {class: AIToTargetAction, ns: UtilityAI, asm: Assembly-CSharp}
       data:
         targetTag: Player
+        allegianceMask: 0
         maxTargets: 1
         consideration:
           rid: 8319330709940469856
@@ -676,6 +682,7 @@ MonoBehaviour:
       type: {class: AICharacterAction, ns: UtilityAI, asm: Assembly-CSharp}
       data:
         targetTag: Player
+        allegianceMask: 0
         maxTargets: 1
         consideration:
           rid: 8319330709940469855

@@ -260,6 +260,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Actions.CharacterComboAction
   binding: 0
+  cooldownDuration: 0
   actionDefinition: {fileID: 11400000, guid: 6f400752c183ada40a205213621761b4, type: 2}
   actionMagnitude: 1
   skipIfActionInProgress: 1
@@ -378,6 +379,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_PinBoy.Scripts.Gameplay.Actions.CharacterDashAction
   binding: 5
+  cooldownDuration: 0
   actionDefinition: {fileID: 0}
   actionMagnitude: 1
   skipIfActionInProgress: 1

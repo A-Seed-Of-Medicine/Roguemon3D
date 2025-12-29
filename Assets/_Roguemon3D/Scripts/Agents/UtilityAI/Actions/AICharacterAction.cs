@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using _PinBoy.Scripts.Gameplay.Actions;
 using UnityEngine;
 
@@ -19,6 +20,13 @@ namespace UtilityAI
             {
                 characterAction = context.Controller.GetComponent<CharacterAction>();
             }
+        }
+
+        public override float CalculateUtility(Context context, IReadOnlyList<TargetContext> targets)
+        {
+            if (characterAction.IsActionInProgress || characterAction.IsOnCooldown)
+                return 0f;
+            return base.CalculateUtility(context, targets);
         }
 
         public override void Execute(Context context)

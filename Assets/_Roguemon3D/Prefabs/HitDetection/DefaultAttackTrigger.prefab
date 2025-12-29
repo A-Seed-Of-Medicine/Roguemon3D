@@ -73,9 +73,13 @@ PrefabInstance:
     - target: {fileID: 1568467376540128524, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: triggerCollider
       value: 
-      objectReference: {fileID: 6004536715577357298}
+      objectReference: {fileID: 3943243518139075302}
     - target: {fileID: 1568467376540128524, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       propertyPath: triggerCapsuleHeight
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1568467376540128524, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
+      propertyPath: radialTriggerSegmentsOverride
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 3436941834127572068, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
@@ -141,15 +145,15 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 335801461557476209, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6004536715577357298}
+      addedObject: {fileID: 3943243518139075302}
   m_SourcePrefab: {fileID: 100100000, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
 --- !u!1 &2320557562467587230 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 335801461557476209, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}
   m_PrefabInstance: {fileID: 2638343471001939951}
   m_PrefabAsset: {fileID: 0}
---- !u!136 &6004536715577357298
-CapsuleCollider:
+--- !u!64 &3943243518139075302
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -166,11 +170,10 @@ CapsuleCollider:
   m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 1.7947022
-  m_Height: 5
-  m_Direction: 2
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!114 &3555899409847565027 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1568467376540128524, guid: 111ad08cf4c177c40bed014f24fe0afa, type: 3}

@@ -122,6 +122,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         [Header("Action")]
         public PressBinding binding;
         public UnityAction<bool> actionTrigger;
+        public float cooldownDuration;
         [SerializeField] protected AgentActionDefinition actionDefinition;
         [SerializeField, Min(0f)] protected float actionMagnitude = 1f;
         [SerializeField] protected bool skipIfActionInProgress = true;
@@ -167,13 +168,15 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected MyFixedTimer windupTimer;
         protected MyFixedTimer activeTimer;
         protected MyFixedTimer recoveryTimer;
+        public MyCountdownTimer cooldownTimer;
         ActionPhase currentPhase = ActionPhase.None;
         ActionPhaseDurations currentPhaseDurations;
         PhaseAnimationSettings currentPhaseAnimations;
         bool autoCompleteWindupWithoutDuration = true;
-        CharacterAction.ActionPhase _activeActionPhase = CharacterAction.ActionPhase.None;
+        ActionPhase _activeActionPhase = ActionPhase.None;
         readonly Dictionary<ActionPhase, List<IPhaseFxInstance>> runningPhaseFx = new();
         PhaseFxSettings currentPhaseFx;
+        public bool IsOnCooldown => cooldownTimer.IsRunning;
 
         public virtual void OnValidate()
         {
@@ -200,6 +203,8 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
             recoveryTimer = new MyFixedTimer(0f);
             recoveryTimer.OnTimerFinish += HandleRecoveryTimerFinished;
+            
+            cooldownTimer = new MyFixedTimer(cooldownDuration);
         }
 
         protected virtual void Start()
@@ -343,8 +348,9 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         }
 
         protected void StartActionPhases(ActionPhaseDurations durations, PhaseAnimationSettings animations,
-            bool completeWindupWhenDurationMissing = true, PhaseFxSettings? fxSettings = null)
+            bool completeWindupWhenDurationMissing = true, PhaseFxSettings? fxSettings = null, bool cooldownOverride = false)
         {
+            if (!cooldownOverride && IsOnCooldown) return;
             currentPhaseDurations = durations;
             currentPhaseAnimations = animations;
             autoCompleteWindupWithoutDuration = completeWindupWhenDurationMissing;
@@ -355,7 +361,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             BeginWindupPhase();
         }
 
-        internal CharacterAction.ActionPhase ActiveActionPhase => _activeActionPhase;
+        internal ActionPhase ActiveActionPhase => _activeActionPhase;
 
         internal bool IsActionInProgress => IsAnyPhaseRunning;
 
@@ -398,18 +404,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void BeginActivePhase()
         {
+            if (cooldownDuration > 0) 
+                cooldownTimer.Start(cooldownDuration);
             currentPhase = ActionPhase.Active;
             ApplyPhaseAnimation(ActionPhase.Active);
             NotifyPhaseStarted(ActionPhase.Active, currentPhaseDurations.Active);
 
             if (currentPhaseDurations.Active > 0f)
-            {
                 activeTimer.Start(currentPhaseDurations.Active);
-            }
             else
-            {
                 HandleActiveTimerFinished();
-            }
         }
 
         void BeginRecoveryPhase()
@@ -419,21 +423,15 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             NotifyPhaseStarted(ActionPhase.Recovery, currentPhaseDurations.Recovery);
 
             if (currentPhaseDurations.Recovery > 0f)
-            {
                 recoveryTimer.Start(currentPhaseDurations.Recovery);
-            }
             else
-            {
                 HandleRecoveryTimerFinished();
-            }
         }
 
         void HandleWindupTimerFinished()
         {
             if (currentPhase != ActionPhase.Windup)
-            {
                 return;
-            }
 
             TryCompleteWindupPhase();
         }
@@ -441,9 +439,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected void TryCompleteWindupPhase()
         {
             if (!CanCompleteWindupPhase())
-            {
                 return;
-            }
 
             CompleteWindupPhase();
         }
@@ -451,9 +447,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected void CompleteWindupPhase()
         {
             if (currentPhase != ActionPhase.Windup)
-            {
                 return;
-            }
 
             windupTimer.Cancel();
             NotifyPhaseEnded(ActionPhase.Windup);
@@ -463,9 +457,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void HandleActiveTimerFinished()
         {
             if (currentPhase != ActionPhase.Active)
-            {
                 return;
-            }
 
             activeTimer.Cancel();
             NotifyPhaseEnded(ActionPhase.Active);
@@ -475,9 +467,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void HandleRecoveryTimerFinished()
         {
             if (currentPhase != ActionPhase.Recovery)
-            {
                 return;
-            }
 
             recoveryTimer.Cancel();
             NotifyPhaseEnded(ActionPhase.Recovery);
@@ -487,14 +477,14 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         void FinishPhaseSequence()
         {
             currentPhase = ActionPhase.None;
-            SetActiveExecutionPhase(CharacterAction.ActionPhase.None);
+            SetActiveExecutionPhase(ActionPhase.None);
             StopAllPhaseFx();
             OnPhasesCompleted();
         }
 
         void NotifyPhaseStarted(ActionPhase phase, float duration)
         {
-            CharacterAction.ActionPhase mapped = MapPhase(phase);
+            ActionPhase mapped = MapPhase(phase);
             SetActiveExecutionPhase(mapped);
             ApplyPhaseFx(phase, duration);
             phaseStarted?.Invoke(mapped, duration);
@@ -505,27 +495,27 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             OnPhaseEnded(phase);
             StopPhaseFx(phase);
-            CharacterAction.ActionPhase mapped = MapPhase(phase);
+            ActionPhase mapped = MapPhase(phase);
             phaseEnded?.Invoke(mapped);
             if (mapped == _activeActionPhase)
             {
-                SetActiveExecutionPhase(CharacterAction.ActionPhase.None);
+                SetActiveExecutionPhase(ActionPhase.None);
             }
         }
 
-        void SetActiveExecutionPhase(CharacterAction.ActionPhase phase)
+        void SetActiveExecutionPhase(ActionPhase phase)
         {
             _activeActionPhase = phase;
         }
 
-        static CharacterAction.ActionPhase MapPhase(ActionPhase phase)
+        static ActionPhase MapPhase(ActionPhase phase)
         {
             return phase switch
             {
-                ActionPhase.Windup => CharacterAction.ActionPhase.Windup,
-                ActionPhase.Active => CharacterAction.ActionPhase.Active,
-                ActionPhase.Recovery => CharacterAction.ActionPhase.Recovery,
-                _ => CharacterAction.ActionPhase.None
+                ActionPhase.Windup => ActionPhase.Windup,
+                ActionPhase.Active => ActionPhase.Active,
+                ActionPhase.Recovery => ActionPhase.Recovery,
+                _ => ActionPhase.None
             };
         }
 
@@ -540,7 +530,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             List<IPhaseFxInstance> activeInstances = GetOrCreateFxList(phase);
             foreach (PhaseFX fx in fxArray)
             {
-                if (fx == null || Controller == null)
+                if (fx == null || !Controller)
                 {
                     continue;
                 }
@@ -613,16 +603,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         void ApplyPhaseAnimation(ActionPhase phase)
         {
-            if (Controller == null)
-            {
+            if (!Controller)
                 return;
-            }
 
-            if (!TryGetAnimationRequestForPhase(currentPhaseAnimations, phase, out AgentAnimationRequest request,
-                    out float targetDuration, out bool scaleToDuration))
-            {
+            if (!TryGetAnimationRequestForPhase(currentPhaseAnimations, phase, out AgentAnimationRequest request, out float targetDuration, out bool scaleToDuration))
                 return;
-            }
 
             AgentAnimationRequest animationRequest = PrepareAnimationRequest(currentPhaseAnimations, request, targetDuration,
                 scaleToDuration);
@@ -660,9 +645,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             };
 
             if (!scaleToDuration)
-            {
                 scaleToDuration = settings.scaleAnimationSpeedToDuration;
-            }
 
             if (!request.IsValid)
             {
@@ -738,14 +721,10 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             InputReader reader = InputReader;
             if (reader == null)
-            {
                 return;
-            }
 
             if (actionTrigger == null)
-            {
                 actionTrigger = DefaultActionTrigger;
-            }
 
             SubscribeToInput(reader);
         }
@@ -754,9 +733,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         {
             InputReader reader = InputReader;
             if (reader == null)
-            {
                 return;
-            }
 
             UnsubscribeFromInput(reader);
         }
@@ -828,9 +805,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             }
 
             if (UsesAimInput)
-            {
                 reader.Aim -= HandleAimInput;
-            }
         }
 
         protected virtual void Reset()
@@ -845,9 +820,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 Vector2 planar = new Vector2(direction.x, direction.z);
                 if (planar.sqrMagnitude > 0.0001f)
-                {
                     InputReader.InvokeMove(planar.normalized);
-                }
             }
         }
 
@@ -930,15 +903,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             {
                 Vector3 aimVector = direction;
                 if (aimVector.sqrMagnitude <= 0.0001f && Controller)
-                {
                     aimVector = Controller.AimDirection;
-                }
 
                 RecordInputDirection(aimVector);
                 if (aimVector.sqrMagnitude > 0.0001f)
-                {
                     lastAimWorldPosition = GetAimOrigin() + aimVector;
-                }
 
                 InvokeActionTrigger(true);
             }
@@ -968,24 +937,18 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected Vector3 ResolveAimWorldPosition(Vector3 directionOrPosition, Transform target)
         {
             if (target)
-            {
                 return target.position;
-            }
 
             Vector3 origin = GetAimOrigin();
 
             if (directionOrPosition.sqrMagnitude > 0.0001f)
-            {
                 return origin + directionOrPosition;
-            }
 
             if (Controller)
             {
                 Vector3 controllerAim = Controller.AimDirection;
                 if (controllerAim.sqrMagnitude > 0.0001f)
-                {
                     return origin + controllerAim;
-                }
             }
 
             return origin + Vector3.forward;
@@ -994,22 +957,16 @@ namespace _PinBoy.Scripts.Gameplay.Actions
         protected Vector3 ResolveAimLocalPosition(Vector3 directionOrPosition, Transform target)
         {
             if (target)
-            {
                 return Controller.transform.InverseTransformPoint(target.position);
-            }
 
             if (directionOrPosition.sqrMagnitude > 0.0001f)
-            {
                 return directionOrPosition;
-            }
 
             if (Controller)
             {
                 Vector3 controllerAim = Controller.AimDirection;
                 if (controllerAim.sqrMagnitude > 0.0001f)
-                {
                     return controllerAim;
-                }
             }
 
             return Vector3.forward;
@@ -1017,12 +974,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
         protected Vector3 GetAimOrigin()
         {
-            if (Controller)
-            {
-                return Controller.AimOrigin;
-            }
-
-            return transform.position;
+            return Controller ? Controller.AimOrigin : transform.position;
         }
 
         async UniTaskVoid StartAiAimRoutine(Vector3 initialAimPosition, Transform target, float aimDelay, bool followTarget)
@@ -1055,15 +1007,11 @@ namespace _PinBoy.Scripts.Gameplay.Actions
 
                     Vector3 nextPosition = initialAimPosition;
                     if (followTarget && target)
-                    {
                         nextPosition = target.position;
-                    }
 
                     Vector3 aimVector = nextPosition - GetAimOrigin();
                     if (aimVector.sqrMagnitude <= 0.0001f && Controller)
-                    {
                         aimVector = Controller.AimDirection;
-                    }
 
                     RecordInputDirection(aimVector);
                     lastAimWorldPosition = nextPosition;
@@ -1072,9 +1020,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
                 }
 
                 if (!token.IsCancellationRequested)
-                {
                     InvokeActionTrigger(true);
-                }
             }
             catch (OperationCanceledException)
             {
@@ -1120,9 +1066,7 @@ namespace _PinBoy.Scripts.Gameplay.Actions
             else
             {
                 if (aimPressed)
-                {
                     OnAimReleased(worldPosition);
-                }
 
                 aimPressed = false;
             }

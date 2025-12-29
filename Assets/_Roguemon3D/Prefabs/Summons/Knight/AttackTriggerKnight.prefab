@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8385476045305049376}
-  - component: {fileID: 6632943989474691100}
+  - component: {fileID: 8754923098348535260}
   m_Layer: 2
   m_Name: Indicator_Cone_Simple_Red_TriggerVolume
   m_TagString: Untagged
@@ -32,8 +32,8 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5016021830088788754}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &6632943989474691100
-CapsuleCollider:
+--- !u!64 &8754923098348535260
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -50,11 +50,10 @@ CapsuleCollider:
   m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 1.8947022
-  m_Height: 3.7894044
-  m_Direction: 2
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!1 &5016021829552386294
 GameObject:
   m_ObjectHideFlags: 0
@@ -9988,13 +9987,13 @@ MonoBehaviour:
   generateTriggerVolume: 1
   triggerLayerMask: 2
   triggerHeight: 0.25
-  triggerCapsuleHeight: 1
+  triggerCapsuleHeight: 1.36
   triggerSizeOffset: 0
-  radialTriggerSegmentsOverride: 3
-  cylinderTriggerSlicesOverride: 0
+  radialTriggerSegmentsOverride: 5
+  cylinderTriggerSlicesOverride: 3
   alignTriggerVolumeToParticleRotation: 1
   triggerVolumeIsTrigger: 1
-  triggerCollider: {fileID: 6632943989474691100}
+  triggerCollider: {fileID: 8754923098348535260}
   particleSystem: {fileID: 5016021830088788753}
   subEmitterSystems:
   - {fileID: 5016021830088788753}
@@ -10002,6 +10001,10 @@ MonoBehaviour:
   - {fileID: 8755687311842327937}
   - {fileID: 5016021830704671645}
   triggerVolumeRoot: {fileID: 8385476045305049376}
+  bakedRenderMesh: {fileID: 0}
+  bakedTriggerMesh: {fileID: 0}
+  bakedRenderHash: 0
+  bakedTriggerHash: 0
 --- !u!1 &5016021830481472948
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,7 +7,7 @@ using ImprovedTimers;
 using Unity.Cinemachine;
 using UnityEngine;
 
-[ExecuteAlways]
+[ExecuteAlways, DefaultExecutionOrder(-1000)]
 public class CameraManager : MonoBehaviour
 {
     public static CameraManager Instance { get; private set; }

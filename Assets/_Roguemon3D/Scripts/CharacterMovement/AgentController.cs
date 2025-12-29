@@ -99,6 +99,12 @@ namespace _PinBoy.Scripts.CharacterMovement
 
             return contextMask;
         }
+        
+        public bool IsAllegiance(AllegianceType mask, AllegianceType targetAllegiance)
+        {
+            AllegianceType contextMask = GetAllegianceMask(mask);
+            return contextMask.HasFlag(targetAllegiance);
+        }
 
         [HideInInspector] public CreatureSummonRuntime summonData;
         [HideInInspector] public CharacterAimAction aimData;

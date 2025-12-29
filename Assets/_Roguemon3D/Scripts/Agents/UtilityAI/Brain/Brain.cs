@@ -2,23 +2,27 @@ using System;
 using System.Collections.Generic;
 using _PinBoy.Scripts.CharacterMovement;
 using AdvancedController;
+using NUnit.Framework;
 using UnityEngine;
 using UtilityAI;
+using UnityUtils;
 
 namespace UtilityAI {
     public class Brain : MonoBehaviour {
         [SerializeField]
         [SerializeReference]
         public List<AIAction> actions = new List<AIAction>();
+        public LayerMask detectionLayerMask = Physics.DefaultRaycastLayers;
         public SphereCollider detectionCollider;
         [Min(0f)] public float detectionRadius = 10f;
+        public float tickCooldown = 0.2f;
         public AgentController controller;
         public Context context;
+        private float tickCount;
 
         [SerializeField]
         List<TargetContext> detectedTargets = new(10);
         readonly List<TargetContext> orderedTargetsBuffer = new(10);
-        readonly HashSet<string> registeredTags = new();
         
         private AIAction currentAction;
 
@@ -26,8 +30,6 @@ namespace UtilityAI {
             ConfigureCollider();
 
             context = new Context(this);
-
-            registeredTags.Clear();
 
             foreach (var action in actions) {
                 if (action == null) {
@@ -58,6 +60,9 @@ namespace UtilityAI {
         }
 
         void Update() {
+            tickCount += Time.deltaTime;
+            if (tickCount < tickCooldown) 
+                return;
             if (context?.Controller) {
                 context.Controller.InputRedirector = null;
             }
@@ -66,7 +71,7 @@ namespace UtilityAI {
 
             AIAction bestAction = null;
             Transform bestTarget = null;
-            float highestUtility = float.MinValue;
+            float highestUtility = 0f;
             var targets = GetPerceivedTargets();
 
             foreach (var action in actions) {
@@ -109,7 +114,7 @@ namespace UtilityAI {
         void RefreshDetectedTargets() {
             detectedTargets.Clear();
 
-            if (!Application.isPlaying || registeredTags.Count == 0) {
+            if (!Application.isPlaying) {
                 return;
             }
 
@@ -144,12 +149,29 @@ namespace UtilityAI {
         }
 
         bool IsValidTarget(Collider other) {
-            if (!other || other.CompareTag("Untagged") || other.gameObject.layer == 2 || other.gameObject == controller.gameObject) {
+            if (!other || other.CompareTag("Untagged") || other.gameObject == controller.gameObject) {
+                return false;
+            }
+            // Check that layer is in the detectionLayerMask
+            if (!detectionLayerMask.Contains(other.gameObject.layer)) {
                 return false;
             }
 
-            return registeredTags.Contains(other.tag);
+            return true;
         }
+        
+        bool IsValidTarget(TargetContext other) {
+            if (!other.transform || other.transform.CompareTag("Untagged") || other.transform.gameObject == controller.gameObject)
+                return false;
+            if (!other.transform.gameObject.activeInHierarchy) 
+                return false;
+            if (!detectionLayerMask.Contains(other.transform.gameObject.layer)) 
+                return false;
+
+            return true;
+        }
+        
+        
 
         void OnTriggerEnter(Collider other) {
             TryAddDetectedTarget(other);
@@ -157,16 +179,6 @@ namespace UtilityAI {
 
         void OnTriggerExit(Collider other) {
             TryRemoveDetectedTarget(other);
-        }
-
-        internal void RegisterTargetTag(string tag) {
-            if (string.IsNullOrWhiteSpace(tag)) {
-                return;
-            }
-
-            if (registeredTags.Add(tag) && Application.isPlaying && isActiveAndEnabled) {
-                RefreshDetectedTargets();
-            }
         }
 
         public IReadOnlyList<TargetContext> GetPerceivedTargets() {
@@ -178,8 +190,8 @@ namespace UtilityAI {
                     detectedTargets.RemoveAt(i);
                     continue;
                 }
-
-                if (!registeredTags.Contains(target.transform.tag)) {
+                
+                if (!IsValidTarget(target)) {
                     detectedTargets.RemoveAt(i);
                     continue;
                 }

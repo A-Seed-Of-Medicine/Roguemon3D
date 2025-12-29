@@ -137,5 +137,10 @@ namespace UnityUtils {
             obj.gameObject.SetActive(false);
             return obj;
         }
+        
+            
+        public static bool Contains(this LayerMask layerMask, int layer) {
+            return (layerMask.value & (1 << layer)) != 0;
+        }
     }
 }

@@ -131,15 +131,15 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 7200000, guid: b9a23f869c4fd45f19c5ada54dd82176, type: 3}
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
-  - {fileID: 8390446307640162769}
   - {fileID: -5132190511051551413}
+  - {fileID: 8390446307640162769}
   - {fileID: 9091153036897899343}
   - {fileID: 2900937846673688665}
   - {fileID: 4126389501551739145}
   - {fileID: -3923843198734950379}
   - {fileID: -6276858940213281904}
   - {fileID: 8805671135321439851}
-  m_RendererFeatureMap: ad6b866f10d7b46cd139e15976da70744b4d24f5ebcbc6b84f53032385432a7e59c8780a9a3342280981e49c63e143391520127166b58bc9903b5ad30c1ee4a86bbebe3d3e07347a
+  m_RendererFeatureMap: ad6b866f10d7b46c4b4d24f5ebcbc6b8d139e15976da70744f53032385432a7e59c8780a9a3342280981e49c63e143391520127166b58bc9903b5ad30c1ee4a86bbebe3d3e07347a
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -309,17 +309,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6b3d386ba5cd94485973aee1479b272e, type: 3}
-  m_Name: FloorFill
+  m_Name: FloorMask
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.RenderObjects
-  m_Active: 1
+  m_Active: 0
   settings:
-    passTag: FloorFill
+    passTag: FloorMask
     Event: 500
     filterSettings:
-      RenderQueueType: 1
+      RenderQueueType: 0
       LayerMask:
         serializedVersion: 2
-        m_Bits: 512
+        m_Bits: 0
       PassNames: []
     overrideMaterial: {fileID: 0}
     overrideMaterialPassIndex: 0
@@ -333,7 +333,7 @@ MonoBehaviour:
       overrideStencilState: 1
       stencilReference: 1
       stencilCompareFunction: 3
-      passOperation: 2
+      passOperation: 0
       failOperation: 0
       zFailOperation: 0
     cameraSettings:
